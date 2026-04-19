@@ -409,6 +409,14 @@
         .cell.boss { background: #5a2a5a; color: #ff00ff; font-weight: bold; }
         .cell.stairs { background: linear-gradient(135deg, #2a4a3a, #3a5a4a); color: #6bff6b; border: 2px solid #4a8a5a; }
         .cell.story { background: #3a3a4a; color: #c0c0c0; }
+        .cell.coffin { background: linear-gradient(135deg, #4a3a2a, #6a5a4a); color: #ffd700; border: 2px solid #d4af37; animation: coffin-glow 2s infinite; }
+        .cell.buff-attack { background: linear-gradient(135deg, #5a3a3a, #7a4a4a); color: #ff6b6b; border: 1px solid #ff6b6b; }
+        .cell.buff-fatigue { background: linear-gradient(135deg, #2a4a3a, #3a5a4a); color: #6bff6b; border: 1px solid #6bff6b; }
+        
+        @keyframes coffin-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); }
+        }
         
         .cell:active:not(.player):not(.wall) {
             transform: scale(0.95);
@@ -829,16 +837,28 @@
         <div class="level-section">
             <div class="section-title">第二章：深渊之下</div>
             
-            <!-- 关卡3-锁定 -->
-            <div class="level-card locked">
+            <!-- 关卡3 -->
+            <div class="level-card" onclick="showMissionIntro(3)">
                 <div class="level-header">
-                    <span class="level-name">血祭祭坛</span>
-                    <span class="level-tag locked">🔒 未解锁</span>
+                    <span class="level-name">星陨古墓</span>
+                    <span class="level-tag new">战斗模式</span>
                 </div>
                 <div class="level-desc">
-                    通过前两关后解锁...
+                    传说星陨古墓是一颗坠落天星砸出的深坑，墓中藏有一具星棺，据说装着来自天外的神秘力量...
+                </div>
+                <div class="level-info">
+                    <span>⚔️ 战斗系统</span>
+                    <span>⚰️ 星棺目标</span>
+                    <span>💚 疲劳度</span>
                 </div>
             </div>
+        </div>
+        
+        <!-- 重置数据按钮 -->
+        <div style="padding: 20px; text-align: center;">
+            <button onclick="resetAllData()" style="background: rgba(139,58,58,0.3); border: 1px solid #5a2a2a; color: #ff6b6b; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;">
+                🗑️ 重置所有数据
+            </button>
         </div>
     </div>
     
@@ -856,6 +876,13 @@
                     <div class="hp-bar-fill" id="hpBar"></div>
                 </div>
                 <div class="hp-text" id="hpText">100%</div>
+            </div>
+            <div class="fatigue-container" style="display:flex;align-items:center;gap:5px;">
+                <span style="font-size:12px;">💚</span>
+                <div class="hp-bar-wrapper" style="width:60px;height:8px;">
+                    <div class="hp-bar-fill" id="fatigueBar" style="background:#6bff6b;"></div>
+                </div>
+                <span id="fatigueText" style="font-size:10px;color:#6bff6b;">100</span>
             </div>
             <div class="torch-info">
                 🔥 <span id="torchValue">∞</span>
@@ -996,6 +1023,30 @@
                     { name: '石棺', icon: '⚰️', text: '一口空石棺，棺盖上刻着张献忠的名字。但这里真的是他的墓吗？' },
                     { name: '祭坛遗迹', icon: '⛩️', text: '残破的祭坛，地上画着血色的符文。这里似乎举行过某种仪式...' }
                 ]
+            },
+            3: {
+                name: '星陨古墓',
+                type: 'structured',
+                mapSize: 16,
+                story: `<p>传说<span class="highlight">星陨古墓</span>是一颗坠落天星砸出的深坑，古人依势建墓。</p>
+                <p>墓中藏有一具<span class="highlight">星棺</span>，据说装着来自天外的神秘力量...</p>
+                <p style="margin-top:12px;">空气越来越稀薄，你感觉到一股强大的压力从深处传来。</p>`,
+                objectives: [
+                    { icon: '⚰️', title: '打开星棺', reward: '主要目标' },
+                    { icon: '👹', title: '击败所有怪物', reward: '完美通关' },
+                    { icon: '📜', title: '发现故事碎片 x3', reward: '+60金币' }
+                ],
+                hasCombat: true, // 第3关有战斗系统
+                mechanismPool: {
+                    luck: ['星辰宝箱'],
+                    knowledge: ['星象石碑'],
+                    hero: ['陨铁门']
+                },
+                storyFragments: [
+                    { name: '陨石碎片', icon: '🌌', text: '一块散发着微光的陨石碎片，摸上去冰凉刺骨。上面刻着看不懂的符文。' },
+                    { name: '星图残卷', icon: '📜', text: '残卷上绘制着十二星宫的图案，但大部分已经模糊不清。只有天蝎座依然清晰可见。' },
+                    { name: '守墓者遗骸', icon: '💀', text: '一具穿着古袍的骸骨，手中握着一把星纹短剑。他的表情凝固在惊恐之中。' }
+                ]
             }
         };
         
@@ -1015,7 +1066,12 @@
             storyFound: 0,
             discoveredStories: [], // 已发现的环境碎片列表
             usedMechanisms: { luck: [], knowledge: [], hero: [] },
-            objectives: null
+            objectives: null,
+            fatigue: 100, // 疲劳度
+            maxFatigue: 100,
+            attackBuff: 0, // 攻击Buff剩余格数
+            totalEnemies: 0, // 关卡总敌人数量
+            killedEnemies: 0 // 已击杀敌人数量
         };
         
         // 队伍数据
@@ -1295,6 +1351,14 @@
             localStorage.removeItem(SAVE_KEY);
         }
         
+        // 重置所有数据
+        function resetAllData() {
+            if (confirm('确定要重置所有数据吗？这将清除所有存档和进度。')) {
+                localStorage.removeItem(SAVE_KEY);
+                location.reload();
+            }
+        }
+        
         // 恢复游戏状态
         function restoreGame(saveData) {
             currentLevel = saveData.levelId;
@@ -1431,6 +1495,10 @@
             gameState.storyFound = 0;
             gameState.discoveredStories = []; // 重置已发现的碎片
             gameState.usedMechanisms = { luck: [], knowledge: [], hero: [] };
+            gameState.fatigue = 100; // 重置疲劳度
+            gameState.attackBuff = 0; // 重置攻击Buff
+            gameState.totalEnemies = 0;
+            gameState.killedEnemies = 0;
             gameState.objectives = {
                 stairs: false,
                 mechanisms: { current: 0, target: levelId === 1 ? 3 : 4 },
@@ -1472,10 +1540,17 @@
             const size = gameState.mapSize;
             gameState.map = [];
             gameState.mechanismTotal = 0;
+            gameState.totalEnemies = 0;
+            gameState.killedEnemies = 0;
             
-            // 第二关：结构化生成
+            // 第二关、第三关：结构化生成
             if (levelId === 2) {
                 generateStructuredMap(level);
+                return;
+            }
+            
+            if (levelId === 3) {
+                generateLevel3Map(level);
                 return;
             }
             
@@ -1625,6 +1700,151 @@
             gameState.mechanismTotal = mechCount;
         }
         
+        // 第三关：星陨古墓（带战斗和棺椁）
+        function generateLevel3Map(level) {
+            const size = gameState.mapSize;
+            gameState.map = [];
+            let enemyCount = 0;
+            
+            // 初始化全部为墙
+            for (let y = 0; y < size; y++) {
+                gameState.map[y] = [];
+                for (let x = 0; x < size; x++) {
+                    gameState.map[y][x] = { x, y, type: 'wall', revealed: false };
+                }
+            }
+            
+            // 定义区域（第三关设计）
+            const areas = [
+                { name: '入口区', x: 1, y: 1, w: 4, h: 4, enemies: 0, mechanisms: [], stories: 1 },
+                { name: '走廊A', x: 5, y: 2, w: 3, h: 3, enemies: 1, mechanisms: [], stories: 0, blocking: true }, // 拦路怪
+                { name: '前厅', x: 8, y: 1, w: 5, h: 5, enemies: 0, mechanisms: [], stories: 0 },
+                { name: '通道B', x: 1, y: 6, w: 3, h: 6, enemies: 1, mechanisms: [], stories: 0, blocking: true }, // 拦路怪
+                { name: '走廊C', x: 5, y: 8, w: 3, h: 4, enemies: 1, mechanisms: [], stories: 1 }, // 可选怪
+                { name: '休息点', x: 9, y: 7, w: 3, h: 3, enemies: 0, mechanisms: [], stories: 0 },
+                { name: 'Boss房', x: 12, y: 10, w: 3, h: 4, enemies: 1, mechanisms: [], stories: 0, isBoss: true } // Boss
+            ];
+            
+            // 随机选择机关和碎片
+            const availableMechanisms = {
+                luck: [...(level.mechanismPool?.luck || [])],
+                knowledge: [...(level.mechanismPool?.knowledge || [])],
+                hero: [...(level.mechanismPool?.hero || [])]
+            };
+            const availableStories = [...(level.storyFragments || [])];
+            
+            let mechCount = 0;
+            let storyIdx = 0;
+            
+            // 生成区域
+            areas.forEach(area => {
+                for (let dy = 0; dy < area.h; dy++) {
+                    for (let dx = 0; dx < area.w; dx++) {
+                        const x = area.x + dx;
+                        const y = area.y + dy;
+                        if (x >= size || y >= size) continue;
+                        gameState.map[y][x] = { x, y, type: 'floor', revealed: false };
+                    }
+                }
+                
+                // 放置敌人
+                if (area.enemies > 0) {
+                    for (let i = 0; i < area.enemies; i++) {
+                        const placed = placeInArea(area, area.isBoss ? 'boss' : 'enemy', {});
+                        if (placed) enemyCount++;
+                    }
+                }
+                
+                // 放置机关
+                area.mechanisms.forEach(mType => {
+                    const available = availableMechanisms[mType.replace('mechanism-', '')];
+                    if (available && available.length > 0) {
+                        const mechName = available.pop();
+                        const placed = placeInArea(area, mType, { name: mechName });
+                        if (placed) {
+                            mechCount++;
+                            gameState.map[placed.y][placed.x].mechanismName = mechName;
+                        }
+                    }
+                });
+                
+                // 放置故事碎片
+                for (let i = 0; i < area.stories && storyIdx < availableStories.length; i++) {
+                    const story = availableStories[storyIdx++];
+                    const placed = placeInArea(area, 'story', story);
+                    if (placed) {
+                        gameState.map[placed.y][placed.x].storyData = story;
+                    }
+                }
+            });
+            
+            // 打通区域之间的通道
+            for (let i = 0; i < areas.length - 1; i++) {
+                const area1 = areas[i];
+                const area2 = areas[i + 1];
+                const c1x = area1.x + Math.floor(area1.w / 2);
+                const c1y = area1.y + Math.floor(area1.h / 2);
+                const c2x = area2.x + Math.floor(area2.w / 2);
+                const c2y = area2.y + Math.floor(area2.h / 2);
+                
+                let x = c1x, y = c1y;
+                while (x !== c2x || y !== c2y) {
+                    if (x >= 0 && x < size && y >= 0 && y < size) {
+                        if (gameState.map[y][x].type === 'wall') {
+                            gameState.map[y][x].type = 'floor';
+                        }
+                    }
+                    if (Math.abs(x - c2x) > Math.abs(y - c2y)) {
+                        x += x < c2x ? 1 : -1;
+                    } else {
+                        y += y < c2y ? 1 : -1;
+                    }
+                }
+                if (c2x >= 0 && c2x < size && c2y >= 0 && c2y < size) {
+                    if (gameState.map[c2y][c2x].type === 'wall') {
+                        gameState.map[c2y][c2x].type = 'floor';
+                    }
+                }
+            }
+            
+            // 玩家起始位置
+            gameState.map[1][1].type = 'player';
+            gameState.map[1][1].revealed = true;
+            
+            // 在Boss房深处放置星棺
+            const bossArea = areas.find(a => a.isBoss);
+            if (bossArea) {
+                const coffinX = bossArea.x + 1;
+                const coffinY = bossArea.y + bossArea.h - 1;
+                if (coffinX < size && coffinY < size) {
+                    gameState.map[coffinY][coffinX].type = 'coffin';
+                }
+            }
+            
+            // 在休息点放置疲劳恢复Buff
+            const restArea = areas.find(a => a.name === '休息点');
+            if (restArea) {
+                const buffX = restArea.x + 1;
+                const buffY = restArea.y + 1;
+                if (buffX < size && buffY < size) {
+                    gameState.map[buffY][buffX].type = 'buff-fatigue';
+                }
+            }
+            
+            // 在前厅放置攻击Buff
+            const hallArea = areas.find(a => a.name === '前厅');
+            if (hallArea) {
+                const buffX = hallArea.x + 2;
+                const buffY = hallArea.y + 2;
+                if (buffX < size && buffY < size) {
+                    gameState.map[buffY][buffX].type = 'buff-attack';
+                }
+            }
+            
+            gameState.mechanismTotal = mechCount;
+            gameState.totalEnemies = enemyCount;
+        }
+        
         function placeInArea(area, type, data) {
             const size = gameState.mapSize;
             let attempts = 50;
@@ -1675,7 +1895,7 @@
                 'wall': '▪️', 'floor': '·', 'player': '👤', 'enemy': '👹',
                 'chest': '📦', 'mechanism-luck': '🍀', 'mechanism-knowledge': '📖',
                 'mechanism-hero': '⚡', 'boss': '💀', 'stairs': '🚪', 'fog': '?',
-                'story': '📜'
+                'story': '📜', 'coffin': '⚰️', 'buff-attack': '⚔️', 'buff-fatigue': '💚'
             };
             
             let html = '';
@@ -1742,6 +1962,14 @@
             cell.type = 'player';
             cell.revealed = true;
             
+            // 消耗攻击Buff
+            if (gameState.attackBuff > 0) {
+                gameState.attackBuff--;
+                if (gameState.attackBuff === 0) {
+                    addLog('攻击强化效果已消失', 'info');
+                }
+            }
+            
             revealArea(x, y, 2);
             renderMap();
             handleCellType(originalType, x, y);
@@ -1759,7 +1987,7 @@
             const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
             
             // 定义危险格子类型（寻路时避开，除非终点就是它）
-            const dangerTypes = ['enemy', 'chest', 'mechanism-luck', 'mechanism-knowledge', 'mechanism-hero', 'boss', 'trap', 'story'];
+            const dangerTypes = ['enemy', 'chest', 'mechanism-luck', 'mechanism-knowledge', 'mechanism-hero', 'boss', 'trap', 'story', 'coffin', 'buff-attack', 'buff-fatigue'];
             
             while (queue.length > 0) {
                 const current = queue.shift();
@@ -1825,7 +2053,11 @@
             
             switch (originalType) {
                 case 'enemy':
-                    showBattleModal();
+                    if (currentLevel === 3) {
+                        showBattleModal();
+                    } else {
+                        addLog('遭遇敌人！', 'danger');
+                    }
                     break;
                 case 'chest':
                     const gold = Math.floor(Math.random() * 30) + 10;
@@ -1840,6 +2072,20 @@
                     break;
                 case 'boss':
                     showBattleModal(true);
+                    break;
+                case 'coffin':
+                    showCoffinModal();
+                    break;
+                case 'buff-attack':
+                    gameState.attackBuff = 5; // 接下来5格攻击+30%
+                    addLog('⚔️ 获得攻击强化！接下来5格内攻击力+30%', 'success');
+                    updateStats();
+                    break;
+                case 'buff-fatigue':
+                    const fatigueGain = 25;
+                    gameState.fatigue = Math.min(gameState.maxFatigue, gameState.fatigue + fatigueGain);
+                    addLog(`💚 休息片刻，恢复 ${fatigueGain} 点疲劳度`, 'success');
+                    updateStats();
                     break;
                 case 'stairs':
                     gameState.objectives.stairs = true;
@@ -1916,6 +2162,186 @@
             `;
             
             modal.classList.add('active');
+        }
+        
+        // 显示棺椁确认弹窗
+        function showCoffinModal() {
+            const modal = document.getElementById('mechanismModal');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <div class="mechanism-type" style="background:linear-gradient(135deg,#4a3a2a,#6a5a4a);">⚰️ 星棺</div>
+                <div class="mechanism-image" style="font-size:60px;">⚰️</div>
+                <div class="mechanism-title">星棺</div>
+                <div class="mechanism-desc">
+                    <p>星棺散发着神秘的气息，里面似乎蕴含着来自天外的力量...</p>
+                    <p style="color:#ff6b6b;margin-top:10px;">但你感觉到一股强大的力量在守护着它。</p>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:15px;">
+                    <button class="option-btn" style="flex:1;background:#5a3a3a;" onclick="startCoffinBattle()">打开星棺</button>
+                    <button class="back-btn" style="flex:1;" onclick="closeModal()">稍后再说</button>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+        
+        // 开始棺椁Boss战
+        function startCoffinBattle() {
+            closeModal();
+            showBattleModal(true, true); // isBoss=true, isCoffin=true
+        }
+        
+        // 战斗系统
+        function showBattleModal(isBoss = false, isCoffin = false) {
+            const modal = document.getElementById('mechanismModal');
+            const content = document.getElementById('modalContent');
+            
+            const enemyName = isBoss ? '星棺守卫' : '墓穴守卫';
+            const enemyHp = isBoss ? 200 : 80;
+            const enemyAtk = isBoss ? 25 : 12;
+            
+            let playerHp = gameState.hp;
+            let enemyCurrentHp = enemyHp;
+            
+            // 计算攻击加成
+            const attackBonus = gameState.attackBuff > 0 ? 1.3 : 1;
+            const playerAtk = Math.floor(20 * attackBonus);
+            
+            const renderBattle = () => {
+                content.innerHTML = `
+                    <div class="mechanism-type" style="background:${isBoss ? '#5a2a5a' : '#8b3a3a'};">
+                        ${isBoss ? '💀 Boss战' : '👹 战斗'}
+                    </div>
+                    <div style="display:flex;justify-content:space-around;align-items:center;margin:20px 0;">
+                        <div style="text-align:center;">
+                            <div style="font-size:30px;">👤</div>
+                            <div style="color:#6bcfff;">队伍</div>
+                            <div style="font-size:12px;">HP: ${playerHp}/${gameState.maxHp}</div>
+                        </div>
+                        <div style="font-size:24px;color:#ff6b6b;">⚔️</div>
+                        <div style="text-align:center;">
+                            <div style="font-size:30px;">${isBoss ? '💀' : '👹'}</div>
+                            <div style="color:#ff6b6b;">${enemyName}</div>
+                            <div style="font-size:12px;">HP: ${enemyCurrentHp}/${enemyHp}</div>
+                        </div>
+                    </div>
+                    ${gameState.attackBuff > 0 ? '<div style="text-align:center;color:#ff6b6b;font-size:12px;">⚔️ 攻击强化生效中</div>' : ''}
+                    <div style="margin-top:15px;">
+                        <button class="option-btn" onclick="doAttack(${playerAtk}, ${enemyAtk})">攻击</button>
+                    </div>
+                `;
+            };
+            
+            window.doAttack = () => {
+                // 玩家攻击
+                const damage = playerAtk + Math.floor(Math.random() * 10);
+                enemyCurrentHp -= damage;
+                
+                if (enemyCurrentHp <= 0) {
+                    // 战斗胜利
+                    gameState.killedEnemies++;
+                    gameState.battleCount++;
+                    
+                    // 计算疲劳度消耗（基于损失生命值）
+                    const hpLost = gameState.maxHp - playerHp;
+                    const fatigueCost = Math.floor(hpLost * 0.9); // 约90%的生命损失会消耗90点疲劳
+                    gameState.fatigue = Math.max(0, gameState.fatigue - fatigueCost);
+                    
+                    const goldReward = isBoss ? 150 : 30;
+                    gameState.gold += goldReward;
+                    
+                    content.innerHTML = `
+                        <div class="mechanism-type" style="background:#2a4a3a;">✓ 胜利</div>
+                        <div style="text-align:center;margin:20px 0;">
+                            <div style="font-size:40px;">🎉</div>
+                            <div style="color:#6bff6b;margin-top:10px;">击败了 ${enemyName}！</div>
+                            <div style="margin-top:15px;color:#ffd700;">+${goldReward} 金币</div>
+                            <div style="color:#ff6b6b;font-size:12px;margin-top:5px;">消耗 ${fatigueCost} 点疲劳度</div>
+                        </div>
+                        ${isCoffin ? `
+                            <div style="background:rgba(212,175,55,0.2);padding:15px;border-radius:8px;margin-top:15px;">
+                                <div style="color:#d4af37;font-size:16px;">⚰️ 星棺已打开</div>
+                                <div style="margin-top:10px;color:#ffd700;">获得星核碎片 ×1</div>
+                                <div style="color:#6bff6b;font-size:12px;">完美通关奖励：+200金币</div>
+                            </div>
+                        ` : ''}
+                        <button class="close-btn" onclick="${isCoffin ? 'completeLevel3()' : 'closeModal()'}">继续</button>
+                    `;
+                    
+                    updateStats();
+                    checkObjectives();
+                    return;
+                }
+                
+                // 敌人反击
+                const enemyDamage = enemyAtk + Math.floor(Math.random() * 8);
+                playerHp -= enemyDamage;
+                gameState.hp = Math.max(1, playerHp); // 保底1血
+                
+                if (playerHp <= 0) {
+                    content.innerHTML = `
+                        <div class="mechanism-type" style="background:#5a2a2a;">✗ 失败</div>
+                        <div style="text-align:center;margin:20px 0;">
+                            <div style="font-size:40px;">💀</div>
+                            <div style="color:#ff6b6b;margin-top:10px;">队伍全军覆没...</div>
+                        </div>
+                        <button class="close-btn" onclick="retreatFromBattle()">撤退</button>
+                    `;
+                    return;
+                }
+                
+                renderBattle();
+            };
+            
+            window.retreatFromBattle = () => {
+                gameState.hp = Math.max(20, gameState.hp);
+                closeModal();
+                addLog('勉强逃离了战斗...', 'danger');
+            };
+            
+            renderBattle();
+            modal.classList.add('active');
+        }
+        
+        // 第三关通关
+        function completeLevel3() {
+            closeModal();
+            
+            const isPerfect = gameState.killedEnemies >= gameState.totalEnemies;
+            const bonusGold = isPerfect ? 200 : 0;
+            gameState.gold += bonusGold;
+            
+            const modal = document.getElementById('missionModal');
+            const content = document.getElementById('missionContent');
+            
+            content.innerHTML = `
+                <div class="mission-title">🎉 关卡完成</div>
+                <div class="mission-story">
+                    <p style="text-align:center;font-size:24px;">⚰️</p>
+                    <p style="text-align:center;color:#d4af37;font-size:18px;">星陨古墓</p>
+                    <p style="margin-top:15px;">你成功打开了星棺，获得了其中的星核碎片。</p>
+                    ${isPerfect ? '<p style="color:#6bff6b;margin-top:10px;">✓ 完美通关：击败了所有敌人！</p>' : ''}
+                </div>
+                <div style="background:rgba(0,0,0,0.3);padding:15px;border-radius:8px;margin-top:15px;">
+                    <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                        <span>击杀敌人</span>
+                        <span>${gameState.killedEnemies}/${gameState.totalEnemies}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                        <span>剩余疲劳度</span>
+                        <span>${gameState.fatigue}/${gameState.maxFatigue}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin:5px 0;color:#ffd700;">
+                        <span>获得金币</span>
+                        <span>+${150 + (isPerfect ? 200 : 0)}</span>
+                    </div>
+                </div>
+                <button class="start-mission-btn" onclick="exitToLevelSelect();closeMissionModal();">返回关卡选择</button>
+            `;
+            
+            modal.classList.add('active');
+            clearSave();
         }
         
         // 切换碎片抽屉
@@ -2210,6 +2636,11 @@
             document.getElementById('goldValue').textContent = gameState.gold;
             document.getElementById('mechanismCount').textContent = `${gameState.mechanismSolved}/${gameState.mechanismTotal}`;
             document.getElementById('battleCount').textContent = gameState.battleCount;
+            
+            // 更新疲劳度显示
+            const fatiguePercent = (gameState.fatigue / gameState.maxFatigue) * 100;
+            document.getElementById('fatigueBar').style.width = `${fatiguePercent}%`;
+            document.getElementById('fatigueText').textContent = gameState.fatigue;
         }
         
         function addLog(text, type = 'info') {
