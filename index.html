@@ -2192,112 +2192,206 @@
             showBattleModal(true, true); // isBoss=true, isCoffin=true
         }
         
-        // 战斗系统
+        // 战斗系统（完整版）
         function showBattleModal(isBoss = false, isCoffin = false) {
             const modal = document.getElementById('mechanismModal');
             const content = document.getElementById('modalContent');
             
-            const enemyName = isBoss ? '星棺守卫' : '墓穴守卫';
-            const enemyHp = isBoss ? 200 : 80;
-            const enemyAtk = isBoss ? 25 : 12;
+            // 战斗数值配置
+            const enemyConfig = isBoss ? {
+                name: '星棺守卫',
+                maxHp: 120,
+                atk: 15,
+                def: 5,
+                gold: 100
+            } : {
+                name: '墓穴守卫',
+                maxHp: 50,
+                atk: 10,
+                def: 3,
+                gold: 25
+            };
             
-            let playerHp = gameState.hp;
-            let enemyCurrentHp = enemyHp;
+            // 玩家队伍数值（简化：合并4人属性）
+            const playerMaxHp = gameState.maxHp; // 100
+            const playerAtk = 22; // 基础攻击力
+            const playerDef = 6; // 防御力
             
-            // 计算攻击加成
-            const attackBonus = gameState.attackBuff > 0 ? 1.3 : 1;
-            const playerAtk = Math.floor(20 * attackBonus);
+            // 战斗状态
+            let battleState = {
+                playerHp: gameState.hp,
+                playerMaxHp: playerMaxHp,
+                enemyHp: enemyConfig.maxHp,
+                enemyMaxHp: enemyConfig.maxHp,
+                logs: [],
+                turn: 0,
+                attackBuff: gameState.attackBuff > 0
+            };
             
+            // 计算实际伤害
+            const calcDamage = (atk, def) => {
+                const baseDamage = Math.max(1, atk - def);
+                const variance = Math.floor(Math.random() * 5) - 2; // -2 ~ +2
+                return Math.max(1, baseDamage + variance);
+            };
+            
+            // 添加战斗日志
+            const addBattleLog = (text, type = 'normal') => {
+                battleState.logs.push({ text, type, turn: battleState.turn });
+            };
+            
+            // 渲染战斗界面
             const renderBattle = () => {
+                const playerHpPercent = (battleState.playerHp / battleState.playerMaxHp) * 100;
+                const enemyHpPercent = Math.max(0, (battleState.enemyHp / battleState.enemyMaxHp) * 100);
+                
                 content.innerHTML = `
                     <div class="mechanism-type" style="background:${isBoss ? '#5a2a5a' : '#8b3a3a'};">
-                        ${isBoss ? '💀 Boss战' : '👹 战斗'}
+                        ${isBoss ? '💀 Boss战' : '👹 战斗'} - 回合 ${battleState.turn}
                     </div>
-                    <div style="display:flex;justify-content:space-around;align-items:center;margin:20px 0;">
-                        <div style="text-align:center;">
-                            <div style="font-size:30px;">👤</div>
-                            <div style="color:#6bcfff;">队伍</div>
-                            <div style="font-size:12px;">HP: ${playerHp}/${gameState.maxHp}</div>
+                    
+                    <div style="display:flex;justify-content:space-around;align-items:center;margin:15px 0;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;">
+                        <!-- 玩家 -->
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:28px;">👤</div>
+                            <div style="color:#6bcfff;font-size:12px;margin:5px 0;">队伍</div>
+                            <div style="background:#2a2a35;border-radius:4px;height:8px;overflow:hidden;margin:5px auto;width:80%;">
+                                <div style="background:linear-gradient(90deg,#4a6fa5,#6b9fd5);height:100%;width:${playerHpPercent}%;"></div>
+                            </div>
+                            <div style="font-size:11px;color:#aaa;">HP: ${battleState.playerHp}/${battleState.playerMaxHp}</div>
+                            ${battleState.attackBuff ? '<div style="color:#ff6b6b;font-size:10px;">⚔️ 攻击强化</div>' : ''}
                         </div>
-                        <div style="font-size:24px;color:#ff6b6b;">⚔️</div>
-                        <div style="text-align:center;">
-                            <div style="font-size:30px;">${isBoss ? '💀' : '👹'}</div>
-                            <div style="color:#ff6b6b;">${enemyName}</div>
-                            <div style="font-size:12px;">HP: ${enemyCurrentHp}/${enemyHp}</div>
+                        
+                        <div style="font-size:20px;color:#ff6b6b;padding:0 10px;">⚔️</div>
+                        
+                        <!-- 敌人 -->
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:28px;">${isBoss ? '💀' : '👹'}</div>
+                            <div style="color:#ff6b6b;font-size:12px;margin:5px 0;">${enemyConfig.name}</div>
+                            <div style="background:#2a2a35;border-radius:4px;height:8px;overflow:hidden;margin:5px auto;width:80%;">
+                                <div style="background:linear-gradient(90deg,#8b3a3a,#ff6b6b);height:100%;width:${enemyHpPercent}%;"></div>
+                            </div>
+                            <div style="font-size:11px;color:#aaa;">HP: ${Math.max(0, battleState.enemyHp)}/${enemyConfig.maxHp}</div>
                         </div>
                     </div>
-                    ${gameState.attackBuff > 0 ? '<div style="text-align:center;color:#ff6b6b;font-size:12px;">⚔️ 攻击强化生效中</div>' : ''}
-                    <div style="margin-top:15px;">
-                        <button class="option-btn" onclick="doAttack(${playerAtk}, ${enemyAtk})">攻击</button>
+                    
+                    <!-- 战斗日志 -->
+                    <div style="background:rgba(0,0,0,0.3);border-radius:6px;padding:8px;margin:10px 0;max-height:100px;overflow-y:auto;font-size:11px;">
+                        ${battleState.logs.slice(-5).map(log => `
+                            <div style="margin:3px 0;color:${log.type === 'player' ? '#6bcfff' : log.type === 'enemy' ? '#ff6b6b' : '#aaa'};">
+                                ${log.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div style="display:flex;gap:8px;margin-top:10px;">
+                        <button class="option-btn" style="flex:2;" onclick="doPlayerAttack()">⚔️ 攻击</button>
+                        <button class="back-btn" style="flex:1;" onclick="doRetreat()">撤退</button>
                     </div>
                 `;
             };
             
-            window.doAttack = () => {
-                // 玩家攻击
-                const damage = playerAtk + Math.floor(Math.random() * 10);
-                enemyCurrentHp -= damage;
+            // 玩家攻击
+            window.doPlayerAttack = () => {
+                battleState.turn++;
                 
-                if (enemyCurrentHp <= 0) {
-                    // 战斗胜利
-                    gameState.killedEnemies++;
-                    gameState.battleCount++;
-                    
-                    // 计算疲劳度消耗（基于损失生命值）
-                    const hpLost = gameState.maxHp - playerHp;
-                    const fatigueCost = Math.floor(hpLost * 0.9); // 约90%的生命损失会消耗90点疲劳
-                    gameState.fatigue = Math.max(0, gameState.fatigue - fatigueCost);
-                    
-                    const goldReward = isBoss ? 150 : 30;
-                    gameState.gold += goldReward;
-                    
-                    content.innerHTML = `
-                        <div class="mechanism-type" style="background:#2a4a3a;">✓ 胜利</div>
-                        <div style="text-align:center;margin:20px 0;">
-                            <div style="font-size:40px;">🎉</div>
-                            <div style="color:#6bff6b;margin-top:10px;">击败了 ${enemyName}！</div>
-                            <div style="margin-top:15px;color:#ffd700;">+${goldReward} 金币</div>
-                            <div style="color:#ff6b6b;font-size:12px;margin-top:5px;">消耗 ${fatigueCost} 点疲劳度</div>
-                        </div>
-                        ${isCoffin ? `
-                            <div style="background:rgba(212,175,55,0.2);padding:15px;border-radius:8px;margin-top:15px;">
-                                <div style="color:#d4af37;font-size:16px;">⚰️ 星棺已打开</div>
-                                <div style="margin-top:10px;color:#ffd700;">获得星核碎片 ×1</div>
-                                <div style="color:#6bff6b;font-size:12px;">完美通关奖励：+200金币</div>
-                            </div>
-                        ` : ''}
-                        <button class="close-btn" onclick="${isCoffin ? 'completeLevel3()' : 'closeModal()'}">继续</button>
-                    `;
-                    
-                    updateStats();
-                    checkObjectives();
+                // 计算玩家攻击（含Buff加成）
+                const atkBonus = battleState.attackBuff ? 1.3 : 1;
+                const playerDamage = calcDamage(Math.floor(playerAtk * atkBonus), enemyConfig.def);
+                battleState.enemyHp -= playerDamage;
+                
+                addBattleLog(`队伍对 ${enemyConfig.name} 造成 ${playerDamage} 点伤害`, 'player');
+                
+                // 检查敌人是否死亡
+                if (battleState.enemyHp <= 0) {
+                    showBattleVictory();
                     return;
                 }
                 
                 // 敌人反击
-                const enemyDamage = enemyAtk + Math.floor(Math.random() * 8);
-                playerHp -= enemyDamage;
-                gameState.hp = Math.max(1, playerHp); // 保底1血
+                const enemyDamage = calcDamage(enemyConfig.atk, playerDef);
+                battleState.playerHp -= enemyDamage;
+                gameState.hp = Math.max(1, battleState.playerHp);
                 
-                if (playerHp <= 0) {
-                    content.innerHTML = `
-                        <div class="mechanism-type" style="background:#5a2a2a;">✗ 失败</div>
-                        <div style="text-align:center;margin:20px 0;">
-                            <div style="font-size:40px;">💀</div>
-                            <div style="color:#ff6b6b;margin-top:10px;">队伍全军覆没...</div>
-                        </div>
-                        <button class="close-btn" onclick="retreatFromBattle()">撤退</button>
-                    `;
+                addBattleLog(`${enemyConfig.name} 对队伍造成 ${enemyDamage} 点伤害`, 'enemy');
+                
+                // 检查玩家是否死亡
+                if (battleState.playerHp <= 0) {
+                    showBattleDefeat();
                     return;
                 }
                 
                 renderBattle();
             };
             
-            window.retreatFromBattle = () => {
-                gameState.hp = Math.max(20, gameState.hp);
+            // 战斗胜利
+            const showBattleVictory = () => {
+                gameState.killedEnemies++;
+                gameState.battleCount++;
+                
+                // 计算疲劳度消耗（损失多少HP就消耗多少疲劳）
+                const hpLost = gameState.maxHp - battleState.playerHp;
+                gameState.fatigue = Math.max(0, gameState.fatigue - hpLost);
+                
+                const goldReward = enemyConfig.gold;
+                gameState.gold += goldReward;
+                gameState.hp = battleState.playerHp;
+                
+                content.innerHTML = `
+                    <div class="mechanism-type" style="background:#2a4a3a;">✓ 战斗胜利</div>
+                    <div style="text-align:center;margin:20px 0;">
+                        <div style="font-size:40px;">🎉</div>
+                        <div style="color:#6bff6b;margin-top:10px;">击败了 ${enemyConfig.name}！</div>
+                        <div style="margin-top:15px;font-size:12px;color:#aaa;">战斗回合：${battleState.turn}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;margin-top:10px;">
+                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                            <span style="color:#aaa;">剩余生命</span>
+                            <span style="color:#6bcfff;">${battleState.playerHp}/${gameState.maxHp} (-${hpLost})</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                            <span style="color:#aaa;">疲劳消耗</span>
+                            <span style="color:#ff6b6b;">-${hpLost}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                            <span style="color:#aaa;">获得金币</span>
+                            <span style="color:#ffd700;">+${goldReward}</span>
+                        </div>
+                    </div>
+                    ${isCoffin ? `
+                        <div style="background:rgba(212,175,55,0.2);padding:12px;border-radius:8px;margin-top:10px;">
+                            <div style="color:#d4af37;">⚰️ 星棺已打开</div>
+                            <div style="margin-top:8px;color:#ffd700;font-size:12px;">获得星核碎片 ×1</div>
+                        </div>
+                    ` : ''}
+                    <button class="close-btn" onclick="${isCoffin ? 'completeLevel3()' : 'closeModal()'}" style="margin-top:15px;">继续</button>
+                `;
+                
+                updateStats();
+                checkObjectives();
+                saveGame();
+            };
+            
+            // 战斗失败
+            const showBattleDefeat = () => {
+                content.innerHTML = `
+                    <div class="mechanism-type" style="background:#5a2a2a;">✗ 战斗失败</div>
+                    <div style="text-align:center;margin:20px 0;">
+                        <div style="font-size:40px;">💀</div>
+                        <div style="color:#ff6b6b;margin-top:10px;">队伍全军覆没...</div>
+                        <div style="font-size:12px;color:#aaa;margin-top:10px;">战斗回合：${battleState.turn}</div>
+                    </div>
+                    <button class="close-btn" onclick="doRetreat()">勉强撤退</button>
+                `;
+            };
+            
+            // 撤退
+            window.doRetreat = () => {
+                gameState.hp = Math.max(15, battleState.playerHp);
                 closeModal();
-                addLog('勉强逃离了战斗...', 'danger');
+                addLog('从战斗中撤退，损失了一些体力...', 'danger');
+                updateStats();
             };
             
             renderBattle();
