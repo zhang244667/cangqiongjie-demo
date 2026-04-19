@@ -1759,7 +1759,7 @@
             const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
             
             // 定义危险格子类型（寻路时避开，除非终点就是它）
-            const dangerTypes = ['enemy', 'chest', 'mechanism-luck', 'mechanism-knowledge', 'mechanism-hero', 'boss', 'trap'];
+            const dangerTypes = ['enemy', 'chest', 'mechanism-luck', 'mechanism-knowledge', 'mechanism-hero', 'boss', 'trap', 'story'];
             
             while (queue.length > 0) {
                 const current = queue.shift();
