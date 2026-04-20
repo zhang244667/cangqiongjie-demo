@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>《苍穹劫》地宫探索 Demo v8 - 战斗动效版</title>
+    <title>《苍穹劫》地宫探索 Demo v9 - 战斗音效版</title>
     <style>
         * {
             margin: 0;
@@ -1606,7 +1606,7 @@
     <div class="level-select-screen" id="levelSelectScreen">
         <div class="game-title">
             <h1>《苍穹劫》地宫探索</h1>
-            <div class="subtitle">v8 - 战斗动效版 Demo</div>
+            <div class="subtitle">v9 - 战斗音效版 Demo</div>
         </div>
         
         <div class="level-section">
@@ -1643,7 +1643,7 @@
                 </div>
                 <div class="level-desc">
                     传说星陨古墓是一颗坠落天星砸出的深坑，墓中藏有一具星棺...
-                    <br><span style="color:#ffcc00;">【战斗动效测试关卡】</span>
+                    <br><span style="color:#ffcc00;">【战斗音效测试关卡】</span>
                 </div>
             </div>
         </div>
@@ -2308,6 +2308,114 @@
         
         function clearSave() { localStorage.removeItem(SAVE_KEY); }
         
+        // ==================== 关卡进度系统 ====================
+        function saveLevelProgress(levelId) {
+            try {
+                let progress = JSON.parse(localStorage.getItem(LEVEL_PROGRESS_KEY) || '{}');
+                progress[levelId] = true;
+                localStorage.setItem(LEVEL_PROGRESS_KEY, JSON.stringify(progress));
+            } catch (e) { console.error('保存进度失败:', e); }
+        }
+        
+        function loadLevelProgress() {
+            try {
+                return JSON.parse(localStorage.getItem(LEVEL_PROGRESS_KEY) || '{}');
+            } catch (e) { return {}; }
+        }
+        
+        function updateLevelCards() {
+            const progress = loadLevelProgress();
+            const cards = document.querySelectorAll('.level-card');
+            cards.forEach((card, index) => {
+                const levelId = index + 1;
+                if (progress[levelId]) {
+                    const tag = card.querySelector('.level-tag');
+                    if (tag && !tag.classList.contains('combat')) {
+                        tag.textContent = '已完成';
+                        tag.style.background = '#3a4a3a';
+                        tag.style.color = '#6bff6b';
+                    }
+                }
+            });
+        }
+        
+        // ==================== 战斗音效系统 ====================
+        let audioCtx = null;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function playAttackSound() {
+            initAudio();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = 200;
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) { console.error('音效播放失败:', e); }
+        }
+        
+        function playSkillSound() {
+            initAudio();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = 400;
+                osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } catch(e) { console.error('音效播放失败:', e); }
+        }
+        
+        function playHitSound() {
+            initAudio();
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.value = 150;
+                osc.type = 'triangle';
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch(e) { console.error('音效播放失败:', e); }
+        }
+        
+        function playVictorySound() {
+            initAudio();
+            try {
+                [523, 659, 784].forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.frequency.value = freq;
+                        osc.type = 'sine';
+                        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.15);
+                    }, i * 150);
+                });
+            } catch(e) { console.error('音效播放失败:', e); }
+        }
+        
         function resetAllData() {
             if (confirm('确定要重置所有数据吗？')) {
                 localStorage.removeItem(SAVE_KEY);
@@ -2662,7 +2770,7 @@
         }
         
         function showSettlement() {
-            clearSave();
+            saveLevelProgress(currentLevel);
             
             const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
             const minutes = Math.floor(elapsed / 60);
@@ -2847,6 +2955,7 @@
         
         // 英雄自动普攻
         function heroAutoAttack(heroId) {
+            playAttackSound(); // 普攻音效
             const hero = battleState.heroes.find(h => h.id === heroId);
             if (!hero || hero.hp <= 0) {
                 battleState.actionQueue.find(a => a.id === heroId).acted = true;
@@ -2925,6 +3034,7 @@
         
         // 英雄释放技能（插队）
         function heroUseSkill(heroId) {
+            playSkillSound(); // 技能音效
             const hero = battleState.heroes.find(h => h.id === heroId);
             if (!hero || hero.hp <= 0 || hero.rage < 100) return;
             
@@ -2986,6 +3096,7 @@
         
         // 敌人攻击
         function enemyAttack(enemyId) {
+            playHitSound(); // 受击音效
             const enemy = battleState.enemies.find(e => e.id === enemyId);
             if (!enemy || enemy.hp <= 0) {
                 battleState.actionQueue.find(a => a.id === enemyId).acted = true;
@@ -3176,6 +3287,7 @@
         
         // 战斗胜利
         function battleVictory() {
+            playVictorySound(); // 胜利音效
             gameState.battleCount++;
             gameState.killedEnemies += battleState.enemies.filter(e => e.hp <= 0).length;
             gameState.objectives.battles.current++;
@@ -3295,6 +3407,7 @@
         
         // 第三关通关
         function completeLevel3(isPerfect) {
+            saveLevelProgress(currentLevel);
             const modal = document.getElementById('missionModal');
             const content = document.getElementById('missionContent');
             
@@ -3334,6 +3447,7 @@
             // 初始化英雄数据
             initBattleHeroes();
             renderParty();
+            updateLevelCards();
         });
     </script>
 </body>
