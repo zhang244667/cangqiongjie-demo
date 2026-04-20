@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>《苍穹劫》地宫探索 Demo v6</title>
+    <title>《苍穹劫》地宫探索 Demo v7 - 新战斗系统</title>
     <style>
         * {
             margin: 0;
@@ -132,156 +132,18 @@
             color: #ff6bff;
         }
         
-        .level-tag.locked {
-            background: #3a3a3a;
-            color: #666;
-        }
-        
-        .level-tag.completed {
-            background: #2a4a3a;
-            color: #6bff6b;
-        }
-        
-        .level-tag.perfect {
-            background: linear-gradient(135deg, #4a3a5a, #3a4a5a);
-            color: #ffd700;
-            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        .level-tag.combat {
+            background: linear-gradient(135deg, #8b3a3a, #6b2a2a);
+            color: #ff8888;
         }
         
         .level-desc {
             font-size: 13px;
             color: #999;
             line-height: 1.6;
-            margin-bottom: 12px;
         }
         
-        .level-info {
-            display: flex;
-            gap: 15px;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .level-info span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        
-        /* ========== 任务介绍弹窗 ========== */
-        .mission-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 2500;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .mission-modal.active {
-            display: flex;
-        }
-        
-        .mission-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 100%);
-            border: 2px solid #d4af37;
-            border-radius: 12px;
-            padding: 25px;
-            max-width: 400px;
-            width: 100%;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        
-        .mission-title {
-            font-size: 20px;
-            color: #d4af37;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .mission-story {
-            background: rgba(20, 15, 30, 0.8);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            line-height: 1.8;
-            color: #aaa;
-        }
-        
-        .mission-story .highlight {
-            color: #d4af37;
-        }
-        
-        .mission-objectives {
-            margin-bottom: 20px;
-        }
-        
-        .mission-objectives h3 {
-            font-size: 14px;
-            color: #888;
-            margin-bottom: 10px;
-        }
-        
-        .obj-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: rgba(40, 30, 60, 0.5);
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
-        
-        .obj-item .obj-icon {
-            font-size: 20px;
-        }
-        
-        .obj-item .obj-text {
-            flex: 1;
-        }
-        
-        .obj-item .obj-title {
-            font-size: 13px;
-            color: #ddd;
-        }
-        
-        .obj-item .obj-reward {
-            font-size: 11px;
-            color: #ffa500;
-        }
-        
-        .start-mission-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #d4af37, #b8962d);
-            border: none;
-            border-radius: 8px;
-            color: #1a1a2e;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        
-        .back-btn {
-            width: 100%;
-            padding: 12px;
-            background: transparent;
-            border: 1px solid #4a4a6a;
-            border-radius: 8px;
-            color: #888;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        
-        /* ========== 游戏界面（沿用v5样式） ========== */
+        /* ========== 游戏界面 ========== */
         .top-bar {
             display: flex;
             justify-content: space-between;
@@ -298,10 +160,11 @@
             font-weight: bold;
         }
         
-        .hp-container {
+        .fatigue-container {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
+            flex: 1;
         }
         
         .hp-bar-wrapper {
@@ -517,9 +380,9 @@
             border: 2px solid #d4af37;
             border-radius: 12px;
             padding: 20px;
-            max-width: 400px;
+            max-width: 450px;
             width: 100%;
-            max-height: 85vh;
+            max-height: 90vh;
             overflow-y: auto;
         }
         
@@ -746,6 +609,392 @@
         .log-entry.gold { color: #ffd700; }
         .log-entry.story { color: #d4af37; font-style: italic; }
         
+        /* ========== 战斗系统样式 ========== */
+        .battle-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+        }
+        
+        .battle-modal.active {
+            display: flex;
+        }
+        
+        .battle-header {
+            text-align: center;
+            padding: 8px;
+            background: rgba(30, 20, 50, 0.8);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+        
+        .battle-title {
+            font-size: 16px;
+            color: #d4af37;
+            font-weight: bold;
+        }
+        
+        .battle-turn {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        /* 敌人区域 */
+        .enemy-area {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px;
+            background: rgba(40, 20, 30, 0.6);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        
+        .enemy-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: rgba(60, 30, 40, 0.5);
+            border-radius: 10px;
+            min-width: 80px;
+            transition: all 0.3s;
+        }
+        
+        .enemy-unit.dead {
+            opacity: 0.3;
+            filter: grayscale(1);
+        }
+        
+        .enemy-unit.target {
+            border: 2px solid #ff6b6b;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .enemy-icon {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+        
+        .enemy-name {
+            font-size: 11px;
+            color: #ff8888;
+            margin-bottom: 5px;
+        }
+        
+        .enemy-hp-bar {
+            width: 60px;
+            height: 6px;
+            background: #2a2040;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 3px;
+        }
+        
+        .enemy-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8b3a3a, #ff6b6b);
+            transition: width 0.3s;
+        }
+        
+        .enemy-hp-text {
+            font-size: 10px;
+            color: #aaa;
+        }
+        
+        /* 行动条区域 */
+        .action-bar-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 10px;
+            background: rgba(30, 30, 50, 0.6);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            flex-shrink: 0;
+            min-height: 70px;
+        }
+        
+        .action-slot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px 8px;
+            background: rgba(40, 40, 60, 0.5);
+            border-radius: 8px;
+            min-width: 50px;
+            transition: all 0.3s;
+        }
+        
+        .action-slot.hero {
+            background: rgba(60, 60, 100, 0.5);
+        }
+        
+        .action-slot.enemy {
+            background: rgba(80, 40, 40, 0.5);
+        }
+        
+        .action-slot.current {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+            border: 2px solid #d4af37;
+        }
+        
+        .action-slot.acted {
+            opacity: 0.4;
+            filter: grayscale(0.5);
+        }
+        
+        .action-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+        
+        .action-slot.current .action-icon {
+            font-size: 26px;
+            animation: pulse-glow 1s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.5)); }
+            50% { filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.9)); }
+        }
+        
+        .action-name {
+            font-size: 9px;
+            color: #888;
+        }
+        
+        .action-arrow {
+            color: #555;
+            font-size: 14px;
+            margin: 0 2px;
+        }
+        
+        /* 英雄区域 */
+        .hero-area {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 10px;
+            background: rgba(20, 30, 50, 0.6);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+        
+        .hero-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: rgba(40, 50, 80, 0.5);
+            border-radius: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .hero-unit.dead {
+            opacity: 0.4;
+            filter: grayscale(0.8);
+            cursor: not-allowed;
+        }
+        
+        .hero-unit.ready {
+            border: 2px solid #6bff6b;
+            box-shadow: 0 0 10px rgba(107, 255, 107, 0.4);
+            animation: rage-ready 1s infinite;
+        }
+        
+        @keyframes rage-ready {
+            0%, 100% { box-shadow: 0 0 10px rgba(107, 255, 107, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(107, 255, 107, 0.7); }
+        }
+        
+        .hero-unit.current-turn {
+            border: 2px solid #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+        
+        .hero-icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .hero-name {
+            font-size: 11px;
+            color: #6bcfff;
+            margin-bottom: 5px;
+        }
+        
+        .hero-hp-bar {
+            width: 70px;
+            height: 8px;
+            background: #2a2040;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 3px;
+        }
+        
+        .hero-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a6fa5, #6b9fd5);
+            transition: width 0.3s;
+        }
+        
+        .hero-hp-text {
+            font-size: 10px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        /* 怒气条 */
+        .rage-bar {
+            width: 70px;
+            height: 6px;
+            background: #2a2040;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 3px;
+        }
+        
+        .rage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffa500, #ffcc00);
+            transition: width 0.3s;
+        }
+        
+        .rage-fill.full {
+            background: linear-gradient(90deg, #ff6b6b, #ffcc00);
+            animation: rage-pulse 0.5s infinite;
+        }
+        
+        @keyframes rage-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .rage-text {
+            font-size: 9px;
+            color: #ffa500;
+        }
+        
+        .rage-text.full {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+        
+        /* 战斗日志 */
+        .battle-log {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 11px;
+            min-height: 80px;
+            max-height: 120px;
+        }
+        
+        .battle-log-entry {
+            margin: 4px 0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(40, 40, 60, 0.3);
+        }
+        
+        .battle-log-entry.player-attack { color: #6bcfff; }
+        .battle-log-entry.player-skill { color: #ffcc00; }
+        .battle-log-entry.enemy-attack { color: #ff6b6b; }
+        .battle-log-entry.system { color: #888; }
+        .battle-log-entry.hero-death { color: #ff4444; }
+        .battle-log-entry.enemy-death { color: #6bff6b; }
+        
+        /* 战斗操作区 */
+        .battle-actions {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(30, 20, 50, 0.8);
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        
+        .battle-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .battle-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .battle-btn.attack {
+            background: linear-gradient(135deg, #4a6fa5, #3a5a8a);
+            color: #fff;
+        }
+        
+        .battle-btn.skill {
+            background: linear-gradient(135deg, #8b5a2b, #6b4a1b);
+            color: #ffcc00;
+        }
+        
+        .battle-btn.retreat {
+            background: rgba(80, 60, 60, 0.8);
+            color: #ff8888;
+            flex: 0.5;
+        }
+        
+        .battle-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 伤害数字动画 */
+        .damage-number {
+            position: absolute;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+            animation: damage-float 1s forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .damage-number.heal {
+            color: #6bff6b;
+        }
+        
+        .damage-number.crit {
+            color: #ffcc00;
+            font-size: 22px;
+        }
+        
+        @keyframes damage-float {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-30px) scale(0.8); }
+        }
+        
         /* 结算界面 */
         .settlement-modal .modal-content {
             text-align: center;
@@ -806,41 +1055,29 @@
     <div class="level-select-screen" id="levelSelectScreen">
         <div class="game-title">
             <h1>《苍穹劫》地宫探索</h1>
-            <div class="subtitle">传承与机关的试炼</div>
+            <div class="subtitle">v7 - 新战斗系统 Demo</div>
         </div>
         
         <div class="level-section">
             <div class="section-title">第一章：初入地宫</div>
             
-            <!-- 关卡1 -->
             <div class="level-card" onclick="showMissionIntro(1)">
                 <div class="level-header">
                     <span class="level-name">古老墓穴</span>
                     <span class="level-tag">经典模式</span>
                 </div>
                 <div class="level-desc">
-                    一座被遗忘的古墓，传说中埋藏着前朝宝藏。机关陷阱遍布，但宝藏也同样诱人...
-                </div>
-                <div class="level-info">
-                    <span>🗺️ 随机迷宫</span>
-                    <span>🔧 多种机关</span>
-                    <span>⏱️ 5-10分钟</span>
+                    一座被遗忘的古墓，传说中埋藏着前朝宝藏...
                 </div>
             </div>
             
-            <!-- 关卡2 -->
             <div class="level-card" onclick="showMissionIntro(2)">
                 <div class="level-header">
                     <span class="level-name">沉银地宫</span>
-                    <span class="level-tag new">剧情模式</span>
+                    <span class="level-tag">剧情模式</span>
                 </div>
                 <div class="level-desc">
-                    明末起义军将领张献忠的藏宝地宫，传说沉银万两。但你很快发现，这里埋葬的不只是金银...
-                </div>
-                <div class="level-info">
-                    <span>📖 剧情叙事</span>
-                    <span>🎯 限量机关</span>
-                    <span>⏱️ 8-12分钟</span>
+                    明末起义军将领张献忠的藏宝地宫...
                 </div>
             </div>
         </div>
@@ -848,24 +1085,18 @@
         <div class="level-section">
             <div class="section-title">第二章：深渊之下</div>
             
-            <!-- 关卡3 -->
             <div class="level-card" onclick="showMissionIntro(3)">
                 <div class="level-header">
                     <span class="level-name">星陨古墓</span>
-                    <span class="level-tag new">战斗模式</span>
+                    <span class="level-tag combat">⚔️ 新战斗系统</span>
                 </div>
                 <div class="level-desc">
-                    传说星陨古墓是一颗坠落天星砸出的深坑，墓中藏有一具星棺，据说装着来自天外的神秘力量...
-                </div>
-                <div class="level-info">
-                    <span>⚔️ 战斗系统</span>
-                    <span>⚰️ 星棺目标</span>
-                    <span>💚 疲劳度</span>
+                    传说星陨古墓是一颗坠落天星砸出的深坑，墓中藏有一具星棺...
+                    <br><span style="color:#ffcc00;">【新战斗系统测试关卡】</span>
                 </div>
             </div>
         </div>
         
-        <!-- 重置数据按钮 -->
         <div style="padding: 20px; text-align: center;">
             <button onclick="resetAllData()" style="background: rgba(139,58,58,0.3); border: 1px solid #5a2a2a; color: #ff6b6b; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 14px;">
                 🗑️ 重置所有数据
@@ -874,8 +1105,8 @@
     </div>
     
     <!-- 任务介绍弹窗 -->
-    <div class="mission-modal" id="missionModal">
-        <div class="mission-content" id="missionContent"></div>
+    <div class="modal-overlay" id="missionModal">
+        <div class="modal-content" id="missionContent"></div>
     </div>
     
     <!-- 游戏主界面 -->
@@ -978,79 +1209,87 @@
         <div class="modal-content" id="modalContent"></div>
     </div>
     
+    <!-- ========== 战斗系统 ========== -->
+    <div class="battle-modal" id="battleModal">
+        <div class="battle-header">
+            <div class="battle-title" id="battleTitle">⚔️ 遭遇战斗</div>
+            <div class="battle-turn" id="battleTurn">回合 0</div>
+        </div>
+        
+        <!-- 敌人区域 -->
+        <div class="enemy-area" id="enemyArea"></div>
+        
+        <!-- 行动条 -->
+        <div class="action-bar-area" id="actionBarArea"></div>
+        
+        <!-- 英雄区域 -->
+        <div class="hero-area" id="heroArea"></div>
+        
+        <!-- 战斗日志 -->
+        <div class="battle-log" id="battleLog"></div>
+        
+        <!-- 操作按钮 -->
+        <div class="battle-actions" id="battleActions">
+            <button class="battle-btn retreat" onclick="doBattleRetreat()">撤退</button>
+        </div>
+    </div>
+    
     <!-- 结算弹窗 -->
     <div class="modal-overlay settlement-modal" id="settlementModal">
         <div class="modal-content" id="settlementContent"></div>
     </div>
 
     <script>
+        // ==================== 英雄配置（新战斗系统） ====================
+        const HERO_STATS = {
+            tieZhu: { name: '铁柱', icon: '💪', hp: 120, atk: 20, def: 8, speed: 85, class: '重装战士' },
+            xingJiSi: { name: '星祭司', icon: '🔮', hp: 75, atk: 24, def: 4, speed: 110, class: '秘法师' },
+            moJinShou: { name: '摸金手', icon: '🔭', hp: 90, atk: 22, def: 5, speed: 105, class: '风水师' },
+            banShanKe: { name: '搬山客', icon: '🔧', hp: 95, atk: 21, def: 6, speed: 95, class: '机关师' }
+        };
+
         // ==================== 关卡配置 ====================
         const LEVELS = {
             1: {
                 name: '古老墓穴',
                 type: 'random',
                 mapSize: 20,
-                story: `<p>你收到消息，城外山中有一座<span class="highlight">被遗忘的古墓</span>，传闻埋藏着前朝的宝藏。</p>
-                <p>带着四名传承者，你踏入了这座幽深的地宫...</p>
-                <p style="margin-top:12px;color:#666;font-size:11px;">【提示】这是一座随机生成的迷宫，机关与宝藏散落其中。</p>`,
+                story: `<p>你收到消息，城外山中有一座<span class="highlight">被遗忘的古墓</span>...</p>`,
                 objectives: [
                     { icon: '🚪', title: '找到出口楼梯', reward: '主要目标' },
-                    { icon: '🔧', title: '破解机关 x3', reward: '+100金币' },
-                    { icon: '👹', title: '击败怪物 x2', reward: '+50金币' }
+                    { icon: '🔧', title: '破解机关 x3', reward: '+100金币' }
                 ]
             },
             2: {
                 name: '沉银地宫',
                 type: 'structured',
                 mapSize: 16,
-                story: `<p><span class="highlight">明末崇祯年间</span>，起义军将领张献忠兵败入川，传说他将劫掠的万两白银沉入江中。</p>
-                <p>但这只是障眼法。真正的藏宝之地，是这座<span class="highlight">依山而建的地宫</span>。</p>
-                <p style="margin-top:12px;">当你踏入地宫，发现墙壁上刻满了奇怪的符文，地上散落着森森白骨...</p>
-                <p style="color:#ff6b6b;font-size:12px;">"这里埋葬的不只是金银，还有——"</p>`,
+                story: `<p><span class="highlight">明末崇祯年间</span>...</p>`,
                 objectives: [
                     { icon: '🔍', title: '调查地宫真相', reward: '主要目标' },
-                    { icon: '📜', title: '发现故事碎片 x5', reward: '+80金币' },
                     { icon: '🔧', title: '破解机关 x4', reward: '+120金币' }
-                ],
-                // 第二关特有：限量机关池
-                mechanismPool: {
-                    luck: ['沉银宝箱', '命运转盘', '七星赌局'],
-                    knowledge: ['张献忠遗书', '五行封印', '古蜀文字'],
-                    hero: ['铁闸门', '悬魂梯', '机关桥', '守墓石像']
-                },
-                // 环境碎片
-                storyFragments: [
-                    { name: '破碎的石碑', icon: '🗿', text: '石碑上模糊地刻着："...献忠于甲申年...沉银于此...后人勿近..."' },
-                    { name: '骸骨', icon: '💀', text: '一具穿着明朝服饰的骸骨，手中紧握着一块玉佩。他的肋骨上有明显的刀痕。' },
-                    { name: '壁画', icon: '🖼️', text: '墙壁上的壁画描绘了张献忠沉银的场景，但最后一幅画面被人刻意刮掉了...' },
-                    { name: '破碎的陶罐', icon: '🏺', text: '陶罐碎片散落一地，里面残留着一些黑色的粉末，散发着刺鼻的气味。' },
-                    { name: '腐烂的木牌', icon: '🪵', text: '木牌上用血写着："不是银子...是诅咒...快逃..."字迹潦草，似乎是在极度恐惧中写下的。' },
-                    { name: '石棺', icon: '⚰️', text: '一口空石棺，棺盖上刻着张献忠的名字。但这里真的是他的墓吗？' },
-                    { name: '祭坛遗迹', icon: '⛩️', text: '残破的祭坛，地上画着血色的符文。这里似乎举行过某种仪式...' }
                 ]
             },
             3: {
                 name: '星陨古墓',
                 type: 'structured',
                 mapSize: 16,
-                story: `<p>传说<span class="highlight">星陨古墓</span>是一颗坠落天星砸出的深坑，古人依势建墓。</p>
-                <p>墓中藏有一具<span class="highlight">星棺</span>，据说装着来自天外的神秘力量...</p>
-                <p style="margin-top:12px;">空气越来越稀薄，你感觉到一股强大的压力从深处传来。</p>`,
+                story: `<p>传说<span class="highlight">星陨古墓</span>是一颗坠落天星砸出的深坑...</p>
+                <p style="margin-top:12px;color:#ffcc00;">【新战斗系统测试关卡】</p>
+                <p style="margin-top:8px;font-size:11px;color:#888;">• 英雄独立血条<br>• 行动条系统<br>• 怒气技能系统<br>• 自动普攻</p>`,
                 objectives: [
                     { icon: '⚰️', title: '打开星棺', reward: '主要目标' },
-                    { icon: '👹', title: '击败所有怪物', reward: '完美通关' },
-                    { icon: '📜', title: '发现故事碎片 x3', reward: '+60金币' }
+                    { icon: '👹', title: '击败所有怪物', reward: '完美通关' }
                 ],
-                hasCombat: true, // 第3关有战斗系统
+                hasCombat: true,
                 mechanismPool: {
                     luck: ['星辰宝箱'],
                     knowledge: ['星象石碑'],
                     hero: ['陨铁门']
                 },
                 storyFragments: [
-                    { name: '陨石碎片', icon: '🌌', text: '一块散发着微光的陨石碎片，摸上去冰凉刺骨。上面刻着看不懂的符文。' },
-                    { name: '星图残卷', icon: '📜', text: '残卷上绘制着十二星宫的图案，但大部分已经模糊不清。只有天蝎座依然清晰可见。' },
-                    { name: '守墓者遗骸', icon: '💀', text: '一具穿着古袍的骸骨，手中握着一把星纹短剑。他的表情凝固在惊恐之中。' }
+                    { name: '陨石碎片', icon: '🌌', text: '一块散发着微光的陨石碎片...' },
+                    { name: '星图残卷', icon: '📜', text: '残卷上绘制着十二星宫的图案...' }
                 ]
             }
         };
@@ -1069,25 +1308,20 @@
             battleCount: 0,
             startTime: null,
             storyFound: 0,
-            discoveredStories: [], // 已发现的环境碎片列表
+            discoveredStories: [],
             usedMechanisms: { luck: [], knowledge: [], hero: [] },
             objectives: null,
-            fatigue: 100, // 疲劳度
+            fatigue: 100,
             maxFatigue: 100,
-            attackBuff: 0, // 攻击Buff剩余格数
-            totalEnemies: 0, // 关卡总敌人数量
-            killedEnemies: 0 // 已击杀敌人数量
+            attackBuff: 0,
+            totalEnemies: 0,
+            killedEnemies: 0
         };
         
-        // 队伍数据
-        const party = [
-            { name: '铁柱', icon: '💪', trait: '辰宿卸岭', traitType: 'strength', hp: 150, maxHp: 150 },
-            { name: '搬山客', icon: '🔧', trait: '璇玑搬山', traitType: 'mechanism', hp: 120, maxHp: 120 },
-            { name: '摸金手', icon: '🔭', trait: '星纹摸金', traitType: 'astro', hp: 100, maxHp: 100 },
-            { name: '星祭司', icon: '🔮', trait: '天枢发丘', traitType: 'seal', hp: 90, maxHp: 90 }
-        ];
+        // 队伍数据（新战斗系统：使用详细属性）
+        let battleHeroes = [];
         
-        // 机关数据（第一关用）
+        // 机关数据（简化版）
         const mechanismsRandom = {
             luck: [
                 { name: '神秘宝箱', icon: '🎁', desc: '一个看起来很可疑的宝箱...', question: '要打开这个宝箱吗？',
@@ -1096,181 +1330,83 @@
                       { text: 'B. 小心检查后打开', result: 'safe' },
                       { text: 'C. 放弃离开', result: 'skip' }
                   ]
-                },
-                { name: '赌博石盘', icon: '🎰', desc: '古老的石盘上有奇怪的符号...', question: '转动石盘试试运气？',
-                  options: [
-                      { text: 'A. 转动石盘', result: 'dice' },
-                      { text: 'B. 不碰它', result: 'skip' }
-                  ]
-                },
-                { name: '岔路口', icon: '🔀', desc: '三条路，不知通向何处...', question: '选择一条路：',
-                  options: [
-                      { text: 'A. 左边的路', result: 'random', successRate: 0.33 },
-                      { text: 'B. 中间的路', result: 'random', successRate: 0.33 },
-                      { text: 'C. 右边的路', result: 'random', successRate: 0.34 }
-                  ]
                 }
             ],
             knowledge: [
                 { name: '天干地支锁', icon: '🔐', desc: '石门上刻着古老的符号...', question: '甲、乙、丙、丁之后是？',
-                  hintTrait: 'astro', hint: '摸金手提示：这是天干排序，甲乙丙丁戊己庚辛壬癸',
                   options: [
                       { text: 'A. 戊', correct: true },
                       { text: 'B. 子', correct: false },
                       { text: 'C. 己', correct: false }
                   ]
-                },
-                { name: '五行谜题', icon: '☯️', desc: '墙上刻着五行相生的谜题...', question: '水生什么？',
-                  hintTrait: 'mechanism', hint: '搬山客提示：五行相生：金生水、水生木、木生火、火生土、土生金',
-                  options: [
-                      { text: 'A. 木', correct: true },
-                      { text: 'B. 金', correct: false },
-                      { text: 'C. 火', correct: false }
-                  ]
-                },
-                { name: '九宫格', icon: '🔢', desc: '地上有一个九宫格机关...', question: '九宫格中，横、竖、斜之和都是15。已知中间是5，左上角应该是？',
-                  hintTrait: 'astro', hint: '摸金手提示：九宫格口诀"二四为肩，六八为足，左三右七，戴九履一，五居中央"',
-                  options: [
-                      { text: 'A. 2', correct: false },
-                      { text: 'B. 4', correct: true },
-                      { text: 'C. 6', correct: false }
-                  ]
                 }
             ],
             hero: [
-                { name: '铁闸门', icon: '🚪', desc: '一道锈迹斑斑的铁门挡住去路...', question: '巨大的铁门挡住了去路，如何通过？',
+                { name: '铁闸门', icon: '🚪', desc: '一道锈迹斑斑的铁门挡住去路...', question: '如何通过？',
                   options: [
-                      { text: 'A. 用力推开', trait: 'strength', hasTraitResult: '铁柱发力推开铁门，成功！', noTraitResult: '你们合力推开门，但受了伤...', hasTraitEffect: { hp: 0, gold: 0 }, noTraitEffect: { hp: -15, gold: 0 } },
-                      { text: 'B. 寻找机关', trait: 'mechanism', hasTraitResult: '搬山客找到隐藏机关，完美开启！还发现了暗格！', noTraitResult: '找不到机关...', hasTraitEffect: { hp: 0, gold: 50 }, noTraitEffect: { hp: 0, gold: 0, fail: true } },
-                      { text: 'C. 硬闯过去', trait: null, hasTraitResult: '硬闯过去，受了点伤', noTraitResult: '硬闯过去，受了点伤', hasTraitEffect: { hp: -10, gold: 0 }, noTraitEffect: { hp: -20, gold: 0 } }
-                  ]
-                },
-                { name: '悬魂梯', icon: '🌀', desc: '螺旋向下的石阶，似乎走不到尽头...', question: '楼梯似乎陷入了循环，如何脱出？',
-                  options: [
-                      { text: 'A. 标记路线', trait: 'mechanism', hasTraitResult: '搬山客用分甲术标记路线，成功脱出！', noTraitResult: '标记了路线，但还是绕了很久...', hasTraitEffect: { hp: 0, gold: 30 }, noTraitEffect: { hp: -5, gold: 0 } },
-                      { text: 'B. 用罗盘指引', trait: 'astro', hasTraitResult: '摸金手拿出罗盘，指向正确方向！', noTraitResult: '罗盘失灵了...', hasTraitEffect: { hp: 0, gold: 20 }, noTraitEffect: { hp: -5, gold: 0 } },
-                      { text: 'C. 直接走下去', trait: null, hasTraitResult: '走了很久，终于出来了...', noTraitResult: '走了很久，终于出来了...', hasTraitEffect: { hp: -10, gold: 0 }, noTraitEffect: { hp: -15, gold: 0 } }
-                  ]
-                },
-                { name: '五行封印', icon: '🔮', desc: '五个元素符文需要按正确顺序激活...', question: '如何破解五行封印？',
-                  options: [
-                      { text: 'A. 按五行相生顺序', trait: 'mechanism', hasTraitResult: '搬山客念出口诀，完美破解！', noTraitResult: '顺序好像不太对...', hasTraitEffect: { hp: 0, gold: 80 }, noTraitEffect: { hp: -10, gold: 0 } },
-                      { text: 'B. 用发丘印破解', trait: 'seal', hasTraitResult: '星祭司使用发丘印，封印瞬间解除！', noTraitResult: '没有人会用发丘印...', hasTraitEffect: { hp: 0, gold: 100 }, noTraitEffect: { hp: 0, gold: 0, fail: true } },
-                      { text: 'C. 强行打破', trait: 'strength', hasTraitResult: '铁柱一击粉碎封印！', noTraitResult: '合力打破封印，受伤！', hasTraitEffect: { hp: -5, gold: 30, battle: true }, noTraitEffect: { hp: -20, gold: 20, battle: true } }
+                      { text: 'A. 用力推开', trait: 'strength' },
+                      { text: 'B. 寻找机关', trait: 'mechanism' },
+                      { text: 'C. 硬闯过去', trait: null }
                   ]
                 }
             ]
         };
         
-        // 第二关专属机关
-        const mechanismsLevel2 = {
-            luck: [
-                { name: '沉银宝箱', icon: '💰', desc: '一个沉甸甸的银箱，上面刻着"大西"二字...', question: '打开这个沉银宝箱？',
-                  options: [
-                      { text: 'A. 直接打开', result: 'random', successRate: 0.6 },
-                      { text: 'B. 检查机关', result: 'safe' },
-                      { text: 'C. 离开', result: 'skip' }
-                  ]
-                },
-                { name: '命运转盘', icon: '🎡', desc: '石壁上嵌着一个巨大的铜制转盘，刻满了八卦符号...', question: '转动命运转盘？',
-                  options: [
-                      { text: 'A. 转动转盘', result: 'dice' },
-                      { text: 'B. 不碰它', result: 'skip' }
-                  ]
-                },
-                { name: '七星赌局', icon: '⭐', desc: '地上有七个石板，每个刻着一颗星...', question: '选择一颗星：',
-                  options: [
-                      { text: 'A. 贪狼星', result: 'random', successRate: 0.3 },
-                      { text: 'B. 破军星', result: 'random', successRate: 0.5 },
-                      { text: 'C. 七杀星', result: 'random', successRate: 0.7 }
-                  ]
-                }
-            ],
-            knowledge: [
-                { name: '张献忠遗书', icon: '📜', desc: '一封泛黄的纸卷，字迹斑驳...', question: '"我生不逢时，死亦无憾。唯一憾者，乃..."后面被虫蛀了。这段文字出自何人之手？',
-                  hintTrait: 'astro', hint: '摸金手辨认出："大西王印"...这是张献忠的遗物！',
-                  options: [
-                      { text: 'A. 张献忠', correct: true },
-                      { text: 'B. 李自成', correct: false },
-                      { text: 'C. 崇祯皇帝', correct: false }
-                  ]
-                },
-                { name: '五行封印', icon: '☯️', desc: '大门上刻着五行相克的谜题...', question: '火克什么？',
-                  hintTrait: 'mechanism', hint: '搬山客提示：五行相克：金克木、木克土、土克水、水克火、火克金',
-                  options: [
-                      { text: 'A. 金', correct: true },
-                      { text: 'B. 水', correct: false },
-                      { text: 'C. 木', correct: false }
-                  ]
-                },
-                { name: '古蜀文字', icon: '🔣', desc: '墙壁上刻着古老的符号，似乎是古蜀国的文字...', question: '这些符号是什么意思？',
-                  hintTrait: 'seal', hint: '星祭司辨认出："此地...诅咒...勿入..."',
-                  options: [
-                      { text: 'A. 警告文字', correct: true },
-                      { text: 'B. 藏宝图', correct: false },
-                      { text: 'C. 祭祀咒语', correct: false }
-                  ]
-                }
-            ],
-            hero: [
-                { name: '铁闸门', icon: '🚪', desc: '一道刻着"大西"字样的铁门...', question: '如何通过？',
-                  options: [
-                      { text: 'A. 用力推开', trait: 'strength', hasTraitResult: '铁柱发力推开铁门！', noTraitResult: '合力推开，受了伤...', hasTraitEffect: { hp: 0, gold: 0 }, noTraitEffect: { hp: -15, gold: 0 } },
-                      { text: 'B. 寻找机关', trait: 'mechanism', hasTraitResult: '搬山客找到机关，还发现暗格！', noTraitResult: '找不到机关...', hasTraitEffect: { hp: 0, gold: 50 }, noTraitEffect: { hp: 0, gold: 0, fail: true } },
-                      { text: 'C. 绕道', trait: null, hasTraitResult: '绕道而行', noTraitResult: '绕道而行', hasTraitEffect: { hp: 0, gold: 0 }, noTraitEffect: { hp: -5, gold: 0 } }
-                  ]
-                },
-                { name: '悬魂梯', icon: '🌀', desc: '螺旋向下的石阶，墙壁上刻满了符文...', question: '楼梯陷入循环，如何脱出？',
-                  options: [
-                      { text: 'A. 标记路线', trait: 'mechanism', hasTraitResult: '搬山客发现规律，成功脱出！', noTraitResult: '绕了很久...', hasTraitEffect: { hp: 0, gold: 30 }, noTraitEffect: { hp: -5, gold: 0 } },
-                      { text: 'B. 用罗盘指引', trait: 'astro', hasTraitResult: '摸金手用罗盘找到方向！', noTraitResult: '罗盘失灵...', hasTraitEffect: { hp: 0, gold: 20 }, noTraitEffect: { hp: -5, gold: 0 } },
-                      { text: 'C. 直接走', trait: null, hasTraitResult: '走了很久才出来', noTraitResult: '走了很久才出来', hasTraitEffect: { hp: -10, gold: 0 }, noTraitEffect: { hp: -15, gold: 0 } }
-                  ]
-                },
-                { name: '机关桥', icon: '🌉', desc: '一座断桥，下方是深不见底的深渊...', question: '如何通过断桥？',
-                  options: [
-                      { text: 'A. 修复机关', trait: 'mechanism', hasTraitResult: '搬山客启动机关，桥自动放下！', noTraitResult: '不会修...', hasTraitEffect: { hp: 0, gold: 40 }, noTraitEffect: { hp: 0, gold: 0, fail: true } },
-                      { text: 'B. 跳过去', trait: 'strength', hasTraitResult: '铁柱背大家跳了过去！', noTraitResult: '有人掉下去了...', hasTraitEffect: { hp: 0, gold: 0 }, noTraitEffect: { hp: -25, gold: 0 } },
-                      { text: 'C. 找其他路', trait: null, hasTraitResult: '绕路而行', noTraitResult: '绕路而行', hasTraitEffect: { hp: 0, gold: 0 }, noTraitEffect: { hp: -5, gold: 0 } }
-                  ]
-                },
-                { name: '守墓石像', icon: '🗿', desc: '一尊巨大的石像挡住去路，手持巨斧...', question: '石像似乎在注视着你...',
-                  options: [
-                      { text: 'A. 用发丘印', trait: 'seal', hasTraitResult: '星祭司用发丘印，石像让开了！', noTraitResult: '没有人会用...', hasTraitEffect: { hp: 0, gold: 60 }, noTraitEffect: { hp: 0, gold: 0, fail: true } },
-                      { text: 'B. 推开石像', trait: 'strength', hasTraitResult: '铁柱推开石像，发现背后有暗门！', noTraitResult: '推不动...', hasTraitEffect: { hp: 0, gold: 80 }, noTraitEffect: { hp: -10, gold: 0 } },
-                      { text: 'C. 绕道', trait: null, hasTraitResult: '小心翼翼地绕过', noTraitResult: '小心翼翼地绕过', hasTraitEffect: { hp: 0, gold: 0 }, noTraitEffect: { hp: -5, gold: 0 } }
-                  ]
-                }
-            ]
-        };
+        // ==================== 存档系统 ====================
+        const SAVE_KEY = 'cangqiongjie_v7_save';
+        const LEVEL_PROGRESS_KEY = 'cangqiongjie_level_progress';
         
-        // ==================== 关卡选择逻辑 ====================
+        function saveGame() {
+            const saveData = {
+                levelId: currentLevel,
+                state: { ...gameState }
+            };
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+            } catch (e) { console.error('保存失败:', e); }
+        }
+        
+        function loadGame() {
+            try {
+                const saveStr = localStorage.getItem(SAVE_KEY);
+                return saveStr ? JSON.parse(saveStr) : null;
+            } catch (e) { return null; }
+        }
+        
+        function clearSave() { localStorage.removeItem(SAVE_KEY); }
+        
+        function resetAllData() {
+            if (confirm('确定要重置所有数据吗？')) {
+                localStorage.removeItem(SAVE_KEY);
+                localStorage.removeItem(LEVEL_PROGRESS_KEY);
+                location.reload();
+            }
+        }
+        
+        // ==================== UI 逻辑 ====================
         function showMissionIntro(levelId) {
             const level = LEVELS[levelId];
-            if (!level) return;
-            
             currentLevel = levelId;
             
             const content = document.getElementById('missionContent');
             content.innerHTML = `
-                <div class="mission-title">${level.name}</div>
-                <div class="mission-story">${level.story}</div>
-                <div class="mission-objectives">
-                    <h3>🎯 任务目标</h3>
+                <div class="mechanism-title">${level.name}</div>
+                <div style="background:rgba(20,15,30,0.8);border-radius:8px;padding:15px;margin-bottom:15px;font-size:12px;line-height:1.6;">
+                    ${level.story}
+                </div>
+                <div style="margin-bottom:15px;">
+                    <div style="font-size:12px;color:#888;margin-bottom:8px;">🎯 任务目标</div>
                     ${level.objectives.map(obj => `
-                        <div class="obj-item">
-                            <span class="obj-icon">${obj.icon}</span>
-                            <div class="obj-text">
-                                <div class="obj-title">${obj.title}</div>
-                                <div class="obj-reward">${obj.reward}</div>
-                            </div>
+                        <div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(40,30,60,0.5);border-radius:6px;margin-bottom:5px;">
+                            <span>${obj.icon}</span>
+                            <span style="flex:1;font-size:12px;">${obj.title}</span>
+                            <span style="font-size:10px;color:#ffa500;">${obj.reward}</span>
                         </div>
                     `).join('')}
                 </div>
-                <button class="start-mission-btn" onclick="startLevel(${levelId})">开始探索</button>
-                <button class="back-btn" onclick="closeMissionModal()">返回</button>
+                <button class="close-btn" onclick="startLevel(${levelId})">开始探索</button>
+                <button class="close-btn" style="background:transparent;border:1px solid #4a4a6a;color:#888;margin-top:8px;" onclick="closeMissionModal()">返回</button>
             `;
-            
             document.getElementById('missionModal').classList.add('active');
         }
         
@@ -1282,267 +1418,18 @@
             closeMissionModal();
             document.getElementById('levelSelectScreen').classList.add('hidden');
             document.getElementById('gameContainer').style.display = 'flex';
-            
             initGame(levelId);
         }
         
         function exitToLevelSelect() {
             document.getElementById('gameContainer').style.display = 'none';
             document.getElementById('levelSelectScreen').classList.remove('hidden');
-            document.getElementById('logList').innerHTML = '';
-            // 退出时更新关卡卡片显示
-            updateLevelCards();
         }
         
-        // ==================== 存档系统 ====================
-        const SAVE_VERSION = 1; // 存档版本号，改版时递增
-        const SAVE_KEY = 'cangqiongjie_dungeon_save';
-        const LEVEL_PROGRESS_KEY = 'cangqiongjie_level_progress'; // 关卡完成进度
-        
-        // 保存游戏
-        function saveGame() {
-            const saveData = {
-                version: SAVE_VERSION,
-                savedAt: Date.now(),
-                levelId: currentLevel,
-                state: {
-                    mapSize: gameState.mapSize,
-                    map: JSON.parse(JSON.stringify(gameState.map)), // 深拷贝地图确保 revealed 状态被保存
-                    playerPos: { ...gameState.playerPos },
-                    hp: gameState.hp,
-                    gold: gameState.gold,
-                    mechanismSolved: gameState.mechanismSolved,
-                    mechanismTotal: gameState.mechanismTotal,
-                    battleCount: gameState.battleCount,
-                    startTime: gameState.startTime,
-                    storyFound: gameState.storyFound,
-                    discoveredStories: [...gameState.discoveredStories], // 复制碎片数组
-                    usedMechanisms: JSON.parse(JSON.stringify(gameState.usedMechanisms)),
-                    objectives: JSON.parse(JSON.stringify(gameState.objectives))
-                }
-            };
-            
-            try {
-                localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
-                return true;
-            } catch (e) {
-                console.error('保存失败:', e);
-                return false;
-            }
-        }
-        
-        // 加载游戏
-        function loadGame() {
-            try {
-                const saveStr = localStorage.getItem(SAVE_KEY);
-                if (!saveStr) return null;
-                
-                const saveData = JSON.parse(saveStr);
-                
-                // 版本检查
-                if (saveData.version !== SAVE_VERSION) {
-                    console.log('存档版本不匹配，清除旧存档');
-                    clearSave();
-                    return null;
-                }
-                
-                return saveData;
-            } catch (e) {
-                console.error('读取存档失败:', e);
-                return null;
-            }
-        }
-        
-        // 清除存档
-        function clearSave() {
-            localStorage.removeItem(SAVE_KEY);
-        }
-        
-        // 保存关卡完成进度
-        function saveLevelProgress(levelId, isPerfect = false) {
-            try {
-                const progressStr = localStorage.getItem(LEVEL_PROGRESS_KEY) || '{}';
-                const progress = JSON.parse(progressStr);
-                progress[levelId] = {
-                    completed: true,
-                    isPerfect: isPerfect,
-                    completedAt: Date.now()
-                };
-                localStorage.setItem(LEVEL_PROGRESS_KEY, JSON.stringify(progress));
-                console.log(`关卡 ${levelId} 完成进度已保存`);
-            } catch (e) {
-                console.error('保存关卡进度失败:', e);
-            }
-        }
-        
-        // 加载关卡完成进度
-        function loadLevelProgress() {
-            try {
-                const progressStr = localStorage.getItem(LEVEL_PROGRESS_KEY);
-                return progressStr ? JSON.parse(progressStr) : {};
-            } catch (e) {
-                console.error('读取关卡进度失败:', e);
-                return {};
-            }
-        }
-        
-        // 更新关卡卡片显示
-        function updateLevelCards() {
-            const progress = loadLevelProgress();
-            
-            // 遍历所有关卡卡片
-            document.querySelectorAll('.level-card').forEach((card, index) => {
-                const levelId = index + 1;
-                const levelProgress = progress[levelId];
-                const tagEl = card.querySelector('.level-tag');
-                
-                if (levelProgress && levelProgress.completed) {
-                    // 已完成
-                    if (levelProgress.isPerfect) {
-                        tagEl.textContent = '⭐ 完美通关';
-                        tagEl.className = 'level-tag perfect';
-                    } else {
-                        tagEl.textContent = '✓ 已通关';
-                        tagEl.className = 'level-tag completed';
-                    }
-                }
-            });
-        }
-        
-        // 重置所有数据
-        function resetAllData() {
-            if (confirm('确定要重置所有数据吗？这将清除所有存档和进度。')) {
-                localStorage.removeItem(SAVE_KEY);
-                localStorage.removeItem(LEVEL_PROGRESS_KEY);
-                location.reload();
-            }
-        }
-        
-        // 恢复游戏状态
-        function restoreGame(saveData) {
-            currentLevel = saveData.levelId;
-            const level = LEVELS[currentLevel];
-            
-            // 恢复状态
-            gameState.mapSize = saveData.state.mapSize;
-            gameState.playerPos = { ...saveData.state.playerPos };
-            gameState.hp = saveData.state.hp;
-            gameState.gold = saveData.state.gold;
-            gameState.mechanismSolved = saveData.state.mechanismSolved;
-            gameState.mechanismTotal = saveData.state.mechanismTotal;
-            gameState.battleCount = saveData.state.battleCount;
-            gameState.startTime = saveData.state.startTime;
-            gameState.storyFound = saveData.state.storyFound;
-            gameState.discoveredStories = saveData.state.discoveredStories || [];
-            gameState.usedMechanisms = JSON.parse(JSON.stringify(saveData.state.usedMechanisms));
-            gameState.objectives = JSON.parse(JSON.stringify(saveData.state.objectives));
-            
-            // 深拷贝地图数据
-            gameState.map = JSON.parse(JSON.stringify(saveData.state.map));
-            
-            // 验证地图数据有效性
-            if (!gameState.map || gameState.map.length === 0) {
-                console.error('存档地图数据无效，重新初始化');
-                initGame(currentLevel);
-                return;
-            }
-            
-            // 更新UI
-            document.getElementById('levelTitle').textContent = `📍 ${level.name}`;
-            document.getElementById('objectiveText').textContent = level.objectives[0].title;
-            
-            // 计算进度显示
-            let progressText = '';
-            if (gameState.objectives.mechanisms.current >= gameState.objectives.mechanisms.target) progressText += '🔧✓ ';
-            if (gameState.objectives.battles && gameState.objectives.battles.current >= gameState.objectives.battles.target) progressText += '⚔️✓ ';
-            if (gameState.objectives.stories && gameState.objectives.stories.current >= gameState.objectives.stories.target) progressText += '📜✓ ';
-            document.getElementById('objectiveProgress').textContent = progressText;
-            document.getElementById('logList').innerHTML = '';
-            
-            // 统计已探索格子数
-            let revealedCount = 0;
-            for (let y = 0; y < gameState.mapSize; y++) {
-                for (let x = 0; x < gameState.mapSize; x++) {
-                    if (gameState.map[y] && gameState.map[y][x] && gameState.map[y][x].revealed) {
-                        revealedCount++;
-                    }
-                }
-            }
-            
-            // 如果已探索格子为0，可能是存档损坏，重新点亮玩家周围
-            if (revealedCount === 0) {
-                console.log('存档中没有已探索区域，重新点亮玩家周围');
-                revealArea(gameState.playerPos.x, gameState.playerPos.y, 2);
-            }
-            
-            renderParty();
-            renderMap();
-            updateStats();
-            scrollToPlayer();
-            renderStoryList();
-            
-            addLog(`继续探索${level.name}...`, 'info');
-            addLog(`已探索: ${gameState.mechanismSolved}个机关, ${gameState.battleCount}场战斗, ${gameState.discoveredStories.length}个碎片`, 'info');
-        }
-        
-        // 检查存档并显示提示
-        function checkSavedGame() {
-            const saveData = loadGame();
-            if (!saveData) return false;
-            
-            const level = LEVELS[saveData.levelId];
-            const savedTime = new Date(saveData.savedAt);
-            const timeStr = `${savedTime.getMonth() + 1}/${savedTime.getDate()} ${savedTime.getHours()}:${savedTime.getMinutes().toString().padStart(2, '0')}`;
-            
-            // 显示存档提示弹窗
-            showSavePrompt(saveData, level, timeStr);
-            return true;
-        }
-        
-        // 显示存档提示
-        function showSavePrompt(saveData, level, timeStr) {
-            const content = document.getElementById('missionContent');
-            content.innerHTML = `
-                <div class="mission-title">发现存档</div>
-                <div class="mission-story">
-                    <p>关卡：<span class="highlight">${level.name}</span></p>
-                    <p>进度：已破解 ${saveData.state.mechanismSolved}/${saveData.state.mechanismTotal} 个机关</p>
-                    <p>金币：${saveData.state.gold}</p>
-                    <p>保存时间：${timeStr}</p>
-                </div>
-                <button class="start-mission-btn" onclick="continueSavedGame()">继续游戏</button>
-                <button class="back-btn" onclick="closeMissionModal()">开始新游戏</button>
-            `;
-            document.getElementById('missionModal').classList.add('active');
-            
-            // 保存存档数据供继续使用
-            window.pendingSaveData = saveData;
-        }
-        
-        // 继续存档游戏
-        function continueSavedGame() {
-            closeMissionModal();
-            document.getElementById('levelSelectScreen').classList.add('hidden');
-            document.getElementById('gameContainer').style.display = 'flex';
-            
-            restoreGame(window.pendingSaveData);
-            window.pendingSaveData = null;
-        }
-        
-        // 重写closeMissionModal，清除pendingSaveData
-        const originalCloseMissionModal = closeMissionModal;
-        closeMissionModal = function() {
-            document.getElementById('missionModal').classList.remove('active');
-            window.pendingSaveData = null;
-        };
-        
-        // ==================== 游戏核心逻辑 ====================
-        let isAutoMoving = false;
-        
+        // ==================== 游戏核心 ====================
         function initGame(levelId) {
             const level = LEVELS[levelId];
             
-            // 重置状态
             gameState.mapSize = level.mapSize;
             gameState.playerPos = { x: 1, y: 1 };
             gameState.hp = 100;
@@ -1552,73 +1439,37 @@
             gameState.battleCount = 0;
             gameState.startTime = Date.now();
             gameState.storyFound = 0;
-            gameState.discoveredStories = []; // 重置已发现的碎片
-            gameState.usedMechanisms = { luck: [], knowledge: [], hero: [] };
-            gameState.fatigue = 100; // 重置疲劳度
-            gameState.attackBuff = 0; // 重置攻击Buff
+            gameState.discoveredStories = [];
+            gameState.fatigue = 100;
             gameState.totalEnemies = 0;
             gameState.killedEnemies = 0;
             gameState.objectives = {
                 stairs: false,
                 mechanisms: { current: 0, target: levelId === 1 ? 3 : 4 },
-                battles: { current: 0, target: levelId === 1 ? 2 : 0 },
-                stories: { current: 0, target: levelId === 1 ? 0 : 5 }
+                battles: { current: 0, target: levelId === 1 ? 2 : 0 }
             };
             
-            // 更新UI
             document.getElementById('levelTitle').textContent = `📍 ${level.name}`;
             document.getElementById('objectiveText').textContent = level.objectives[0].title;
-            document.getElementById('objectiveProgress').textContent = '';
             document.getElementById('logList').innerHTML = '';
-            document.getElementById('storyList').innerHTML = ''; // 清空碎片列表
             
             generateMap(levelId);
-            
-            // 【修复】初始视野：揭示玩家周围两格
-            revealArea(gameState.playerPos.x, gameState.playerPos.y, 2);
-            
+            revealArea(1, 1, 2);
             renderParty();
             renderMap();
             updateStats();
-            
-            // 保存初始状态
             saveGame();
-            
             addLog(`你踏入了${level.name}...`, 'info');
-            
-            // 第二关开场叙事
-            if (levelId === 2) {
-                setTimeout(() => {
-                    addLog('空气中弥漫着腐烂的气息，墙壁上的符文散发着微弱的光芒...', 'story');
-                }, 500);
-            }
         }
         
         function generateMap(levelId) {
-            const level = LEVELS[levelId];
             const size = gameState.mapSize;
             gameState.map = [];
-            gameState.mechanismTotal = 0;
-            gameState.totalEnemies = 0;
-            gameState.killedEnemies = 0;
             
-            // 第二关、第三关：结构化生成
-            if (levelId === 2) {
-                generateStructuredMap(level);
-                return;
-            }
-            
-            if (levelId === 3) {
-                generateLevel3Map(level);
-                return;
-            }
-            
-            // 第一关：随机生成
             for (let y = 0; y < size; y++) {
                 gameState.map[y] = [];
                 for (let x = 0; x < size; x++) {
                     const cell = { x, y, type: 'floor', revealed: false };
-                    
                     if (x === 0 || x === size - 1 || y === 0 || y === size - 1) {
                         cell.type = 'wall';
                     } else if (x === 1 && y === 1) {
@@ -1626,318 +1477,47 @@
                         cell.revealed = true;
                     } else {
                         const rand = Math.random();
-                        if (rand < 0.05) cell.type = 'enemy';
-                        else if (rand < 0.09) cell.type = 'chest';
-                        else if (rand < 0.13) { cell.type = 'mechanism-luck'; gameState.mechanismTotal++; }
-                        else if (rand < 0.17) { cell.type = 'mechanism-knowledge'; gameState.mechanismTotal++; }
-                        else if (rand < 0.21) { cell.type = 'mechanism-hero'; gameState.mechanismTotal++; }
-                        else if (rand < 0.23) cell.type = 'boss';
-                        else if (rand < 0.25) cell.type = 'stairs';
+                        if (levelId === 3) {
+                            if (rand < 0.06) { cell.type = 'enemy'; gameState.totalEnemies++; }
+                            else if (rand < 0.08) { cell.type = 'boss'; gameState.totalEnemies++; }
+                            else if (rand < 0.11) { cell.type = 'mechanism-luck'; gameState.mechanismTotal++; }
+                            else if (rand < 0.13) { cell.type = 'mechanism-knowledge'; gameState.mechanismTotal++; }
+                            else if (rand < 0.15) { cell.type = 'mechanism-hero'; gameState.mechanismTotal++; }
+                            else if (rand < 0.17) cell.type = 'coffin';
+                        } else {
+                            if (rand < 0.05) cell.type = 'enemy';
+                            else if (rand < 0.09) cell.type = 'chest';
+                            else if (rand < 0.13) { cell.type = 'mechanism-luck'; gameState.mechanismTotal++; }
+                            else if (rand < 0.17) { cell.type = 'mechanism-knowledge'; gameState.mechanismTotal++; }
+                            else if (rand < 0.21) { cell.type = 'mechanism-hero'; gameState.mechanismTotal++; }
+                        }
                     }
                     gameState.map[y][x] = cell;
                 }
             }
-        }
-        
-        // 第二关：结构化地图生成
-        function generateStructuredMap(level) {
-            const size = gameState.mapSize;
-            gameState.map = [];
             
-            // 初始化全部为墙
-            for (let y = 0; y < size; y++) {
-                gameState.map[y] = [];
-                for (let x = 0; x < size; x++) {
-                    gameState.map[y][x] = { x, y, type: 'wall', revealed: false };
+            // 放置出口
+            for (let attempts = 0; attempts < 100; attempts++) {
+                const ex = Math.floor(Math.random() * (size - 4)) + 2;
+                const ey = Math.floor(Math.random() * (size - 4)) + 2;
+                if (gameState.map[ey][ex].type === 'floor' && 
+                    (Math.abs(ex - 1) + Math.abs(ey - 1)) > size / 2) {
+                    gameState.map[ey][ex].type = 'stairs';
+                    break;
                 }
-            }
-            
-            // 定义区域
-            const areas = [
-                { name: '入口区', x: 1, y: 1, w: 5, h: 5, mechanisms: [], stories: 1 },
-                { name: '走廊', x: 6, y: 2, w: 3, h: 3, mechanisms: ['mechanism-hero'], stories: 0 },
-                { name: '墓室区', x: 9, y: 1, w: 6, h: 6, mechanisms: ['mechanism-luck', 'mechanism-knowledge'], stories: 2 },
-                { name: '宝库前厅', x: 1, y: 7, w: 5, h: 4, mechanisms: ['mechanism-hero'], stories: 1 },
-                { name: '祭坛区', x: 9, y: 8, w: 6, h: 5, mechanisms: ['mechanism-knowledge'], stories: 2 },
-                { name: '藏宝室', x: 6, y: 12, w: 7, h: 3, mechanisms: ['mechanism-luck'], stories: 1 }
-            ];
-            
-            // 随机选择机关（限量）
-            const availableMechanisms = {
-                luck: [...(level.mechanismPool?.luck || [])],
-                knowledge: [...(level.mechanismPool?.knowledge || [])],
-                hero: [...(level.mechanismPool?.hero || [])]
-            };
-            
-            // 随机选择故事碎片
-            const availableStories = [...(level.storyFragments || [])];
-            shuffleArray(availableStories);
-            
-            let mechCount = 0;
-            let storyIdx = 0;
-            
-            // 生成区域
-            areas.forEach(area => {
-                for (let dy = 0; dy < area.h; dy++) {
-                    for (let dx = 0; dx < area.w; dx++) {
-                        const x = area.x + dx;
-                        const y = area.y + dy;
-                        if (x >= size || y >= size) continue;
-                        
-                        gameState.map[y][x] = { x, y, type: 'floor', revealed: false };
-                    }
-                }
-                
-                // 放置机关
-                area.mechanisms.forEach(mType => {
-                    const available = availableMechanisms[mType.replace('mechanism-', '')];
-                    if (available && available.length > 0) {
-                        const mechName = available.pop();
-                        const placed = placeInArea(area, mType, { name: mechName });
-                        if (placed) {
-                            mechCount++;
-                            gameState.map[placed.y][placed.x].mechanismName = mechName;
-                        }
-                    }
-                });
-                
-                // 放置故事碎片
-                for (let i = 0; i < area.stories && storyIdx < availableStories.length; i++) {
-                    const story = availableStories[storyIdx++];
-                    const placed = placeInArea(area, 'story', story);
-                    if (placed) {
-                        gameState.map[placed.y][placed.x].storyData = story;
-                    }
-                }
-            });
-            
-            // 打通区域之间的通道
-            for (let i = 0; i < areas.length - 1; i++) {
-                const area1 = areas[i];
-                const area2 = areas[i + 1];
-                
-                // 找到两个区域的连接点
-                // 计算区域中心
-                const c1x = area1.x + Math.floor(area1.w / 2);
-                const c1y = area1.y + Math.floor(area1.h / 2);
-                const c2x = area2.x + Math.floor(area2.w / 2);
-                const c2y = area2.y + Math.floor(area2.h / 2);
-                
-                // 从区域1中心向区域2方向打通通道
-                let x = c1x, y = c1y;
-                while (x !== c2x || y !== c2y) {
-                    // 确保当前位置是可行走的
-                    if (x >= 0 && x < size && y >= 0 && y < size) {
-                        if (gameState.map[y][x].type === 'wall') {
-                            gameState.map[y][x].type = 'floor';
-                        }
-                    }
-                    
-                    // 向目标方向移动（优先移动距离更远的轴）
-                    if (Math.abs(x - c2x) > Math.abs(y - c2y)) {
-                        x += x < c2x ? 1 : -1;
-                    } else {
-                        y += y < c2y ? 1 : -1;
-                    }
-                }
-                // 确保终点也是可行走的
-                if (c2x >= 0 && c2x < size && c2y >= 0 && c2y < size) {
-                    if (gameState.map[c2y][c2x].type === 'wall') {
-                        gameState.map[c2y][c2x].type = 'floor';
-                    }
-                }
-            }
-            
-            // 玩家起始位置
-            gameState.map[1][1].type = 'player';
-            gameState.map[1][1].revealed = true;
-            
-            // 出口
-            const exitArea = areas[areas.length - 1];
-            gameState.map[exitArea.y + 1][exitArea.x + exitArea.w - 2].type = 'stairs';
-            
-            gameState.mechanismTotal = mechCount;
-        }
-        
-        // 第三关：星陨古墓（带战斗和棺椁）
-        function generateLevel3Map(level) {
-            const size = gameState.mapSize;
-            gameState.map = [];
-            let enemyCount = 0;
-            
-            // 初始化全部为墙
-            for (let y = 0; y < size; y++) {
-                gameState.map[y] = [];
-                for (let x = 0; x < size; x++) {
-                    gameState.map[y][x] = { x, y, type: 'wall', revealed: false };
-                }
-            }
-            
-            // 定义区域（第三关设计）
-            const areas = [
-                { name: '入口区', x: 1, y: 1, w: 4, h: 4, enemies: 0, mechanisms: [], stories: 1 },
-                { name: '走廊A', x: 5, y: 2, w: 3, h: 3, enemies: 1, mechanisms: [], stories: 0, blocking: true }, // 拦路怪
-                { name: '前厅', x: 8, y: 1, w: 5, h: 5, enemies: 0, mechanisms: [], stories: 0 },
-                { name: '通道B', x: 1, y: 6, w: 3, h: 6, enemies: 1, mechanisms: [], stories: 0, blocking: true }, // 拦路怪
-                { name: '走廊C', x: 5, y: 8, w: 3, h: 4, enemies: 1, mechanisms: [], stories: 1 }, // 可选怪
-                { name: '休息点', x: 9, y: 7, w: 3, h: 3, enemies: 0, mechanisms: [], stories: 0 },
-                { name: 'Boss房', x: 12, y: 10, w: 3, h: 4, enemies: 1, mechanisms: [], stories: 0, isBoss: true } // Boss
-            ];
-            
-            // 随机选择机关和碎片
-            const availableMechanisms = {
-                luck: [...(level.mechanismPool?.luck || [])],
-                knowledge: [...(level.mechanismPool?.knowledge || [])],
-                hero: [...(level.mechanismPool?.hero || [])]
-            };
-            const availableStories = [...(level.storyFragments || [])];
-            
-            let mechCount = 0;
-            let storyIdx = 0;
-            
-            // 生成区域
-            areas.forEach(area => {
-                for (let dy = 0; dy < area.h; dy++) {
-                    for (let dx = 0; dx < area.w; dx++) {
-                        const x = area.x + dx;
-                        const y = area.y + dy;
-                        if (x >= size || y >= size) continue;
-                        gameState.map[y][x] = { x, y, type: 'floor', revealed: false };
-                    }
-                }
-                
-                // 放置敌人
-                if (area.enemies > 0) {
-                    for (let i = 0; i < area.enemies; i++) {
-                        const placed = placeInArea(area, area.isBoss ? 'boss' : 'enemy', {});
-                        if (placed) enemyCount++;
-                    }
-                }
-                
-                // 放置机关
-                area.mechanisms.forEach(mType => {
-                    const available = availableMechanisms[mType.replace('mechanism-', '')];
-                    if (available && available.length > 0) {
-                        const mechName = available.pop();
-                        const placed = placeInArea(area, mType, { name: mechName });
-                        if (placed) {
-                            mechCount++;
-                            gameState.map[placed.y][placed.x].mechanismName = mechName;
-                        }
-                    }
-                });
-                
-                // 放置故事碎片
-                for (let i = 0; i < area.stories && storyIdx < availableStories.length; i++) {
-                    const story = availableStories[storyIdx++];
-                    const placed = placeInArea(area, 'story', story);
-                    if (placed) {
-                        gameState.map[placed.y][placed.x].storyData = story;
-                    }
-                }
-            });
-            
-            // 打通区域之间的通道
-            for (let i = 0; i < areas.length - 1; i++) {
-                const area1 = areas[i];
-                const area2 = areas[i + 1];
-                const c1x = area1.x + Math.floor(area1.w / 2);
-                const c1y = area1.y + Math.floor(area1.h / 2);
-                const c2x = area2.x + Math.floor(area2.w / 2);
-                const c2y = area2.y + Math.floor(area2.h / 2);
-                
-                let x = c1x, y = c1y;
-                while (x !== c2x || y !== c2y) {
-                    if (x >= 0 && x < size && y >= 0 && y < size) {
-                        if (gameState.map[y][x].type === 'wall') {
-                            gameState.map[y][x].type = 'floor';
-                        }
-                    }
-                    if (Math.abs(x - c2x) > Math.abs(y - c2y)) {
-                        x += x < c2x ? 1 : -1;
-                    } else {
-                        y += y < c2y ? 1 : -1;
-                    }
-                }
-                if (c2x >= 0 && c2x < size && c2y >= 0 && c2y < size) {
-                    if (gameState.map[c2y][c2x].type === 'wall') {
-                        gameState.map[c2y][c2x].type = 'floor';
-                    }
-                }
-            }
-            
-            // 玩家起始位置
-            gameState.map[1][1].type = 'player';
-            gameState.map[1][1].revealed = true;
-            
-            // 在Boss房深处放置星棺
-            const bossArea = areas.find(a => a.isBoss);
-            if (bossArea) {
-                const coffinX = bossArea.x + 1;
-                const coffinY = bossArea.y + bossArea.h - 1;
-                if (coffinX < size && coffinY < size) {
-                    gameState.map[coffinY][coffinX].type = 'coffin';
-                }
-            }
-            
-            // 在休息点放置疲劳恢复Buff
-            const restArea = areas.find(a => a.name === '休息点');
-            if (restArea) {
-                const buffX = restArea.x + 1;
-                const buffY = restArea.y + 1;
-                if (buffX < size && buffY < size) {
-                    gameState.map[buffY][buffX].type = 'buff-fatigue';
-                }
-            }
-            
-            // 在前厅放置攻击Buff
-            const hallArea = areas.find(a => a.name === '前厅');
-            if (hallArea) {
-                const buffX = hallArea.x + 2;
-                const buffY = hallArea.y + 2;
-                if (buffX < size && buffY < size) {
-                    gameState.map[buffY][buffX].type = 'buff-attack';
-                }
-            }
-            
-            gameState.mechanismTotal = mechCount;
-            gameState.totalEnemies = enemyCount;
-        }
-        
-        function placeInArea(area, type, data) {
-            const size = gameState.mapSize;
-            let attempts = 50;
-            
-            while (attempts > 0) {
-                const x = area.x + Math.floor(Math.random() * area.w);
-                const y = area.y + Math.floor(Math.random() * area.h);
-                
-                if (x < size && y < size && gameState.map[y][x].type === 'floor') {
-                    gameState.map[y][x].type = type;
-                    return { x, y };
-                }
-                attempts--;
-            }
-            return null;
-        }
-        
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
             }
         }
         
         function renderParty() {
-            document.getElementById('partyList').innerHTML = party.map(m => `
+            document.getElementById('partyList').innerHTML = battleHeroes.map(h => `
                 <div class="party-member">
-                    <div class="member-avatar">${m.icon}</div>
+                    <div class="member-avatar">${h.icon}</div>
                     <div class="member-info">
-                        <div class="member-name">${m.name}</div>
-                        <div class="member-trait">${m.trait}</div>
-                        <div class="member-hp">HP: ${m.hp}/${m.maxHp}</div>
+                        <div class="member-name">${h.name}</div>
+                        <div class="member-trait">${h.class}</div>
+                        <div class="member-hp">HP: ${h.hp}/${h.maxHp}</div>
                         <div class="hp-bar-mini">
-                            <div class="hp-fill-mini" style="width: ${(m.hp / m.maxHp) * 100}%"></div>
+                            <div class="hp-fill-mini" style="width:${(h.hp/h.maxHp)*100}%"></div>
                         </div>
                     </div>
                 </div>
@@ -1947,7 +1527,6 @@
         function renderMap() {
             const container = document.getElementById('gameMap');
             const size = gameState.mapSize;
-            
             container.style.gridTemplateColumns = `repeat(${size}, 40px)`;
             
             const icons = {
@@ -1973,151 +1552,70 @@
             const viewport = document.querySelector('.map-viewport');
             const container = document.getElementById('mapScrollContainer');
             const cellSize = 42;
-            
-            const viewportWidth = viewport.clientWidth;
-            const viewportHeight = viewport.clientHeight;
-            
-            const scrollX = -(gameState.playerPos.x * cellSize - viewportWidth / 2 + cellSize / 2);
-            const scrollY = -(gameState.playerPos.y * cellSize - viewportHeight / 2 + cellSize / 2);
-            
-            const maxScrollX = 0;
-            const minScrollX = -(gameState.mapSize * cellSize - viewportWidth);
-            const maxScrollY = 0;
-            const minScrollY = -(gameState.mapSize * cellSize - viewportHeight);
-            
-            const clampedX = Math.max(minScrollX, Math.min(maxScrollX, scrollX));
-            const clampedY = Math.max(minScrollY, Math.min(maxScrollY, scrollY));
-            
+            const scrollX = -(gameState.playerPos.x * cellSize - viewport.clientWidth / 2 + cellSize / 2);
+            const scrollY = -(gameState.playerPos.y * cellSize - viewport.clientHeight / 2 + cellSize / 2);
+            const clampedX = Math.max(-(gameState.mapSize * cellSize - viewport.clientWidth), Math.min(0, scrollX));
+            const clampedY = Math.max(-(gameState.mapSize * cellSize - viewport.clientHeight), Math.min(0, scrollY));
             container.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
         }
         
         function handleCellClick(x, y) {
             const cell = gameState.map[y][x];
             if (cell.type === 'wall' || cell.type === 'player') return;
-            if (isAutoMoving) return;
             
-            const playerPos = gameState.playerPos;
-            const dx = Math.abs(x - playerPos.x);
-            const dy = Math.abs(y - playerPos.y);
+            const dx = Math.abs(x - gameState.playerPos.x);
+            const dy = Math.abs(y - gameState.playerPos.y);
             
             if (dx + dy === 1) {
                 movePlayerTo(x, y);
-            } else if (cell.revealed && cell.type !== 'fog') {
-                const path = findPath(playerPos.x, playerPos.y, x, y);
-                if (path && path.length > 1) {
-                    autoMove(path);
-                }
             }
         }
         
         function movePlayerTo(x, y) {
             const cell = gameState.map[y][x];
-            const originalType = cell.type;
-            
             const oldPos = gameState.playerPos;
+            
             gameState.map[oldPos.y][oldPos.x].type = 'floor';
             gameState.map[oldPos.y][oldPos.x].revealed = true;
             gameState.playerPos = { x, y };
             cell.type = 'player';
             cell.revealed = true;
             
-            // 消耗攻击Buff
-            if (gameState.attackBuff > 0) {
-                gameState.attackBuff--;
-                if (gameState.attackBuff === 0) {
-                    addLog('攻击强化效果已消失', 'info');
-                }
-            }
-            
             revealArea(x, y, 2);
             renderMap();
-            handleCellType(originalType, x, y);
-            
-            // 移动后自动保存
+            handleCellType(cell.type, x, y);
             saveGame();
         }
         
-        function findPath(startX, startY, endX, endY) {
+        function revealArea(cx, cy, r) {
             const size = gameState.mapSize;
-            const visited = Array(size).fill(null).map(() => Array(size).fill(false));
-            const queue = [{ x: startX, y: startY, path: [{ x: startX, y: startY }] }];
-            visited[startY][startX] = true;
-            
-            const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
-            
-            // 定义危险格子类型（寻路时避开，除非终点就是它）
-            const dangerTypes = ['enemy', 'chest', 'mechanism-luck', 'mechanism-knowledge', 'mechanism-hero', 'boss', 'trap', 'story', 'coffin', 'buff-attack', 'buff-fatigue'];
-            
-            while (queue.length > 0) {
-                const current = queue.shift();
-                if (current.x === endX && current.y === endY) return current.path;
-                
-                for (const [dx, dy] of directions) {
-                    const nx = current.x + dx;
-                    const ny = current.y + dy;
-                    
-                    if (nx < 0 || nx >= size || ny < 0 || ny >= size) continue;
-                    if (visited[ny][nx]) continue;
-                    
-                    const nextCell = gameState.map[ny][nx];
-                    if (nextCell.type === 'wall') continue;
-                    if (!nextCell.revealed && nextCell.type !== 'stairs') continue;
-                    
-                    // 避开危险格子，除非终点就是危险格子
-                    if (dangerTypes.includes(nextCell.type) && !(nx === endX && ny === endY)) continue;
-                    
-                    visited[ny][nx] = true;
-                    queue.push({ x: nx, y: ny, path: [...current.path, { x: nx, y: ny }] });
-                }
-            }
-            return null;
-        }
-        
-        async function autoMove(path) {
-            isAutoMoving = true;
-            
-            for (let i = 1; i < path.length; i++) {
-                const pos = path[i];
-                const cell = gameState.map[pos.y][pos.x];
-                
-                if (!cell.revealed || cell.type === 'fog') break;
-                if (['enemy', 'chest', 'mechanism-luck', 'mechanism-knowledge', 'mechanism-hero', 'boss', 'story'].includes(cell.type)) {
-                    movePlayerTo(pos.x, pos.y);
-                    break;
-                }
-                
-                movePlayerTo(pos.x, pos.y);
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            
-            isAutoMoving = false;
-        }
-        
-        function revealArea(centerX, centerY, radius) {
-            const size = gameState.mapSize;
-            for (let dy = -radius; dy <= radius; dy++) {
-                for (let dx = -radius; dx <= radius; dx++) {
-                    const x = centerX + dx;
-                    const y = centerY + dy;
-                    if (x < 0 || x >= size || y < 0 || y >= size) continue;
-                    if (!gameState.map[y][x].revealed) {
+            for (let dy = -r; dy <= r; dy++) {
+                for (let dx = -r; dx <= r; dx++) {
+                    const x = cx + dx, y = cy + dy;
+                    if (x >= 0 && x < size && y >= 0 && y < size) {
                         gameState.map[y][x].revealed = true;
                     }
                 }
             }
         }
         
-        function handleCellType(originalType, x, y) {
-            const cell = gameState.map[y][x];
+        function handleCellType(type, x, y) {
             const level = LEVELS[currentLevel];
             
-            switch (originalType) {
+            switch (type) {
                 case 'enemy':
-                    // 第3关启用完整战斗系统，其他关卡显示简单提示
                     if (level && level.hasCombat) {
-                        showBattleModal();
+                        startBattle(false);
                     } else {
-                        addLog('遭遇敌人！（战斗系统仅第3关可用）', 'danger');
+                        addLog('遭遇敌人！', 'danger');
+                    }
+                    break;
+                case 'boss':
+                case 'coffin':
+                    if (level && level.hasCombat) {
+                        startBattle(type === 'boss');
+                    } else {
+                        addLog('遭遇Boss！', 'danger');
                     }
                     break;
                 case 'chest':
@@ -2129,627 +1627,113 @@
                 case 'mechanism-luck':
                 case 'mechanism-knowledge':
                 case 'mechanism-hero':
-                    showMechanismModal(originalType.replace('mechanism-', ''), cell);
-                    break;
-                case 'boss':
-                    if (level && level.hasCombat) {
-                        showBattleModal(true);
-                    } else {
-                        addLog('遭遇Boss！（战斗系统仅第3关可用）', 'danger');
-                    }
-                    break;
-                case 'coffin':
-                    showCoffinModal();
-                    break;
-                case 'buff-attack':
-                    gameState.attackBuff = 5; // 接下来5格攻击+30%
-                    addLog('⚔️ 获得攻击强化！接下来5格内攻击力+30%', 'success');
-                    updateStats();
-                    break;
-                case 'buff-fatigue':
-                    const fatigueGain = 25;
-                    gameState.fatigue = Math.min(gameState.maxFatigue, gameState.fatigue + fatigueGain);
-                    addLog(`💚 休息片刻，恢复 ${fatigueGain} 点疲劳度`, 'success');
-                    updateStats();
+                    showMechanismModal(type.replace('mechanism-', ''));
                     break;
                 case 'stairs':
                     gameState.objectives.stairs = true;
                     addLog('发现出口！', 'success');
-                    checkObjectives();
-                    break;
-                case 'story':
-                    showStoryFragment(cell.storyData);
+                    showSettlement();
                     break;
             }
         }
         
-        function showStoryFragment(storyData) {
-            if (!storyData) return;
+        function showMechanismModal(type) {
+            const pool = mechanismsRandom[type];
+            const mech = pool[Math.floor(Math.random() * pool.length)];
             
-            gameState.storyFound++;
-            gameState.objectives.stories.current++;
-            
-            // 记录已发现的碎片（避免重复）
-            if (!gameState.discoveredStories.find(s => s.name === storyData.name)) {
-                gameState.discoveredStories.push({...storyData});
-                renderStoryList(); // 更新碎片列表
-            }
-            
-            const modal = document.getElementById('mechanismModal');
             const content = document.getElementById('modalContent');
-            
-            content.innerHTML = `
-                <div class="mechanism-type story">📖 环境碎片</div>
-                <div class="mechanism-image">${storyData.icon}</div>
-                <div class="mechanism-title">${storyData.name}</div>
-                <div class="mechanism-desc">${storyData.text}</div>
-                <button class="close-btn" onclick="closeModal()">继续探索</button>
-            `;
-            
-            modal.classList.add('active');
-            addLog(`发现：${storyData.name}`, 'story');
-            updateStats();
-            checkObjectives();
-            saveGame(); // 保存游戏状态
-        }
-        
-        // 渲染碎片列表
-        function renderStoryList() {
-            const container = document.getElementById('storyList');
-            
-            if (gameState.discoveredStories.length === 0) {
-                container.innerHTML = `<div style="text-align:center;color:#666;padding:20px;">暂未发现环境碎片</div>`;
-                return;
-            }
-            
-            container.innerHTML = gameState.discoveredStories.map((story, idx) => `
-                <div class="log-entry story" style="cursor:pointer;padding:10px;border-radius:5px;margin:5px 0;background:rgba(40,30,60,0.5);" onclick="showStoryDetail(${idx})">
-                    <span style="font-size:16px;margin-right:8px;">${story.icon}</span>
-                    <span style="color:#d4af37;">${story.name}</span>
-                </div>
-            `).join('');
-        }
-        
-        // 显示碎片详情
-        function showStoryDetail(idx) {
-            const story = gameState.discoveredStories[idx];
-            if (!story) return;
-            
-            const modal = document.getElementById('mechanismModal');
-            const content = document.getElementById('modalContent');
-            
-            content.innerHTML = `
-                <div class="mechanism-type story">📖 环境碎片</div>
-                <div class="mechanism-image">${story.icon}</div>
-                <div class="mechanism-title">${story.name}</div>
-                <div class="mechanism-desc">${story.text}</div>
-                <button class="close-btn" onclick="closeModal()">关闭</button>
-            `;
-            
-            modal.classList.add('active');
-        }
-        
-        // 显示棺椁确认弹窗
-        function showCoffinModal() {
-            const modal = document.getElementById('mechanismModal');
-            const content = document.getElementById('modalContent');
-            
-            content.innerHTML = `
-                <div class="mechanism-type" style="background:linear-gradient(135deg,#4a3a2a,#6a5a4a);">⚰️ 星棺</div>
-                <div class="mechanism-image" style="font-size:60px;">⚰️</div>
-                <div class="mechanism-title">星棺</div>
-                <div class="mechanism-desc">
-                    <p>星棺散发着神秘的气息，里面似乎蕴含着来自天外的力量...</p>
-                    <p style="color:#ff6b6b;margin-top:10px;">但你感觉到一股强大的力量在守护着它。</p>
-                </div>
-                <div style="display:flex;gap:10px;margin-top:15px;">
-                    <button class="option-btn" style="flex:1;background:#5a3a3a;" onclick="startCoffinBattle()">打开星棺</button>
-                    <button class="back-btn" style="flex:1;" onclick="closeModal()">稍后再说</button>
-                </div>
-            `;
-            
-            modal.classList.add('active');
-        }
-        
-        // 开始棺椁Boss战
-        function startCoffinBattle() {
-            closeModal();
-            showBattleModal(true, true); // isBoss=true, isCoffin=true
-        }
-        
-        // 战斗系统（完整版）
-        function showBattleModal(isBoss = false, isCoffin = false) {
-            const modal = document.getElementById('mechanismModal');
-            const content = document.getElementById('modalContent');
-            
-            // 战斗数值配置
-            const enemyConfig = isBoss ? {
-                name: '星棺守卫',
-                maxHp: 120,
-                atk: 15,
-                def: 5,
-                gold: 100
-            } : {
-                name: '墓穴守卫',
-                maxHp: 50,
-                atk: 10,
-                def: 3,
-                gold: 25
-            };
-            
-            // 玩家队伍数值（简化：合并4人属性）
-            const playerMaxHp = gameState.maxHp; // 100
-            const playerAtk = 22; // 基础攻击力
-            const playerDef = 6; // 防御力
-            
-            // 战斗状态
-            let battleState = {
-                playerHp: gameState.hp,
-                playerMaxHp: playerMaxHp,
-                enemyHp: enemyConfig.maxHp,
-                enemyMaxHp: enemyConfig.maxHp,
-                logs: [],
-                turn: 0,
-                attackBuff: gameState.attackBuff > 0
-            };
-            
-            // 计算实际伤害
-            const calcDamage = (atk, def) => {
-                const baseDamage = Math.max(1, atk - def);
-                const variance = Math.floor(Math.random() * 5) - 2; // -2 ~ +2
-                return Math.max(1, baseDamage + variance);
-            };
-            
-            // 添加战斗日志
-            const addBattleLog = (text, type = 'normal') => {
-                battleState.logs.push({ text, type, turn: battleState.turn });
-            };
-            
-            // 渲染战斗界面
-            const renderBattle = () => {
-                const playerHpPercent = (battleState.playerHp / battleState.playerMaxHp) * 100;
-                const enemyHpPercent = Math.max(0, (battleState.enemyHp / battleState.enemyMaxHp) * 100);
-                
-                content.innerHTML = `
-                    <div class="mechanism-type" style="background:${isBoss ? '#5a2a5a' : '#8b3a3a'};">
-                        ${isBoss ? '💀 Boss战' : '👹 战斗'} - 回合 ${battleState.turn}
-                    </div>
-                    
-                    <div style="display:flex;justify-content:space-around;align-items:center;margin:15px 0;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;">
-                        <!-- 玩家 -->
-                        <div style="text-align:center;flex:1;">
-                            <div style="font-size:28px;">👤</div>
-                            <div style="color:#6bcfff;font-size:12px;margin:5px 0;">队伍</div>
-                            <div style="background:#2a2a35;border-radius:4px;height:8px;overflow:hidden;margin:5px auto;width:80%;">
-                                <div style="background:linear-gradient(90deg,#4a6fa5,#6b9fd5);height:100%;width:${playerHpPercent}%;"></div>
-                            </div>
-                            <div style="font-size:11px;color:#aaa;">HP: ${battleState.playerHp}/${battleState.playerMaxHp}</div>
-                            ${battleState.attackBuff ? '<div style="color:#ff6b6b;font-size:10px;">⚔️ 攻击强化</div>' : ''}
-                        </div>
-                        
-                        <div style="font-size:20px;color:#ff6b6b;padding:0 10px;">⚔️</div>
-                        
-                        <!-- 敌人 -->
-                        <div style="text-align:center;flex:1;">
-                            <div style="font-size:28px;">${isBoss ? '💀' : '👹'}</div>
-                            <div style="color:#ff6b6b;font-size:12px;margin:5px 0;">${enemyConfig.name}</div>
-                            <div style="background:#2a2a35;border-radius:4px;height:8px;overflow:hidden;margin:5px auto;width:80%;">
-                                <div style="background:linear-gradient(90deg,#8b3a3a,#ff6b6b);height:100%;width:${enemyHpPercent}%;"></div>
-                            </div>
-                            <div style="font-size:11px;color:#aaa;">HP: ${Math.max(0, battleState.enemyHp)}/${enemyConfig.maxHp}</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 战斗日志 -->
-                    <div style="background:rgba(0,0,0,0.3);border-radius:6px;padding:8px;margin:10px 0;max-height:100px;overflow-y:auto;font-size:11px;">
-                        ${battleState.logs.slice(-5).map(log => `
-                            <div style="margin:3px 0;color:${log.type === 'player' ? '#6bcfff' : log.type === 'enemy' ? '#ff6b6b' : '#aaa'};">
-                                ${log.text}
-                            </div>
-                        `).join('')}
-                    </div>
-                    
-                    <!-- 操作按钮 -->
-                    <div style="display:flex;gap:8px;margin-top:10px;">
-                        <button class="option-btn" style="flex:2;" onclick="doPlayerAttack()">⚔️ 攻击</button>
-                        <button class="back-btn" style="flex:1;" onclick="doRetreat()">撤退</button>
-                    </div>
-                `;
-            };
-            
-            // 玩家攻击
-            window.doPlayerAttack = () => {
-                battleState.turn++;
-                
-                // 计算玩家攻击（含Buff加成）
-                const atkBonus = battleState.attackBuff ? 1.3 : 1;
-                const playerDamage = calcDamage(Math.floor(playerAtk * atkBonus), enemyConfig.def);
-                battleState.enemyHp -= playerDamage;
-                
-                addBattleLog(`队伍对 ${enemyConfig.name} 造成 ${playerDamage} 点伤害`, 'player');
-                
-                // 检查敌人是否死亡
-                if (battleState.enemyHp <= 0) {
-                    showBattleVictory();
-                    return;
-                }
-                
-                // 敌人反击
-                const enemyDamage = calcDamage(enemyConfig.atk, playerDef);
-                battleState.playerHp -= enemyDamage;
-                gameState.hp = Math.max(1, battleState.playerHp);
-                
-                addBattleLog(`${enemyConfig.name} 对队伍造成 ${enemyDamage} 点伤害`, 'enemy');
-                
-                // 检查玩家是否死亡
-                if (battleState.playerHp <= 0) {
-                    showBattleDefeat();
-                    return;
-                }
-                
-                renderBattle();
-            };
-            
-            // 战斗胜利
-            const showBattleVictory = () => {
-                gameState.killedEnemies++;
-                gameState.battleCount++;
-                
-                // 计算疲劳度消耗（损失多少HP就消耗多少疲劳）
-                const hpLost = gameState.maxHp - battleState.playerHp;
-                gameState.fatigue = Math.max(0, gameState.fatigue - hpLost);
-                
-                // HP自动回满（每场战斗独立）
-                gameState.hp = gameState.maxHp;
-                
-                const goldReward = enemyConfig.gold;
-                gameState.gold += goldReward;
-                
-                content.innerHTML = `
-                    <div class="mechanism-type" style="background:#2a4a3a;">✓ 战斗胜利</div>
-                    <div style="text-align:center;margin:20px 0;">
-                        <div style="font-size:40px;">🎉</div>
-                        <div style="color:#6bff6b;margin-top:10px;">击败了 ${enemyConfig.name}！</div>
-                        <div style="margin-top:15px;font-size:12px;color:#aaa;">战斗回合：${battleState.turn}</div>
-                    </div>
-                    <div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;margin-top:10px;">
-                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
-                            <span style="color:#aaa;">本战损耗</span>
-                            <span style="color:#6bcfff;">-${hpLost} HP</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
-                            <span style="color:#aaa;">疲劳消耗</span>
-                            <span style="color:#ff6b6b;">-${hpLost}</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
-                            <span style="color:#aaa;">生命恢复</span>
-                            <span style="color:#6bff6b;">✓ 已回满</span>
-                        </div>
-                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
-                            <span style="color:#aaa;">获得金币</span>
-                            <span style="color:#ffd700;">+${goldReward}</span>
-                        </div>
-                    </div>
-                    ${isCoffin ? `
-                        <div style="background:rgba(212,175,55,0.2);padding:12px;border-radius:8px;margin-top:10px;">
-                            <div style="color:#d4af37;">⚰️ 星棺已打开</div>
-                            <div style="margin-top:8px;color:#ffd700;font-size:12px;">获得星核碎片 ×1</div>
-                        </div>
-                    ` : ''}
-                    <button class="close-btn" onclick="${isCoffin ? 'completeLevel3()' : 'closeModal()'}" style="margin-top:15px;">继续</button>
-                `;
-                
-                updateStats();
-                checkObjectives();
-                saveGame();
-            };
-            
-            // 战斗失败
-            const showBattleDefeat = () => {
-                content.innerHTML = `
-                    <div class="mechanism-type" style="background:#5a2a2a;">✗ 战斗失败</div>
-                    <div style="text-align:center;margin:20px 0;">
-                        <div style="font-size:40px;">💀</div>
-                        <div style="color:#ff6b6b;margin-top:10px;">队伍全军覆没...</div>
-                        <div style="font-size:12px;color:#aaa;margin-top:10px;">战斗回合：${battleState.turn}</div>
-                    </div>
-                    <button class="close-btn" onclick="doRetreat()">勉强撤退</button>
-                `;
-            };
-            
-            // 撤退
-            window.doRetreat = () => {
-                // 撤退也要消耗疲劳（惩罚性消耗）
-                const retreatFatigueCost = 15;
-                gameState.fatigue = Math.max(0, gameState.fatigue - retreatFatigueCost);
-                // HP恢复满（每场战斗独立）
-                gameState.hp = gameState.maxHp;
-                closeModal();
-                addLog(`撤退成功，消耗 ${retreatFatigueCost} 疲劳度`, 'danger');
-                updateStats();
-            };
-            
-            renderBattle();
-            modal.classList.add('active');
-        }
-        
-        // 第三关通关
-        function completeLevel3() {
-            closeModal();
-            
-            const isPerfect = gameState.killedEnemies >= gameState.totalEnemies;
-            const bonusGold = isPerfect ? 200 : 0;
-            gameState.gold += bonusGold;
-            
-            // 保存关卡完成进度
-            saveLevelProgress(3, isPerfect);
-            
-            const modal = document.getElementById('missionModal');
-            const content = document.getElementById('missionContent');
-            
-            content.innerHTML = `
-                <div class="mission-title">🎉 关卡完成</div>
-                <div class="mission-story">
-                    <p style="text-align:center;font-size:24px;">⚰️</p>
-                    <p style="text-align:center;color:#d4af37;font-size:18px;">星陨古墓</p>
-                    <p style="margin-top:15px;">你成功打开了星棺，获得了其中的星核碎片。</p>
-                    ${isPerfect ? '<p style="color:#6bff6b;margin-top:10px;">✓ 完美通关：击败了所有敌人！</p>' : ''}
-                </div>
-                <div style="background:rgba(0,0,0,0.3);padding:15px;border-radius:8px;margin-top:15px;">
-                    <div style="display:flex;justify-content:space-between;margin:5px 0;">
-                        <span>击杀敌人</span>
-                        <span>${gameState.killedEnemies}/${gameState.totalEnemies}</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;margin:5px 0;">
-                        <span>剩余疲劳度</span>
-                        <span>${gameState.fatigue}/${gameState.maxFatigue}</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;margin:5px 0;color:#ffd700;">
-                        <span>获得金币</span>
-                        <span>+${150 + (isPerfect ? 200 : 0)}</span>
-                    </div>
-                </div>
-                <button class="start-mission-btn" onclick="exitToLevelSelect();closeMissionModal();">返回关卡选择</button>
-            `;
-            
-            modal.classList.add('active');
-            clearSave();
-        }
-        
-        // 切换碎片抽屉
-        function toggleStoryDrawer() {
-            const drawer = document.getElementById('storyDrawer');
-            drawer.classList.toggle('open');
-            if (drawer.classList.contains('open')) {
-                renderStoryList();
-            }
-        }
-        
-        function showMechanismModal(type, cell) {
-            let mechanism;
-            
-            // 第二关：使用限量机关
-            if (currentLevel === 2 && cell.mechanismName) {
-                const pool = mechanismsLevel2[type];
-                mechanism = pool.find(m => m.name === cell.mechanismName) || pool[0];
-            } else {
-                // 第一关：随机选择
-                const pool = currentLevel === 2 ? mechanismsLevel2[type] : mechanismsRandom[type];
-                mechanism = pool[Math.floor(Math.random() * pool.length)];
-            }
-            
-            const modal = document.getElementById('mechanismModal');
-            const content = document.getElementById('modalContent');
-            
-            let optionsHtml = '';
-            
-            if (type === 'luck') {
-                optionsHtml = mechanism.options.map((opt, idx) => `
-                    <button class="option-btn" onclick="handleLuckChoice(${idx}, ${mechanism.successRate || 0.5})">${opt.text}</button>
-                `).join('');
-            } else if (type === 'knowledge') {
-                const hasHint = party.some(p => p.traitType === mechanism.hintTrait);
-                const hintHtml = hasHint ? `<div class="hero-hint">💡 ${mechanism.hint}</div>` : '';
-                optionsHtml = mechanism.options.map((opt, idx) => `
-                    <button class="option-btn" onclick="handleKnowledgeChoice(${idx}, ${opt.correct})">${opt.text}</button>
-                `).join('');
-                
-                content.innerHTML = `
-                    <div class="mechanism-type knowledge">🔵 知识型机关</div>
-                    <div class="mechanism-image">${mechanism.icon}</div>
-                    <div class="mechanism-title">${mechanism.name}</div>
-                    <div class="mechanism-desc">${mechanism.desc}</div>
-                    <div class="mechanism-question">${mechanism.question}</div>
-                    ${hintHtml}
-                    <div class="options-list" id="optionsContainer">${optionsHtml}</div>
-                `;
-                content.dataset.mechanismType = type;
-                content.dataset.mechanism = JSON.stringify(mechanism);
-                modal.classList.add('active');
-                return;
-            } else if (type === 'hero') {
-                optionsHtml = mechanism.options.map((opt, idx) => {
-                    const hasTrait = opt.trait && party.some(p => p.traitType === opt.trait);
-                    const tagHtml = opt.trait ? 
-                        `<span class="option-tag ${hasTrait ? 'matched' : 'unmatched'}">${hasTrait ? '✓ 有传承' : '✗ 无传承'}</span>` : 
-                        '<span class="option-tag" style="background:#3a3a4a;color:#888;">无关联</span>';
-                    return `<button class="option-btn" onclick="handleHeroChoice(${idx})">${opt.text}${tagHtml}</button>`;
-                }).join('');
-            }
-            
             const typeNames = { luck: '运气型机关', knowledge: '知识型机关', hero: '英雄型机关' };
-            const typeColors = { luck: 'luck', knowledge: 'knowledge', hero: 'hero' };
-            const typeIcons = { luck: '🟢', knowledge: '🔵', hero: '🟣' };
             
             content.innerHTML = `
-                <div class="mechanism-type ${typeColors[type]}">${typeIcons[type]} ${typeNames[type]}</div>
-                <div class="mechanism-image">${mechanism.icon}</div>
-                <div class="mechanism-title">${mechanism.name}</div>
-                <div class="mechanism-desc">${mechanism.desc}</div>
-                <div class="mechanism-question">${mechanism.question}</div>
-                <div class="options-list" id="optionsContainer">${optionsHtml}</div>
+                <div class="mechanism-type ${type}">${typeNames[type]}</div>
+                <div class="mechanism-image">${mech.icon}</div>
+                <div class="mechanism-title">${mech.name}</div>
+                <div class="mechanism-desc">${mech.desc}</div>
+                <div class="mechanism-question">${mech.question}</div>
+                <div class="options-list">
+                    ${mech.options.map((opt, idx) => `
+                        <button class="option-btn" onclick="handleMechanismResult('${opt.result || opt.correct}')">${opt.text}</button>
+                    `).join('')}
+                </div>
             `;
-            
-            content.dataset.mechanismType = type;
-            content.dataset.mechanism = JSON.stringify(mechanism);
-            modal.classList.add('active');
+            document.getElementById('mechanismModal').classList.add('active');
         }
         
-        function handleLuckChoice(optionIdx, successRate) {
-            const content = document.getElementById('modalContent');
-            const mechanism = JSON.parse(content.dataset.mechanism);
-            const option = mechanism.options[optionIdx];
-            
-            let resultHtml = '', hpChange = 0, goldChange = 0;
-            
-            if (option.result === 'skip') {
-                resultHtml = '<div class="result-box partial">你选择了放弃...</div>';
-            } else if (option.result === 'safe') {
-                goldChange = Math.floor(Math.random() * 20) + 10;
-                resultHtml = `<div class="result-box success">小心检查后获得 ${goldChange} 金币！</div>`;
-            } else if (option.result === 'dice') {
-                const roll = Math.floor(Math.random() * 6) + 1;
-                if (roll >= 4) {
-                    goldChange = Math.floor(Math.random() * 50) + 30;
-                    resultHtml = `<div class="result-box success">🎲 掷出 ${roll} 点！获得 ${goldChange} 金币！</div>`;
+        function handleMechanismResult(result) {
+            let gold = 0, hpChange = 0;
+            if (result === true || result === 'safe') {
+                gold = Math.floor(Math.random() * 30) + 20;
+                addLog(`机关破解成功！获得 ${gold} 金币`, 'success');
+            } else if (result === false) {
+                hpChange = -10;
+                addLog('机关破解失败...损失生命', 'danger');
+            } else if (result === 'skip') {
+                addLog('你选择放弃了这个机关', 'info');
+            } else {
+                if (Math.random() < 0.5) {
+                    gold = Math.floor(Math.random() * 30) + 20;
+                    addLog(`机关破解成功！获得 ${gold} 金币`, 'success');
                 } else {
                     hpChange = -10;
-                    resultHtml = `<div class="result-box fail">🎲 掷出 ${roll} 点...触发陷阱，损失 ${Math.abs(hpChange)} 生命！</div>`;
-                }
-            } else {
-                const success = Math.random() < successRate;
-                if (success) {
-                    goldChange = Math.floor(Math.random() * 30) + 20;
-                    resultHtml = `<div class="result-box success">成功！获得 ${goldChange} 金币！</div>`;
-                } else {
-                    hpChange = -15;
-                    resultHtml = `<div class="result-box fail">触发陷阱！损失 ${Math.abs(hpChange)} 生命！</div>`;
+                    addLog('机关破解失败...损失生命', 'danger');
                 }
             }
             
+            gameState.gold += gold;
             gameState.hp = Math.max(0, gameState.hp + hpChange);
-            gameState.gold += goldChange;
             gameState.mechanismSolved++;
             gameState.objectives.mechanisms.current++;
             
-            addLog(`[运气机关] ${mechanism.name} - ${hpChange < 0 ? '失败' : '成功'}`, hpChange < 0 ? 'danger' : 'success');
+            closeModal();
             updateStats();
             checkObjectives();
-            
-            document.getElementById('optionsContainer').innerHTML = resultHtml + `<button class="close-btn" onclick="closeModal()">继续探索</button>`;
-        }
-        
-        function handleKnowledgeChoice(optionIdx, correct) {
-            const content = document.getElementById('modalContent');
-            const mechanism = JSON.parse(content.dataset.mechanism);
-            
-            let hpChange = 0, goldChange = 0;
-            
-            if (correct) {
-                goldChange = Math.floor(Math.random() * 50) + 30;
-                document.getElementById('optionsContainer').innerHTML = `
-                    <div class="result-box success">回答正确！获得 ${goldChange} 金币！</div>
-                    <button class="close-btn" onclick="closeModal()">继续探索</button>
-                `;
-            } else {
-                hpChange = -10;
-                document.getElementById('optionsContainer').innerHTML = `
-                    <div class="result-box fail">回答错误！损失 ${Math.abs(hpChange)} 生命！</div>
-                    <button class="close-btn" onclick="closeModal()">继续探索</button>
-                `;
-            }
-            
-            gameState.hp = Math.max(0, gameState.hp + hpChange);
-            gameState.gold += goldChange;
-            gameState.mechanismSolved++;
-            gameState.objectives.mechanisms.current++;
-            
-            addLog(`[知识机关] ${mechanism.name} - ${correct ? '正确' : '错误'}`, correct ? 'success' : 'danger');
-            updateStats();
-            checkObjectives();
-        }
-        
-        function handleHeroChoice(optionIdx) {
-            const content = document.getElementById('modalContent');
-            const mechanism = JSON.parse(content.dataset.mechanism);
-            const option = mechanism.options[optionIdx];
-            
-            const hasTrait = option.trait && party.some(p => p.traitType === option.trait);
-            
-            let resultText, effect, resultClass;
-            
-            if (hasTrait) {
-                resultText = option.hasTraitResult;
-                effect = option.hasTraitEffect;
-                resultClass = effect.fail ? 'partial' : 'success';
-            } else {
-                resultText = option.noTraitResult;
-                effect = option.noTraitEffect;
-                resultClass = effect.fail || effect.hp < 0 ? 'fail' : 'partial';
-            }
-            
-            if (effect) {
-                if (effect.hp) gameState.hp = Math.max(0, gameState.hp + effect.hp);
-                if (effect.gold) gameState.gold += effect.gold;
-                if (effect.battle) {
-                    gameState.battleCount++;
-                    gameState.objectives.battles.current++;
-                }
-            }
-            
-            gameState.mechanismSolved++;
-            gameState.objectives.mechanisms.current++;
-            
-            addLog(`[英雄机关] ${mechanism.name} - ${hasTrait ? '传承匹配' : '普通破解'}`, hasTrait ? 'success' : 'danger');
-            updateStats();
-            checkObjectives();
-            
-            document.getElementById('optionsContainer').innerHTML = `
-                <div class="result-box ${resultClass}">${resultText}</div>
-                <button class="close-btn" onclick="closeModal()">继续探索</button>
-            `;
         }
         
         function closeModal() {
             document.getElementById('mechanismModal').classList.remove('active');
         }
         
-        function showCurrentObjective() {
-            showMissionIntro(currentLevel);
+        function updateStats() {
+            document.getElementById('goldValue').textContent = gameState.gold;
+            document.getElementById('mechanismCount').textContent = `${gameState.mechanismSolved}/${gameState.mechanismTotal}`;
+            document.getElementById('battleCount').textContent = gameState.battleCount;
+            
+            const fatiguePercent = (gameState.fatigue / gameState.maxFatigue) * 100;
+            document.getElementById('fatigueBar').style.width = `${fatiguePercent}%`;
+            document.getElementById('fatigueText').textContent = gameState.fatigue;
+            
+            const fatigueBar = document.getElementById('fatigueBar');
+            if (gameState.fatigue <= 20) {
+                fatigueBar.style.background = 'linear-gradient(90deg,#8a4a4a,#ff6b6b)';
+                document.getElementById('fatigueText').style.color = '#ff6b6b';
+            } else {
+                fatigueBar.style.background = 'linear-gradient(90deg,#4a8a4a,#6bff6b)';
+                document.getElementById('fatigueText').style.color = '#6bff6b';
+            }
+        }
+        
+        function addLog(text, type = 'info') {
+            const logList = document.getElementById('logList');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = text;
+            logList.insertBefore(entry, logList.firstChild);
         }
         
         function checkObjectives() {
             const obj = gameState.objectives;
-            const level = LEVELS[currentLevel];
-            
             let progressText = '';
             if (obj.mechanisms.current >= obj.mechanisms.target) progressText += '🔧✓ ';
             if (obj.battles && obj.battles.current >= obj.battles.target) progressText += '⚔️✓ ';
-            if (obj.stories && obj.stories.current >= obj.stories.target) progressText += '📜✓ ';
             document.getElementById('objectiveProgress').textContent = progressText;
-            
-            if (obj.stairs) {
-                showSettlement();
-            }
         }
         
         function showSettlement() {
-            // 结算时清除存档
             clearSave();
-            
-            // 保存关卡完成进度（第1关和第2关）
-            if (currentLevel === 1 || currentLevel === 2) {
-                saveLevelProgress(currentLevel, false);
-            }
             
             const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
             const minutes = Math.floor(elapsed / 60);
             const seconds = elapsed % 60;
-            
-            let bonus = 0;
-            if (gameState.objectives.mechanisms.current >= gameState.objectives.mechanisms.target) bonus += 100;
-            if (gameState.objectives.battles && gameState.objectives.battles.current >= gameState.objectives.battles.target) bonus += 50;
-            if (gameState.objectives.stories && gameState.objectives.stories.current >= gameState.objectives.stories.target) bonus += 80;
             
             document.getElementById('settlementContent').innerHTML = `
                 <div class="settlement-title">🎉 探索完成!</div>
@@ -2771,73 +1755,548 @@
                         <div class="stat-value">${minutes}:${seconds.toString().padStart(2, '0')}</div>
                     </div>
                 </div>
-                <div class="rewards-section">
-                    <div class="rewards-title">🎁 结算奖励</div>
-                    <div class="reward-item">💰 基础奖励: 50 金币</div>
-                    <div class="reward-item">⭐ 目标奖励: ${bonus} 金币</div>
-                </div>
-                <button class="start-mission-btn" onclick="exitToLevelSelect()">返回关卡</button>
+                <button class="close-btn" onclick="exitToLevelSelect();closeSettlement();">返回关卡</button>
             `;
-            
             document.getElementById('settlementModal').classList.add('active');
         }
         
-        function updateStats() {
-            document.getElementById('goldValue').textContent = gameState.gold;
-            document.getElementById('mechanismCount').textContent = `${gameState.mechanismSolved}/${gameState.mechanismTotal}`;
-            document.getElementById('battleCount').textContent = gameState.battleCount;
+        function closeSettlement() {
+            document.getElementById('settlementModal').classList.remove('active');
+        }
+        
+        function togglePartyDrawer() { document.getElementById('partyDrawer').classList.toggle('open'); }
+        function toggleLogDrawer() { document.getElementById('logDrawer').classList.toggle('open'); }
+        function toggleStoryDrawer() { document.getElementById('storyDrawer').classList.toggle('open'); }
+        
+        // ==================== 新战斗系统 ====================
+        let battleState = {
+            heroes: [],
+            enemies: [],
+            actionQueue: [],
+            currentIndex: 0,
+            turn: 0,
+            logs: [],
+            isRunning: false,
+            isBoss: false
+        };
+        
+        // 初始化英雄数据
+        function initBattleHeroes() {
+            battleHeroes = [
+                { ...HERO_STATS.tieZhu, id: 'tieZhu', hp: HERO_STATS.tieZhu.hp, maxHp: HERO_STATS.tieZhu.hp, rage: 0 },
+                { ...HERO_STATS.xingJiSi, id: 'xingJiSi', hp: HERO_STATS.xingJiSi.hp, maxHp: HERO_STATS.xingJiSi.hp, rage: 0 },
+                { ...HERO_STATS.moJinShou, id: 'moJinShou', hp: HERO_STATS.moJinShou.hp, maxHp: HERO_STATS.moJinShou.hp, rage: 0 },
+                { ...HERO_STATS.banShanKe, id: 'banShanKe', hp: HERO_STATS.banShanKe.hp, maxHp: HERO_STATS.banShanKe.hp, rage: 0 }
+            ];
+        }
+        
+        // 开始战斗
+        function startBattle(isBoss = false) {
+            battleState.isBoss = isBoss;
+            battleState.turn = 0;
+            battleState.logs = [];
+            battleState.isRunning = false;
             
-            // 更新疲劳度显示（主要资源）
-            const fatiguePercent = (gameState.fatigue / gameState.maxFatigue) * 100;
-            document.getElementById('fatigueBar').style.width = `${fatiguePercent}%`;
-            document.getElementById('fatigueText').textContent = gameState.fatigue;
+            // 初始化英雄
+            initBattleHeroes();
             
-            // 疲劳度低时变色警告
-            const fatigueBar = document.getElementById('fatigueBar');
-            if (gameState.fatigue <= 20) {
-                fatigueBar.style.background = 'linear-gradient(90deg,#8a4a4a,#ff6b6b)';
-                document.getElementById('fatigueText').style.color = '#ff6b6b';
+            // 初始化敌人
+            const enemyCount = isBoss ? 2 : 3;
+            battleState.enemies = [];
+            for (let i = 0; i < enemyCount; i++) {
+                battleState.enemies.push({
+                    id: `enemy_${i}`,
+                    name: isBoss ? '星棺守卫' : '墓穴守卫',
+                    icon: isBoss ? '💀' : '👹',
+                    hp: isBoss ? 120 : 50,
+                    maxHp: isBoss ? 120 : 50,
+                    atk: isBoss ? 18 : 12,
+                    def: isBoss ? 8 : 4,
+                    speed: isBoss ? 75 : 90
+                });
+            }
+            
+            // 构建行动队列（按速度排序）
+            rebuildActionQueue();
+            battleState.turn = 1;
+            
+            // 显示战斗界面
+            document.getElementById('battleTitle').textContent = isBoss ? '💀 Boss战' : '⚔️ 遭遇战斗';
+            document.getElementById('battleModal').classList.add('active');
+            
+            renderBattle();
+            
+            // 开始自动战斗
+            setTimeout(() => {
+                battleState.isRunning = true;
+                executeNextAction();
+            }, 1000);
+        }
+        
+        // 重建行动队列
+        function rebuildActionQueue() {
+            battleState.actionQueue = [];
+            
+            // 添加存活的英雄
+            battleState.heroes.forEach(hero => {
+                if (hero.hp > 0) {
+                    battleState.actionQueue.push({ type: 'hero', id: hero.id, acted: false });
+                }
+            });
+            
+            // 添加存活的敌人
+            battleState.enemies.forEach(enemy => {
+                if (enemy.hp > 0) {
+                    battleState.actionQueue.push({ type: 'enemy', id: enemy.id, acted: false });
+                }
+            });
+            
+            // 按速度排序
+            battleState.actionQueue.sort((a, b) => {
+                const speedA = a.type === 'hero' ? 
+                    battleState.heroes.find(h => h.id === a.id).speed : 
+                    battleState.enemies.find(e => e.id === a.id).speed;
+                const speedB = b.type === 'hero' ? 
+                    battleState.heroes.find(h => h.id === b.id).speed : 
+                    battleState.enemies.find(e => e.id === b.id).speed;
+                return speedB - speedA;
+            });
+        }
+        
+        // 执行下一个行动
+        function executeNextAction() {
+            if (!battleState.isRunning) return;
+            
+            // 找到下一个未行动的角色
+            let nextIndex = -1;
+            for (let i = 0; i < battleState.actionQueue.length; i++) {
+                if (!battleState.actionQueue[i].acted) {
+                    nextIndex = i;
+                    break;
+                }
+            }
+            
+            // 如果所有人都行动过了，开始新回合
+            if (nextIndex === -1) {
+                battleState.turn++;
+                battleState.actionQueue.forEach(a => a.acted = false);
+                rebuildActionQueue();
+                for (let i = 0; i < battleState.actionQueue.length; i++) {
+                    if (!battleState.actionQueue[i].acted) {
+                        nextIndex = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (nextIndex === -1) {
+                endBattle();
+                return;
+            }
+            
+            battleState.currentIndex = nextIndex;
+            const currentAction = battleState.actionQueue[nextIndex];
+            
+            renderBattle();
+            
+            if (currentAction.type === 'hero') {
+                // 英雄行动：自动普攻
+                setTimeout(() => {
+                    heroAutoAttack(currentAction.id);
+                }, 800);
             } else {
-                fatigueBar.style.background = 'linear-gradient(90deg,#4a8a4a,#6bff6b)';
-                document.getElementById('fatigueText').style.color = '#6bff6b';
+                // 敌人行动
+                setTimeout(() => {
+                    enemyAttack(currentAction.id);
+                }, 800);
             }
         }
         
-        function addLog(text, type = 'info') {
-            const logList = document.getElementById('logList');
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.textContent = text;
-            logList.insertBefore(entry, logList.firstChild);
+        // 英雄自动普攻
+        function heroAutoAttack(heroId) {
+            const hero = battleState.heroes.find(h => h.id === heroId);
+            if (!hero || hero.hp <= 0) {
+                battleState.actionQueue.find(a => a.id === heroId).acted = true;
+                executeNextAction();
+                return;
+            }
+            
+            // 找到HP最低的敌人
+            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
+            if (aliveEnemies.length === 0) {
+                endBattle();
+                return;
+            }
+            
+            const target = aliveEnemies.reduce((min, e) => e.hp < min.hp ? e : min);
+            
+            // 计算伤害
+            const damage = calculateDamage(hero.atk, target.def);
+            target.hp = Math.max(0, target.hp - damage);
+            
+            // 获得怒气
+            hero.rage = Math.min(100, hero.rage + 20);
+            
+            addBattleLog(`${hero.icon}${hero.name} 对 ${target.icon}${target.name} 发动普攻，造成 ${damage} 点伤害！`, 'player-attack');
+            
+            // 检查敌人死亡
+            if (target.hp <= 0) {
+                addBattleLog(`${target.icon}${target.name} 被击败了！`, 'enemy-death');
+                hero.rage = Math.min(100, hero.rage + 15); // 击杀额外+15怒气
+            }
+            
+            // 标记为已行动
+            battleState.actionQueue.find(a => a.id === heroId).acted = true;
+            
+            renderBattle();
+            
+            // 检查战斗是否结束
+            setTimeout(() => {
+                if (battleState.enemies.every(e => e.hp <= 0)) {
+                    endBattle();
+                } else {
+                    executeNextAction();
+                }
+            }, 600);
         }
         
-        function togglePartyDrawer() {
-            document.getElementById('partyDrawer').classList.toggle('open');
+        // 英雄释放技能（插队）
+        function heroUseSkill(heroId) {
+            const hero = battleState.heroes.find(h => h.id === heroId);
+            if (!hero || hero.hp <= 0 || hero.rage < 100) return;
+            
+            // 找到HP最低的敌人
+            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
+            if (aliveEnemies.length === 0) return;
+            
+            const target = aliveEnemies.reduce((min, e) => e.hp < min.hp ? e : min);
+            
+            // 技能伤害150%
+            const damage = Math.floor(calculateDamage(hero.atk * 1.5, target.def));
+            target.hp = Math.max(0, target.hp - damage);
+            
+            // 怒气归零
+            hero.rage = 0;
+            
+            addBattleLog(`${hero.icon}${hero.name} 释放技能！对 ${target.icon}${target.name} 造成 ${damage} 点伤害！`, 'player-skill');
+            
+            // 检查敌人死亡
+            if (target.hp <= 0) {
+                addBattleLog(`${target.icon}${target.name} 被击败了！`, 'enemy-death');
+            }
+            
+            renderBattle();
+            
+            // 检查战斗是否结束
+            setTimeout(() => {
+                if (battleState.enemies.every(e => e.hp <= 0)) {
+                    endBattle();
+                }
+            }, 600);
         }
         
-        function toggleLogDrawer() {
-            document.getElementById('logDrawer').classList.toggle('open');
+        // 敌人攻击
+        function enemyAttack(enemyId) {
+            const enemy = battleState.enemies.find(e => e.id === enemyId);
+            if (!enemy || enemy.hp <= 0) {
+                battleState.actionQueue.find(a => a.id === enemyId).acted = true;
+                executeNextAction();
+                return;
+            }
+            
+            // 找到HP最高的英雄
+            const aliveHeroes = battleState.heroes.filter(h => h.hp > 0);
+            if (aliveHeroes.length === 0) {
+                endBattle();
+                return;
+            }
+            
+            const target = aliveHeroes.reduce((max, h) => h.hp > max.hp ? h : max);
+            
+            // 计算伤害
+            const damage = calculateDamage(enemy.atk, target.def);
+            target.hp = Math.max(0, target.hp - damage);
+            
+            // 目标获得怒气
+            target.rage = Math.min(100, target.rage + 5);
+            
+            addBattleLog(`${enemy.icon}${enemy.name} 对 ${target.icon}${target.name} 发动攻击，造成 ${damage} 点伤害！`, 'enemy-attack');
+            
+            // 检查英雄死亡
+            if (target.hp <= 0) {
+                addBattleLog(`${target.icon}${target.name} 倒下了...`, 'hero-death');
+            }
+            
+            // 标记为已行动
+            battleState.actionQueue.find(a => a.id === enemyId).acted = true;
+            
+            renderBattle();
+            
+            // 检查战斗是否结束
+            setTimeout(() => {
+                if (battleState.heroes.every(h => h.hp <= 0)) {
+                    endBattle();
+                } else {
+                    executeNextAction();
+                }
+            }, 600);
         }
         
+        // 计算伤害
+        function calculateDamage(atk, def) {
+            const baseDamage = Math.max(1, atk - def);
+            const variance = Math.floor(Math.random() * 5) - 2;
+            return Math.max(1, baseDamage + variance);
+        }
+        
+        // 添加战斗日志
+        function addBattleLog(text, type) {
+            battleState.logs.push({ text, type });
+            if (battleState.logs.length > 50) {
+                battleState.logs.shift();
+            }
+        }
+        
+        // 渲染战斗界面
+        function renderBattle() {
+            // 更新回合数
+            document.getElementById('battleTurn').textContent = `回合 ${battleState.turn}`;
+            
+            // 复制英雄数据到战斗状态
+            battleState.heroes = [...battleHeroes];
+            
+            // 渲染敌人区域
+            const enemyArea = document.getElementById('enemyArea');
+            enemyArea.innerHTML = battleState.enemies.map(e => `
+                <div class="enemy-unit ${e.hp <= 0 ? 'dead' : ''}">
+                    <div class="enemy-icon">${e.icon}</div>
+                    <div class="enemy-name">${e.name}</div>
+                    <div class="enemy-hp-bar">
+                        <div class="enemy-hp-fill" style="width:${(e.hp/e.maxHp)*100}%"></div>
+                    </div>
+                    <div class="enemy-hp-text">${e.hp}/${e.maxHp}</div>
+                </div>
+            `).join('');
+            
+            // 渲染行动条
+            const actionBarArea = document.getElementById('actionBarArea');
+            const currentAction = battleState.actionQueue[battleState.currentIndex];
+            
+            actionBarArea.innerHTML = battleState.actionQueue.map((action, idx) => {
+                const isHero = action.type === 'hero';
+                const unit = isHero ? 
+                    battleState.heroes.find(h => h.id === action.id) : 
+                    battleState.enemies.find(e => e.id === action.id);
+                const isCurrent = idx === battleState.currentIndex;
+                const isDead = unit.hp <= 0;
+                
+                return `
+                    <div class="action-slot ${action.type} ${isCurrent ? 'current' : ''} ${action.acted || isDead ? 'acted' : ''}">
+                        <div class="action-icon">${unit.icon}</div>
+                        <div class="action-name">${unit.name}</div>
+                    </div>
+                `;
+            }).join('<span class="action-arrow">→</span>');
+            
+            // 渲染英雄区域
+            const heroArea = document.getElementById('heroArea');
+            const currentHeroAction = currentAction && currentAction.type === 'hero' ? currentAction.id : null;
+            
+            heroArea.innerHTML = battleState.heroes.map(h => {
+                const isDead = h.hp <= 0;
+                const isRageReady = h.rage >= 100;
+                const isCurrentTurn = h.id === currentHeroAction;
+                const isClickable = !isDead && isRageReady && battleState.isRunning;
+                
+                return `
+                    <div class="hero-unit ${isDead ? 'dead' : ''} ${isRageReady ? 'ready' : ''} ${isCurrentTurn ? 'current-turn' : ''}"
+                         ${isClickable ? `onclick="heroUseSkill('${h.id}')"` : ''}>
+                        <div class="hero-icon">${h.icon}</div>
+                        <div class="hero-name">${h.name}</div>
+                        <div class="hero-hp-bar">
+                            <div class="hero-hp-fill" style="width:${(h.hp/h.maxHp)*100}%"></div>
+                        </div>
+                        <div class="hero-hp-text">${h.hp}/${h.maxHp}</div>
+                        <div class="rage-bar">
+                            <div class="rage-fill ${h.rage >= 100 ? 'full' : ''}" style="width:${h.rage}%"></div>
+                        </div>
+                        <div class="rage-text ${h.rage >= 100 ? 'full' : ''}">
+                            ${h.rage >= 100 ? '★ 可放技能' : `怒气 ${h.rage}/100`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // 渲染战斗日志
+            const battleLog = document.getElementById('battleLog');
+            battleLog.innerHTML = battleState.logs.slice(-8).map(log => `
+                <div class="battle-log-entry ${log.type}">${log.text}</div>
+            `).join('');
+            battleLog.scrollTop = battleLog.scrollHeight;
+            
+            // 渲染操作按钮
+            const battleActions = document.getElementById('battleActions');
+            battleActions.innerHTML = `
+                <button class="battle-btn retreat" onclick="doBattleRetreat()">撤退</button>
+            `;
+        }
+        
+        // 结束战斗
+        function endBattle() {
+            battleState.isRunning = false;
+            
+            // 检查胜负
+            const allEnemiesDead = battleState.enemies.every(e => e.hp <= 0);
+            const allHeroesDead = battleState.heroes.every(h => h.hp <= 0);
+            
+            if (allEnemiesDead) {
+                // 胜利
+                battleVictory();
+            } else if (allHeroesDead) {
+                // 失败
+                battleDefeat();
+            }
+        }
+        
+        // 战斗胜利
+        function battleVictory() {
+            gameState.battleCount++;
+            gameState.killedEnemies += battleState.enemies.filter(e => e.hp <= 0).length;
+            gameState.objectives.battles.current++;
+            
+            // 计算总HP损失
+            let totalDamage = 0;
+            battleState.heroes.forEach(h => {
+                totalDamage += (h.maxHp - h.hp);
+            });
+            
+            // 疲劳消耗=HP损失
+            gameState.fatigue = Math.max(0, gameState.fatigue - totalDamage);
+            
+            // 英雄HP回满
+            battleState.heroes.forEach(h => {
+                h.hp = h.maxHp;
+            });
+            battleHeroes = [...battleState.heroes];
+            
+            // 奖励金币
+            const goldReward = battleState.isBoss ? 100 : 50;
+            gameState.gold += goldReward;
+            
+            const isPerfect = gameState.killedEnemies >= gameState.totalEnemies;
+            const bonusGold = isPerfect ? 100 : 0;
+            gameState.gold += bonusGold;
+            
+            // 显示胜利界面
+            document.getElementById('battleLog').innerHTML += `
+                <div class="battle-log-entry" style="text-align:center;font-size:14px;color:#6bff6b;padding:10px;">
+                    🎉 战斗胜利！获得 ${goldReward} 金币！
+                </div>
+            `;
+            
+            setTimeout(() => {
+                document.getElementById('battleModal').classList.remove('active');
+                
+                // 如果是Boss战（星棺）
+                if (battleState.isBoss) {
+                    completeLevel3(isPerfect);
+                } else {
+                    addLog(`战斗胜利！获得 ${goldReward} 金币`, 'success');
+                    updateStats();
+                    renderParty();
+                    saveGame();
+                }
+            }, 1500);
+        }
+        
+        // 战斗失败
+        function battleDefeat() {
+            document.getElementById('battleLog').innerHTML += `
+                <div class="battle-log-entry" style="text-align:center;font-size:14px;color:#ff6b6b;padding:10px;">
+                    💀 队伍全军覆没...
+                </div>
+            `;
+            
+            setTimeout(() => {
+                document.getElementById('battleModal').classList.remove('active');
+                addLog('战斗失败...勉强撤退', 'danger');
+                
+                // 撤退惩罚
+                gameState.fatigue = Math.max(0, gameState.fatigue - 15);
+                gameState.hp = gameState.maxHp;
+                
+                // 英雄HP回满
+                battleState.heroes.forEach(h => {
+                    h.hp = h.maxHp;
+                    h.rage = 0;
+                });
+                battleHeroes = [...battleState.heroes];
+                
+                updateStats();
+                renderParty();
+            }, 1500);
+        }
+        
+        // 撤退
+        function doBattleRetreat() {
+            battleState.isRunning = false;
+            document.getElementById('battleModal').classList.remove('active');
+            
+            // 英雄HP回满
+            battleState.heroes.forEach(h => {
+                h.hp = h.maxHp;
+                h.rage = 0;
+            });
+            battleHeroes = [...battleState.heroes];
+            
+            // 撤退惩罚
+            gameState.fatigue = Math.max(0, gameState.fatigue - 10);
+            addLog('撤退成功，消耗 10 点疲劳度', 'info');
+            updateStats();
+            renderParty();
+        }
+        
+        // 第三关通关
+        function completeLevel3(isPerfect) {
+            const modal = document.getElementById('missionModal');
+            const content = document.getElementById('missionContent');
+            
+            content.innerHTML = `
+                <div class="mechanism-title">🎉 关卡完成</div>
+                <div style="text-align:center;padding:20px;">
+                    <div style="font-size:48px;">⚰️</div>
+                    <div style="color:#d4af37;margin-top:10px;">星陨古墓</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.3);padding:15px;border-radius:8px;">
+                    <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                        <span>击杀敌人</span>
+                        <span>${gameState.killedEnemies}/${gameState.totalEnemies}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                        <span>剩余疲劳度</span>
+                        <span>${gameState.fatigue}/${gameState.maxFatigue}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin:5px 0;color:#ffd700;">
+                        <span>获得金币</span>
+                        <span>+${150 + (isPerfect ? 100 : 0)}</span>
+                    </div>
+                </div>
+                ${isPerfect ? '<div style="color:#6bff6b;text-align:center;margin-top:10px;">⭐ 完美通关！</div>' : ''}
+                <button class="close-btn" onclick="exitToLevelSelect();closeMissionModal();" style="margin-top:15px;">返回关卡选择</button>
+            `;
+            
+            modal.classList.add('active');
+            updateStats();
+            saveGame();
+        }
+        
+        // 初始化
         window.addEventListener('resize', scrollToPlayer);
         
-        // 页面加载时检测存档
         window.addEventListener('DOMContentLoaded', function() {
-            // 更新关卡卡片显示
-            updateLevelCards();
-            
-            // 延迟检查存档，等UI渲染完成
-            setTimeout(() => {
-                checkSavedGame();
-            }, 100);
-        });
-        
-        // 页面关闭前保存
-        window.addEventListener('beforeunload', function() {
-            // 如果正在游戏中，保存进度
-            if (document.getElementById('gameContainer').style.display !== 'none') {
-                saveGame();
-            }
+            // 初始化英雄数据
+            initBattleHeroes();
+            renderParty();
         });
     </script>
 </body>
