@@ -137,6 +137,17 @@
             color: #666;
         }
         
+        .level-tag.completed {
+            background: #2a4a3a;
+            color: #6bff6b;
+        }
+        
+        .level-tag.perfect {
+            background: linear-gradient(135deg, #4a3a5a, #3a4a5a);
+            color: #ffd700;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
         .level-desc {
             font-size: 13px;
             color: #999;
@@ -1285,12 +1296,14 @@
             document.getElementById('gameContainer').style.display = 'none';
             document.getElementById('levelSelectScreen').classList.remove('hidden');
             document.getElementById('logList').innerHTML = '';
-            // 退出时不清除存档，允许下次继续
+            // 退出时更新关卡卡片显示
+            updateLevelCards();
         }
         
         // ==================== 存档系统 ====================
         const SAVE_VERSION = 1; // 存档版本号，改版时递增
         const SAVE_KEY = 'cangqiongjie_dungeon_save';
+        const LEVEL_PROGRESS_KEY = 'cangqiongjie_level_progress'; // 关卡完成进度
         
         // 保存游戏
         function saveGame() {
@@ -1351,10 +1364,62 @@
             localStorage.removeItem(SAVE_KEY);
         }
         
+        // 保存关卡完成进度
+        function saveLevelProgress(levelId, isPerfect = false) {
+            try {
+                const progressStr = localStorage.getItem(LEVEL_PROGRESS_KEY) || '{}';
+                const progress = JSON.parse(progressStr);
+                progress[levelId] = {
+                    completed: true,
+                    isPerfect: isPerfect,
+                    completedAt: Date.now()
+                };
+                localStorage.setItem(LEVEL_PROGRESS_KEY, JSON.stringify(progress));
+                console.log(`关卡 ${levelId} 完成进度已保存`);
+            } catch (e) {
+                console.error('保存关卡进度失败:', e);
+            }
+        }
+        
+        // 加载关卡完成进度
+        function loadLevelProgress() {
+            try {
+                const progressStr = localStorage.getItem(LEVEL_PROGRESS_KEY);
+                return progressStr ? JSON.parse(progressStr) : {};
+            } catch (e) {
+                console.error('读取关卡进度失败:', e);
+                return {};
+            }
+        }
+        
+        // 更新关卡卡片显示
+        function updateLevelCards() {
+            const progress = loadLevelProgress();
+            
+            // 遍历所有关卡卡片
+            document.querySelectorAll('.level-card').forEach((card, index) => {
+                const levelId = index + 1;
+                const levelProgress = progress[levelId];
+                const tagEl = card.querySelector('.level-tag');
+                
+                if (levelProgress && levelProgress.completed) {
+                    // 已完成
+                    if (levelProgress.isPerfect) {
+                        tagEl.textContent = '⭐ 完美通关';
+                        tagEl.className = 'level-tag perfect';
+                    } else {
+                        tagEl.textContent = '✓ 已通关';
+                        tagEl.className = 'level-tag completed';
+                    }
+                }
+            });
+        }
+        
         // 重置所有数据
         function resetAllData() {
             if (confirm('确定要重置所有数据吗？这将清除所有存档和进度。')) {
                 localStorage.removeItem(SAVE_KEY);
+                localStorage.removeItem(LEVEL_PROGRESS_KEY);
                 location.reload();
             }
         }
@@ -2412,6 +2477,9 @@
             const bonusGold = isPerfect ? 200 : 0;
             gameState.gold += bonusGold;
             
+            // 保存关卡完成进度
+            saveLevelProgress(3, isPerfect);
+            
             const modal = document.getElementById('missionModal');
             const content = document.getElementById('missionContent');
             
@@ -2690,6 +2758,11 @@
             // 结算时清除存档
             clearSave();
             
+            // 保存关卡完成进度（第1关和第2关）
+            if (currentLevel === 1 || currentLevel === 2) {
+                saveLevelProgress(currentLevel, false);
+            }
+            
             const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
             const minutes = Math.floor(elapsed / 60);
             const seconds = elapsed % 60;
@@ -2763,6 +2836,9 @@
         
         // 页面加载时检测存档
         window.addEventListener('DOMContentLoaded', function() {
+            // 更新关卡卡片显示
+            updateLevelCards();
+            
             // 延迟检查存档，等UI渲染完成
             setTimeout(() => {
                 checkSavedGame();
