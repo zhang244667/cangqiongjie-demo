@@ -2710,31 +2710,6 @@
             document.getElementById('mechanismModal').classList.remove('active');
         }
         
-        function showBattleModal(isBoss = false) {
-            gameState.battleCount++;
-            gameState.objectives.battles.current++;
-            
-            const goldReward = isBoss ? Math.floor(Math.random() * 100) + 50 : Math.floor(Math.random() * 30) + 10;
-            gameState.gold += goldReward;
-            
-            const modal = document.getElementById('mechanismModal');
-            const content = document.getElementById('modalContent');
-            
-            content.innerHTML = `
-                <div class="mechanism-image">${isBoss ? '💀' : '👹'}</div>
-                <div class="mechanism-title">${isBoss ? '古墓守护者' : '墓穴怪物'}</div>
-                <div class="result-box success">
-                    战斗胜利！获得 ${goldReward} 金币
-                </div>
-                <button class="close-btn" onclick="closeModal()">继续探索</button>
-            `;
-            
-            modal.classList.add('active');
-            addLog(`战斗胜利！获得 ${goldReward} 金币`, 'success');
-            updateStats();
-            checkObjectives();
-        }
-        
         function showCurrentObjective() {
             showMissionIntro(currentLevel);
         }
