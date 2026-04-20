@@ -882,18 +882,12 @@
     <div class="game-container" id="gameContainer" style="display: none;">
         <div class="top-bar">
             <div class="floor-info" id="levelTitle">📍 地宫</div>
-            <div class="hp-container">
-                <div class="hp-bar-wrapper">
-                    <div class="hp-bar-fill" id="hpBar"></div>
+            <div class="fatigue-container" style="display:flex;align-items:center;gap:5px;flex:1;">
+                <span style="font-size:14px;">💚</span>
+                <div class="hp-bar-wrapper" style="flex:1;height:10px;max-width:150px;">
+                    <div class="hp-bar-fill" id="fatigueBar" style="background:linear-gradient(90deg,#4a8a4a,#6bff6b);"></div>
                 </div>
-                <div class="hp-text" id="hpText">100%</div>
-            </div>
-            <div class="fatigue-container" style="display:flex;align-items:center;gap:5px;">
-                <span style="font-size:12px;">💚</span>
-                <div class="hp-bar-wrapper" style="width:60px;height:8px;">
-                    <div class="hp-bar-fill" id="fatigueBar" style="background:#6bff6b;"></div>
-                </div>
-                <span id="fatigueText" style="font-size:10px;color:#6bff6b;">100</span>
+                <span id="fatigueText" style="font-size:12px;color:#6bff6b;font-weight:bold;">100</span>
             </div>
             <div class="torch-info">
                 🔥 <span id="torchValue">∞</span>
@@ -2405,9 +2399,11 @@
                 const hpLost = gameState.maxHp - battleState.playerHp;
                 gameState.fatigue = Math.max(0, gameState.fatigue - hpLost);
                 
+                // HP自动回满（每场战斗独立）
+                gameState.hp = gameState.maxHp;
+                
                 const goldReward = enemyConfig.gold;
                 gameState.gold += goldReward;
-                gameState.hp = battleState.playerHp;
                 
                 content.innerHTML = `
                     <div class="mechanism-type" style="background:#2a4a3a;">✓ 战斗胜利</div>
@@ -2418,12 +2414,16 @@
                     </div>
                     <div style="background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;margin-top:10px;">
                         <div style="display:flex;justify-content:space-between;margin:5px 0;">
-                            <span style="color:#aaa;">剩余生命</span>
-                            <span style="color:#6bcfff;">${battleState.playerHp}/${gameState.maxHp} (-${hpLost})</span>
+                            <span style="color:#aaa;">本战损耗</span>
+                            <span style="color:#6bcfff;">-${hpLost} HP</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;margin:5px 0;">
                             <span style="color:#aaa;">疲劳消耗</span>
                             <span style="color:#ff6b6b;">-${hpLost}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin:5px 0;">
+                            <span style="color:#aaa;">生命恢复</span>
+                            <span style="color:#6bff6b;">✓ 已回满</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;margin:5px 0;">
                             <span style="color:#aaa;">获得金币</span>
@@ -2459,9 +2459,13 @@
             
             // 撤退
             window.doRetreat = () => {
-                gameState.hp = Math.max(15, battleState.playerHp);
+                // 撤退也要消耗疲劳（惩罚性消耗）
+                const retreatFatigueCost = 15;
+                gameState.fatigue = Math.max(0, gameState.fatigue - retreatFatigueCost);
+                // HP恢复满（每场战斗独立）
+                gameState.hp = gameState.maxHp;
                 closeModal();
-                addLog('从战斗中撤退，损失了一些体力...', 'danger');
+                addLog(`撤退成功，消耗 ${retreatFatigueCost} 疲劳度`, 'danger');
                 updateStats();
             };
             
@@ -2779,16 +2783,24 @@
         }
         
         function updateStats() {
-            document.getElementById('hpBar').style.width = `${gameState.hp}%`;
-            document.getElementById('hpText').textContent = `${gameState.hp}%`;
             document.getElementById('goldValue').textContent = gameState.gold;
             document.getElementById('mechanismCount').textContent = `${gameState.mechanismSolved}/${gameState.mechanismTotal}`;
             document.getElementById('battleCount').textContent = gameState.battleCount;
             
-            // 更新疲劳度显示
+            // 更新疲劳度显示（主要资源）
             const fatiguePercent = (gameState.fatigue / gameState.maxFatigue) * 100;
             document.getElementById('fatigueBar').style.width = `${fatiguePercent}%`;
             document.getElementById('fatigueText').textContent = gameState.fatigue;
+            
+            // 疲劳度低时变色警告
+            const fatigueBar = document.getElementById('fatigueBar');
+            if (gameState.fatigue <= 20) {
+                fatigueBar.style.background = 'linear-gradient(90deg,#8a4a4a,#ff6b6b)';
+                document.getElementById('fatigueText').style.color = '#ff6b6b';
+            } else {
+                fatigueBar.style.background = 'linear-gradient(90deg,#4a8a4a,#6bff6b)';
+                document.getElementById('fatigueText').style.color = '#6bff6b';
+            }
         }
         
         function addLog(text, type = 'info') {
