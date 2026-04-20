@@ -2050,13 +2050,15 @@
         
         function handleCellType(originalType, x, y) {
             const cell = gameState.map[y][x];
+            const level = LEVELS[currentLevel];
             
             switch (originalType) {
                 case 'enemy':
-                    if (currentLevel === 3) {
+                    // 第3关启用完整战斗系统，其他关卡显示简单提示
+                    if (level && level.hasCombat) {
                         showBattleModal();
                     } else {
-                        addLog('遭遇敌人！', 'danger');
+                        addLog('遭遇敌人！（战斗系统仅第3关可用）', 'danger');
                     }
                     break;
                 case 'chest':
@@ -2071,7 +2073,11 @@
                     showMechanismModal(originalType.replace('mechanism-', ''), cell);
                     break;
                 case 'boss':
-                    showBattleModal(true);
+                    if (level && level.hasCombat) {
+                        showBattleModal(true);
+                    } else {
+                        addLog('遭遇Boss！（战斗系统仅第3关可用）', 'danger');
+                    }
                     break;
                 case 'coffin':
                     showCoffinModal();
