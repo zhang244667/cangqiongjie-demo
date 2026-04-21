@@ -3450,6 +3450,22 @@
             initBattleHeroes();
             renderParty();
             updateLevelCards();
+            
+            // 移动端兼容：动态绑定关卡卡片点击事件
+            document.querySelectorAll('.level-card').forEach((card, index) => {
+                const levelId = index + 1;
+                // 同时绑定 click 和 touchend 事件
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showMissionIntro(levelId);
+                });
+                card.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    showMissionIntro(levelId);
+                });
+            });
+            
+            console.log('关卡卡片事件绑定完成，共', document.querySelectorAll('.level-card').length, '个');
         });
     </script>
 </body>
