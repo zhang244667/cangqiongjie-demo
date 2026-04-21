@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>《苍穹劫》地宫探索 Demo v9 - 战斗音效版</title>
+    <title>《苍穹劫》地宫探索 Demo v7 - 新战斗系统</title>
     <style>
         * {
             margin: 0;
@@ -995,557 +995,6 @@
             100% { opacity: 0; transform: translateY(-30px) scale(0.8); }
         }
         
-        /* ========== 战斗动效系统 ========== */
-        
-        /* 伤害/治疗飘字 */
-        .damage-number {
-            position: absolute;
-            font-size: 20px;
-            font-weight: bold;
-            color: #ff4444;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,68,68,0.5);
-            animation: damage-float 0.8s ease-out forwards;
-            pointer-events: none;
-            z-index: 2100;
-            font-family: 'Arial Black', sans-serif;
-        }
-        
-        .damage-number.heal {
-            color: #44ff44;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(68,255,68,0.5);
-        }
-        
-        .damage-number.crit {
-            color: #ffcc00;
-            font-size: 28px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 15px rgba(255,204,0,0.8), 0 0 30px rgba(255,204,0,0.4);
-            animation: crit-float 0.8s ease-out forwards;
-        }
-        
-        .damage-number.miss {
-            color: #888;
-            font-size: 14px;
-            font-style: italic;
-        }
-        
-        @keyframes damage-float {
-            0% { opacity: 1; transform: translateY(0) scale(0.5); }
-            20% { opacity: 1; transform: translateY(-10px) scale(1.2); }
-            40% { transform: translateY(-15px) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(0.6); }
-        }
-        
-        @keyframes crit-float {
-            0% { opacity: 1; transform: translateY(0) scale(0.3) rotate(-10deg); }
-            10% { opacity: 1; transform: translateY(-5px) scale(1.4) rotate(5deg); }
-            20% { opacity: 1; transform: translateY(-15px) scale(1.2) rotate(-3deg); }
-            40% { transform: translateY(-25px) scale(1.1) rotate(2deg); }
-            60% { transform: translateY(-35px) scale(1.05) rotate(-1deg); }
-            100% { opacity: 0; transform: translateY(-60px) scale(0.5) rotate(0deg); }
-        }
-        
-        /* 受击抖动效果 */
-        .shake {
-            animation: shake 0.3s ease-in-out;
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-8px) rotate(-2deg); }
-            40% { transform: translateX(8px) rotate(2deg); }
-            60% { transform: translateX(-5px) rotate(-1deg); }
-            80% { transform: translateX(5px) rotate(1deg); }
-        }
-        
-        /* 严重抖动（Boss受击） */
-        .shake-heavy {
-            animation: shake-heavy 0.4s ease-in-out;
-        }
-        
-        @keyframes shake-heavy {
-            0%, 100% { transform: translateX(0) translateY(0); }
-            10% { transform: translateX(-10px) translateY(-3px); }
-            20% { transform: translateX(10px) translateY(3px); }
-            30% { transform: translateX(-8px) translateY(-2px); }
-            40% { transform: translateX(8px) translateY(2px); }
-            50% { transform: translateX(-6px) translateY(-2px); }
-            60% { transform: translateX(6px) translateY(2px); }
-            70% { transform: translateX(-4px) translateY(-1px); }
-            80% { transform: translateX(4px) translateY(1px); }
-            90% { transform: translateX(-2px); }
-        }
-        
-        /* 屏幕震动效果 */
-        .screen-shake {
-            animation: screen-shake 0.3s ease-in-out;
-        }
-        
-        @keyframes screen-shake {
-            0%, 100% { transform: translate(0, 0); }
-            10% { transform: translate(-5px, -3px); }
-            20% { transform: translate(5px, 3px); }
-            30% { transform: translate(-4px, -2px); }
-            40% { transform: translate(4px, 2px); }
-            50% { transform: translate(-3px, -1px); }
-            60% { transform: translate(3px, 1px); }
-            70% { transform: translate(-2px, -1px); }
-            80% { transform: translate(2px, 1px); }
-            90% { transform: translate(-1px, 0); }
-        }
-        
-        /* 闪烁效果（受击） */
-        .flash-red {
-            animation: flash-red 0.3s ease-out;
-        }
-        
-        @keyframes flash-red {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(2) saturate(1.5) hue-rotate(-10deg); background-color: rgba(255,100,100,0.4); }
-        }
-        
-        /* 死亡淡出 */
-        .death-fade {
-            animation: death-fade 0.6s ease-out forwards;
-        }
-        
-        @keyframes death-fade {
-            0% { opacity: 1; transform: scale(1); filter: grayscale(0); }
-            30% { opacity: 0.8; transform: scale(1.1); }
-            100% { opacity: 0.2; transform: scale(0.8); filter: grayscale(1); }
-        }
-        
-        /* 怒气满发光脉冲 */
-        .rage-ready-glow {
-            animation: rage-ready-glow 1s ease-in-out infinite;
-        }
-        
-        @keyframes rage-ready-glow {
-            0%, 100% { 
-                box-shadow: 0 0 10px rgba(255,165,0,0.4), 
-                            inset 0 0 5px rgba(255,165,0,0.2);
-            }
-            50% { 
-                box-shadow: 0 0 25px rgba(255,165,0,0.8), 
-                            inset 0 0 15px rgba(255,165,0,0.4),
-                            0 0 40px rgba(255,200,0,0.3);
-            }
-        }
-        
-        /* 星星闪烁 */
-        .star-blink {
-            animation: star-blink 0.5s ease-in-out infinite;
-        }
-        
-        @keyframes star-blink {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-        
-        /* 行动条当前角色高亮 */
-        .action-slot.current {
-            transform: scale(1.15);
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
-            border: 2px solid #d4af37;
-            animation: current-pulse 1s ease-in-out infinite;
-            z-index: 10;
-        }
-        
-        @keyframes current-pulse {
-            0%, 100% { 
-                transform: scale(1.15);
-                box-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-            }
-            50% { 
-                transform: scale(1.2);
-                box-shadow: 0 0 25px rgba(212, 175, 55, 0.9);
-            }
-        }
-        
-        /* 行动条过渡动画 */
-        .action-slot {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* ========== 英雄技能特效 ========== */
-        
-        /* 通用特效容器 */
-        .skill-effect-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2090;
-        }
-        
-        /* 铁柱 - 冲锋特效 */
-        .charge-effect {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,200,100,0.8) 0%, rgba(255,150,50,0.4) 50%, transparent 70%);
-            animation: charge-forward 0.4s ease-in forwards;
-        }
-        
-        @keyframes charge-forward {
-            0% { transform: translateX(0) scale(1); opacity: 1; }
-            50% { transform: translateX(80px) scale(1.3); opacity: 1; }
-            100% { transform: translateX(150px) scale(0.5); opacity: 0; }
-        }
-        
-        /* 铁柱 - 冲击波 */
-        .shockwave {
-            position: absolute;
-            border-radius: 50%;
-            border: 4px solid rgba(255,200,100,0.8);
-            animation: shockwave-expand 0.5s ease-out forwards;
-        }
-        
-        @keyframes shockwave-expand {
-            0% { transform: scale(0); opacity: 1; border-width: 8px; }
-            100% { transform: scale(3); opacity: 0; border-width: 1px; }
-        }
-        
-        /* 星祭司 - 星星粒子 */
-        .star-particle {
-            position: absolute;
-            font-size: 20px;
-            animation: star-fall 0.6s ease-in forwards;
-        }
-        
-        @keyframes star-fall {
-            0% { transform: translateY(-50px) rotate(0deg) scale(0); opacity: 0; }
-            20% { opacity: 1; transform: translateY(-30px) rotate(72deg) scale(1.2); }
-            80% { opacity: 1; }
-            100% { transform: translateY(30px) rotate(360deg) scale(0.3); opacity: 0; }
-        }
-        
-        /* 星祭司 - 星辰光柱 */
-        .star-beam {
-            position: absolute;
-            width: 80px;
-            height: 300px;
-            background: linear-gradient(180deg, 
-                rgba(148,0,211,0) 0%,
-                rgba(148,0,211,0.3) 20%,
-                rgba(148,0,211,0.8) 50%,
-                rgba(75,0,130,0.6) 80%,
-                rgba(138,43,226,0.3) 100%);
-            animation: beam-fall 0.6s ease-out forwards;
-            filter: blur(3px);
-        }
-        
-        @keyframes beam-fall {
-            0% { transform: translateY(-300px) scaleY(0.5); opacity: 0; }
-            30% { transform: translateY(0) scaleY(1.2); opacity: 1; }
-            70% { transform: translateY(0) scaleY(1); opacity: 0.8; }
-            100% { transform: translateY(50px) scaleY(0.8); opacity: 0; }
-        }
-        
-        /* 紫色粒子扩散 */
-        .purple-particle {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: radial-gradient(circle, #da70d6 0%, #9400d3 100%);
-            border-radius: 50%;
-            animation: particle-spread 0.8s ease-out forwards;
-        }
-        
-        @keyframes particle-spread {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-        }
-        
-        /* 摸金手 - 金色符文 */
-        .rune-particle {
-            position: absolute;
-            font-size: 18px;
-            color: #ffd700;
-            text-shadow: 0 0 10px rgba(255,215,0,0.8);
-            animation: rune-fly 0.5s ease-in forwards;
-        }
-        
-        @keyframes rune-fly {
-            0% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
-            50% { transform: translate(60px, -20px) rotate(180deg) scale(1.2); opacity: 1; }
-            100% { transform: translate(120px, 0) rotate(360deg) scale(0.5); opacity: 0; }
-        }
-        
-        /* 摸金手 - 罗盘旋转 */
-        .compass-spin {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            border: 4px solid transparent;
-            border-top-color: #ffd700;
-            border-bottom-color: #ffd700;
-            border-radius: 50%;
-            animation: compass-rotate 0.8s linear infinite, compass-glow 0.5s ease-out forwards;
-        }
-        
-        @keyframes compass-rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        @keyframes compass-glow {
-            0% { box-shadow: 0 0 20px rgba(255,215,0,0.5); }
-            50% { box-shadow: 0 0 50px rgba(255,215,0,0.9), 0 0 80px rgba(255,215,0,0.5); }
-            100% { box-shadow: 0 0 30px rgba(255,215,0,0.6); opacity: 0; }
-        }
-        
-        /* 金色光波 */
-        .golden-wave {
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            border: 6px solid rgba(255,215,0,0.8);
-            border-radius: 50%;
-            animation: golden-wave-expand 0.6s ease-out forwards;
-        }
-        
-        @keyframes golden-wave-expand {
-            0% { transform: scale(0); opacity: 1; border-width: 10px; }
-            50% { opacity: 0.8; }
-            100% { transform: scale(2); opacity: 0; border-width: 2px; }
-        }
-        
-        /* 搬山客 - 齿轮飞向 */
-        .gear-particle {
-            position: absolute;
-            font-size: 22px;
-            animation: gear-fly 0.5s ease-in forwards;
-        }
-        
-        @keyframes gear-fly {
-            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-            30% { transform: translate(40px, -10px) rotate(108deg); }
-            60% { transform: translate(80px, 5px) rotate(216deg); }
-            100% { transform: translate(120px, 0) rotate(360deg); opacity: 0; }
-        }
-        
-        /* 搬山客 - 机械火焰 */
-        .mech-flame {
-            position: absolute;
-            width: 120px;
-            height: 60px;
-            background: linear-gradient(90deg, 
-                rgba(255,100,0,0) 0%,
-                rgba(255,150,0,0.6) 30%,
-                rgba(255,200,0,0.9) 50%,
-                rgba(255,150,0,0.6) 70%,
-                rgba(255,100,0,0) 100%);
-            clip-path: polygon(0% 50%, 30% 0%, 50% 30%, 70% 0%, 100% 50%, 70% 100%, 50% 70%, 30% 100%);
-            animation: flame-burst 0.5s ease-out forwards;
-            filter: blur(2px);
-        }
-        
-        @keyframes flame-burst {
-            0% { transform: scaleX(0.3) scaleY(0.5); opacity: 0; }
-            30% { transform: scaleX(1.2) scaleY(1.3); opacity: 1; }
-            60% { transform: scaleX(1) scaleY(1); opacity: 0.8; }
-            100% { transform: scaleX(1.5) scaleY(0.6); opacity: 0; }
-        }
-        
-        /* 机械展开 */
-        .mech-expand {
-            position: absolute;
-            width: 150px;
-            height: 80px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            animation: mech-unfold 0.6s ease-out forwards;
-        }
-        
-        .mech-arm {
-            position: absolute;
-            width: 40px;
-            height: 8px;
-            background: linear-gradient(90deg, #666, #888, #666);
-            border-radius: 4px;
-        }
-        
-        .mech-arm.left { left: 0; transform-origin: right center; animation: arm-left 0.6s ease-out forwards; }
-        .mech-arm.right { right: 0; transform-origin: left center; animation: arm-right 0.6s ease-out forwards; }
-        
-        @keyframes arm-left {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(-45deg); }
-            100% { transform: rotate(-30deg); }
-        }
-        
-        @keyframes arm-right {
-            0% { transform: rotate(0deg); }
-            50% { transform: rotate(45deg); }
-            100% { transform: rotate(30deg); }
-        }
-        
-        @keyframes mech-unfold {
-            0% { opacity: 0; transform: scale(0.5); }
-            40% { opacity: 1; transform: scale(1.2); }
-            100% { opacity: 0; transform: scale(1); }
-        }
-        
-        /* 普攻特效闪光 */
-        .attack-flash {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,200,0.5) 40%, transparent 70%);
-            border-radius: 50%;
-            animation: flash-pop 0.3s ease-out forwards;
-            pointer-events: none;
-        }
-        
-        @keyframes flash-pop {
-            0% { transform: scale(0); opacity: 1; }
-            50% { transform: scale(1.5); opacity: 0.8; }
-            100% { transform: scale(2); opacity: 0; }
-        }
-        
-        /* 技能释放光芒 */
-        .skill-glow {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,220,100,0.4) 40%, transparent 70%);
-            border-radius: 50%;
-            animation: skill-glow-pulse 0.5s ease-out forwards;
-        }
-        
-        @keyframes skill-glow-pulse {
-            0% { transform: scale(0); opacity: 1; }
-            40% { transform: scale(1.5); opacity: 0.9; }
-            100% { transform: scale(2.5); opacity: 0; }
-        }
-        
-        /* 击杀特效 */
-        .kill-burst {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            animation: kill-explode 0.5s ease-out forwards;
-        }
-        
-        .kill-particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: #ff6b6b;
-            border-radius: 50%;
-            animation: kill-particle-fly 0.5s ease-out forwards;
-        }
-        
-        @keyframes kill-explode {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(2); opacity: 0; }
-        }
-        
-        @keyframes kill-particle-fly {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--kx), var(--ky)) scale(0); opacity: 0; }
-        }
-        
-        /* 怒气积攒动画 */
-        .rage-fill-animate {
-            transition: width 0.3s ease-out;
-        }
-        
-        /* 英雄死亡动画 */
-        .hero-death-anim {
-            animation: hero-death 0.8s ease-out forwards;
-        }
-        
-        @keyframes hero-death {
-            0% { transform: scale(1); filter: brightness(1); opacity: 1; }
-            30% { transform: scale(1.1); filter: brightness(1.5) hue-rotate(-20deg); }
-            100% { transform: scale(0.9); filter: grayscale(1) brightness(0.5); opacity: 0.4; }
-        }
-        
-        /* 敌人死亡动画 */
-        .enemy-death-anim {
-            animation: enemy-death 0.8s ease-out forwards;
-        }
-        
-        @keyframes enemy-death {
-            0% { transform: scale(1); filter: brightness(1); opacity: 1; }
-            30% { transform: scale(1.15); filter: brightness(1.3); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(0.7) translateY(10px); filter: grayscale(1) brightness(0.3); opacity: 0.2; }
-        }
-        
-        /* 战斗胜利/失败特效 */
-        .battle-victory-glow {
-            animation: victory-flash 0.5s ease-out;
-        }
-        
-        @keyframes victory-flash {
-            0% { background-color: rgba(255,215,0,0.3); }
-            100% { background-color: transparent; }
-        }
-        
-        .battle-defeat-dark {
-            animation: defeat-dark 0.5s ease-out;
-        }
-        
-        @keyframes defeat-dark {
-            0% { background-color: rgba(139,0,0,0.3); }
-            100% { background-color: transparent; }
-        }
-        
-        /* 目标选择光效 */
-        .target-select {
-            animation: target-pulse 0.8s ease-in-out infinite;
-        }
-        
-        @keyframes target-pulse {
-            0%, 100% { 
-                box-shadow: 0 0 10px rgba(255,100,100,0.5);
-                border-color: rgba(255,100,100,0.5);
-            }
-            50% { 
-                box-shadow: 0 0 25px rgba(255,100,100,0.9);
-                border-color: rgba(255,100,100,1);
-            }
-        }
-        
-        /* 治疗特效 */
-        .heal-effect {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            background: radial-gradient(circle, rgba(100,255,100,0.6) 0%, rgba(50,200,50,0.3) 50%, transparent 70%);
-            border-radius: 50%;
-            animation: heal-pulse 0.6s ease-out forwards;
-        }
-        
-        @keyframes heal-pulse {
-            0% { transform: scale(0.5); opacity: 0; }
-            30% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1.8); opacity: 0; }
-        }
-        
-        /* 加号飘字（治疗） */
-        .heal-plus {
-            position: absolute;
-            font-size: 18px;
-            font-weight: bold;
-            color: #44ff44;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(68,255,68,0.5);
-            animation: heal-float 0.8s ease-out forwards;
-            z-index: 2100;
-        }
-        
-        @keyframes heal-float {
-            0% { transform: translateY(0) scale(0.5); opacity: 0; }
-            20% { transform: translateY(-5px) scale(1.2); opacity: 1; }
-            100% { transform: translateY(-40px) scale(0.8); opacity: 0; }
-        }
-        
         /* 结算界面 */
         .settlement-modal .modal-content {
             text-align: center;
@@ -1606,7 +1055,7 @@
     <div class="level-select-screen" id="levelSelectScreen">
         <div class="game-title">
             <h1>《苍穹劫》地宫探索</h1>
-            <div class="subtitle">v9 - 战斗音效版 Demo</div>
+            <div class="subtitle">v7 - 新战斗系统 Demo</div>
         </div>
         
         <div class="level-section">
@@ -1643,7 +1092,7 @@
                 </div>
                 <div class="level-desc">
                     传说星陨古墓是一颗坠落天星砸出的深坑，墓中藏有一具星棺...
-                    <br><span style="color:#ffcc00;">【战斗音效测试关卡】</span>
+                    <br><span style="color:#ffcc00;">【新战斗系统测试关卡】</span>
                 </div>
             </div>
         </div>
@@ -1826,8 +1275,8 @@
                 type: 'structured',
                 mapSize: 16,
                 story: `<p>传说<span class="highlight">星陨古墓</span>是一颗坠落天星砸出的深坑...</p>
-                <p style="margin-top:12px;color:#ffcc00;">【战斗动效版】</p>
-                <p style="margin-top:8px;font-size:11px;color:#888;">• 英雄独立血条<br>• 行动条系统<br>• 怒气技能系统<br>• <span style="color:#ff6b6b;">战斗动效系统</span></p>`,
+                <p style="margin-top:12px;color:#ffcc00;">【新战斗系统测试关卡】</p>
+                <p style="margin-top:8px;font-size:11px;color:#888;">• 英雄独立血条<br>• 行动条系统<br>• 怒气技能系统<br>• 自动普攻</p>`,
                 objectives: [
                     { icon: '⚰️', title: '打开星棺', reward: '主要目标' },
                     { icon: '👹', title: '击败所有怪物', reward: '完美通关' }
@@ -1903,388 +1352,6 @@
             ]
         };
         
-        // ==================== 战斗特效系统 ====================
-        
-        // 显示伤害飘字
-        function showDamageNumber(element, damage, type = 'damage') {
-            const rect = element.getBoundingClientRect();
-            const num = document.createElement('div');
-            num.className = `damage-number ${type}`;
-            
-            if (type === 'crit') {
-                num.textContent = `暴击! ${damage}`;
-            } else if (type === 'heal') {
-                num.textContent = `+${damage}`;
-            } else if (type === 'miss') {
-                num.textContent = '闪避';
-            } else {
-                num.textContent = `-${damage}`;
-            }
-            
-            num.style.left = `${rect.left + rect.width / 2 - 30}px`;
-            num.style.top = `${rect.top}px`;
-            
-            document.body.appendChild(num);
-            setTimeout(() => num.remove(), 800);
-        }
-        
-        // 受击抖动
-        function shakeElement(element, isHeavy = false) {
-            element.classList.remove('shake', 'shake-heavy');
-            void element.offsetWidth; // 强制重绘
-            element.classList.add(isHeavy ? 'shake-heavy' : 'shake');
-        }
-        
-        // 屏幕震动
-        function screenShake() {
-            const modal = document.getElementById('battleModal');
-            modal.classList.remove('screen-shake');
-            void modal.offsetWidth;
-            modal.classList.add('screen-shake');
-        }
-        
-        // 闪烁效果
-        function flashElement(element) {
-            element.classList.remove('flash-red');
-            void element.offsetWidth;
-            element.classList.add('flash-red');
-        }
-        
-        // 显示普攻特效（根据英雄类型）
-        function showAttackEffect(heroId, targetElement) {
-            const targetRect = targetElement.getBoundingClientRect();
-            const effectContainer = document.createElement('div');
-            effectContainer.className = 'skill-effect-container';
-            document.body.appendChild(effectContainer);
-            
-            switch(heroId) {
-                case 'tieZhu': // 铁柱 - 冲锋
-                    showTiezhuAttackEffect(effectContainer, targetRect);
-                    break;
-                case 'xingJiSi': // 星祭司 - 星星
-                    showXingjisiAttackEffect(effectContainer, targetRect);
-                    break;
-                case 'moJinShou': // 摸金手 - 符文
-                    showMojinshouAttackEffect(effectContainer, targetRect);
-                    break;
-                case 'banShanKe': // 搬山客 - 齿轮
-                    showBanshankeAttackEffect(effectContainer, targetRect);
-                    break;
-                default:
-                    showGenericAttackEffect(effectContainer, targetRect);
-            }
-            
-            setTimeout(() => effectContainer.remove(), 1000);
-        }
-        
-        // 铁柱普攻特效
-        function showTiezhuAttackEffect(container, targetRect) {
-            // 冲击光芒
-            const flash = document.createElement('div');
-            flash.className = 'attack-flash';
-            flash.style.left = `${targetRect.left + targetRect.width / 2 - 25}px`;
-            flash.style.top = `${targetRect.top + targetRect.height / 2 - 25}px`;
-            flash.style.background = 'radial-gradient(circle, rgba(255,200,100,0.9) 0%, rgba(255,150,50,0.5) 40%, transparent 70%)';
-            container.appendChild(flash);
-        }
-        
-        // 星祭司普攻特效
-        function showXingjisiAttackEffect(container, targetRect) {
-            const starChars = ['✦', '✧', '★', '☆', '✶', '✷'];
-            for (let i = 0; i < 5; i++) {
-                setTimeout(() => {
-                    const star = document.createElement('div');
-                    star.className = 'star-particle';
-                    star.textContent = starChars[Math.floor(Math.random() * starChars.length)];
-                    star.style.left = `${targetRect.left + targetRect.width / 2 - 10 + (Math.random() - 0.5) * 40}px`;
-                    star.style.top = `${targetRect.top - 20}px`;
-                    star.style.color = ['#9400d3', '#da70d6', '#ff00ff'][Math.floor(Math.random() * 3)];
-                    container.appendChild(star);
-                }, i * 80);
-            }
-        }
-        
-        // 摸金手普攻特效
-        function showMojinshouAttackEffect(container, targetRect) {
-            const runes = ['☵', '☲', '☴', '☰', '☷', '☳'];
-            for (let i = 0; i < 4; i++) {
-                setTimeout(() => {
-                    const rune = document.createElement('div');
-                    rune.className = 'rune-particle';
-                    rune.textContent = runes[Math.floor(Math.random() * runes.length)];
-                    rune.style.left = `${targetRect.left + targetRect.width / 2 - 10}px`;
-                    rune.style.top = `${targetRect.top + targetRect.height / 2 - 10}px`;
-                    container.appendChild(rune);
-                }, i * 100);
-            }
-        }
-        
-        // 搬山客普攻特效
-        function showBanshankeAttackEffect(container, targetRect) {
-            const gear = document.createElement('div');
-            gear.className = 'gear-particle';
-            gear.textContent = '⚙️';
-            gear.style.left = `${targetRect.left + targetRect.width / 2 - 15}px`;
-            gear.style.top = `${targetRect.top + targetRect.height / 2 - 15}px`;
-            container.appendChild(gear);
-            
-            // 机械火花
-            for (let i = 0; i < 6; i++) {
-                const spark = document.createElement('div');
-                spark.style.cssText = `
-                    position: absolute;
-                    width: 4px;
-                    height: 4px;
-                    background: #ffaa00;
-                    border-radius: 50%;
-                    left: ${targetRect.left + targetRect.width / 2}px;
-                    top: ${targetRect.top + targetRect.height / 2}px;
-                    --tx: ${(Math.random() - 0.5) * 60}px;
-                    --ty: ${(Math.random() - 0.5) * 60}px;
-                    animation: particle-spread 0.4s ease-out forwards;
-                `;
-                container.appendChild(spark);
-            }
-        }
-        
-        // 通用普攻特效
-        function showGenericAttackEffect(container, targetRect) {
-            const flash = document.createElement('div');
-            flash.className = 'attack-flash';
-            flash.style.left = `${targetRect.left + targetRect.width / 2 - 25}px`;
-            flash.style.top = `${targetRect.top + targetRect.height / 2 - 25}px`;
-            container.appendChild(flash);
-        }
-        
-        // 显示技能特效
-        function showSkillEffect(heroId, targetElement) {
-            const targetRect = targetElement.getBoundingClientRect();
-            const effectContainer = document.createElement('div');
-            effectContainer.className = 'skill-effect-container';
-            document.body.appendChild(effectContainer);
-            
-            switch(heroId) {
-                case 'tieZhu': // 铁柱 - 冲击波
-                    showTiezhuSkillEffect(effectContainer, targetRect);
-                    break;
-                case 'xingJiSi': // 星祭司 - 星辰光柱
-                    showXingjisiSkillEffect(effectContainer, targetRect);
-                    break;
-                case 'moJinShou': // 摸金手 - 罗盘
-                    showMojinshouSkillEffect(effectContainer, targetRect);
-                    break;
-                case 'banShanKe': // 搬山客 - 火焰
-                    showBanshankeSkillEffect(effectContainer, targetRect);
-                    break;
-            }
-            
-            setTimeout(() => effectContainer.remove(), 1200);
-        }
-        
-        // 铁柱技能 - 金光冲击波
-        function showTiezhuSkillEffect(container, targetRect) {
-            // 金光闪烁
-            const glow = document.createElement('div');
-            glow.className = 'skill-glow';
-            glow.style.width = '150px';
-            glow.style.height = '150px';
-            glow.style.left = `${targetRect.left + targetRect.width / 2 - 75}px`;
-            glow.style.top = `${targetRect.top + targetRect.height / 2 - 75}px`;
-            glow.style.background = 'radial-gradient(circle, rgba(255,220,100,0.9) 0%, rgba(255,180,50,0.5) 40%, transparent 70%)';
-            container.appendChild(glow);
-            
-            // 冲击波
-            const shockwave = document.createElement('div');
-            shockwave.className = 'shockwave';
-            shockwave.style.width = '60px';
-            shockwave.style.height = '60px';
-            shockwave.style.left = `${targetRect.left + targetRect.width / 2 - 30}px`;
-            shockwave.style.top = `${targetRect.top + targetRect.height / 2 - 30}px`;
-            container.appendChild(shockwave);
-            
-            // 第二层冲击波
-            setTimeout(() => {
-                const shockwave2 = document.createElement('div');
-                shockwave2.className = 'shockwave';
-                shockwave2.style.width = '80px';
-                shockwave2.style.height = '80px';
-                shockwave2.style.left = `${targetRect.left + targetRect.width / 2 - 40}px`;
-                shockwave2.style.top = `${targetRect.top + targetRect.height / 2 - 40}px`;
-                shockwave2.style.animationDelay = '0.1s';
-                container.appendChild(shockwave2);
-            }, 150);
-        }
-        
-        // 星祭司技能 - 星辰光柱
-        function showXingjisiSkillEffect(container, targetRect) {
-            // 星辰光柱
-            const beam = document.createElement('div');
-            beam.className = 'star-beam';
-            beam.style.left = `${targetRect.left + targetRect.width / 2 - 40}px`;
-            beam.style.top = '0';
-            container.appendChild(beam);
-            
-            // 紫色粒子扩散
-            for (let i = 0; i < 15; i++) {
-                const angle = (i / 15) * Math.PI * 2;
-                const distance = 50 + Math.random() * 50;
-                const particle = document.createElement('div');
-                particle.className = 'purple-particle';
-                particle.style.left = `${targetRect.left + targetRect.width / 2}px`;
-                particle.style.top = `${targetRect.top + targetRect.height / 2}px`;
-                particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
-                particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
-                particle.style.animationDelay = `${0.3 + Math.random() * 0.3}s`;
-                container.appendChild(particle);
-            }
-        }
-        
-        // 摸金手技能 - 罗盘光波
-        function showMojinshouSkillEffect(container, targetRect) {
-            // 罗盘旋转
-            const compass = document.createElement('div');
-            compass.className = 'compass-spin';
-            compass.style.left = `${targetRect.left + targetRect.width / 2 - 50}px`;
-            compass.style.top = `${targetRect.top + targetRect.height / 2 - 50}px`;
-            container.appendChild(compass);
-            
-            // 金色光波
-            setTimeout(() => {
-                const wave = document.createElement('div');
-                wave.className = 'golden-wave';
-                wave.style.left = `${targetRect.left + targetRect.width / 2 - 100}px`;
-                wave.style.top = `${targetRect.top + targetRect.height / 2 - 100}px`;
-                container.appendChild(wave);
-            }, 200);
-            
-            // 符文环绕
-            const runes = ['☵', '☲', '☴', '☰', '☷', '☳', '☱', '☶'];
-            for (let i = 0; i < 8; i++) {
-                const rune = document.createElement('div');
-                rune.className = 'rune-particle';
-                rune.textContent = runes[i];
-                rune.style.left = `${targetRect.left + targetRect.width / 2 - 10}px`;
-                rune.style.top = `${targetRect.top + targetRect.height / 2 - 10}px`;
-                rune.style.fontSize = '22px';
-                rune.style.animationDelay = `${i * 0.05}s`;
-                container.appendChild(rune);
-            }
-        }
-        
-        // 搬山客技能 - 机械火焰
-        function showBanshankeSkillEffect(container, targetRect) {
-            // 机械展开
-            const mech = document.createElement('div');
-            mech.className = 'mech-expand';
-            mech.innerHTML = '<div class="mech-arm left"></div><div class="mech-arm right"></div>';
-            mech.style.left = `${targetRect.left + targetRect.width / 2 - 75}px`;
-            mech.style.top = `${targetRect.top + targetRect.height / 2 - 40}px`;
-            container.appendChild(mech);
-            
-            // 火焰喷射
-            setTimeout(() => {
-                const flame = document.createElement('div');
-                flame.className = 'mech-flame';
-                flame.style.left = `${targetRect.left + targetRect.width / 2 - 60}px`;
-                flame.style.top = `${targetRect.top + targetRect.height / 2 - 30}px`;
-                container.appendChild(flame);
-            }, 200);
-            
-            // 齿轮飞出
-            for (let i = 0; i < 3; i++) {
-                setTimeout(() => {
-                    const gear = document.createElement('div');
-                    gear.className = 'gear-particle';
-                    gear.textContent = '⚙️';
-                    gear.style.left = `${targetRect.left + targetRect.width / 2 - 15}px`;
-                    gear.style.top = `${targetRect.top + targetRect.height / 2 - 15}px`;
-                    container.appendChild(gear);
-                }, i * 100);
-            }
-        }
-        
-        // 敌人死亡特效
-        function showDeathEffect(element, isBoss = false) {
-            // 添加死亡动画
-            element.classList.add(isBoss ? 'shake-heavy' : 'shake');
-            
-            setTimeout(() => {
-                element.classList.add('enemy-death-anim');
-                
-                // 击杀粒子效果
-                const rect = element.getBoundingClientRect();
-                const container = document.createElement('div');
-                container.className = 'skill-effect-container';
-                document.body.appendChild(container);
-                
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i / 8) * Math.PI * 2;
-                    const particle = document.createElement('div');
-                    particle.className = 'kill-particle';
-                    particle.style.left = `${rect.left + rect.width / 2}px`;
-                    particle.style.top = `${rect.top + rect.height / 2}px`;
-                    particle.style.setProperty('--kx', `${Math.cos(angle) * 40}px`);
-                    particle.style.setProperty('--ky', `${Math.sin(angle) * 40}px`);
-                    particle.style.background = isBoss ? '#9400d3' : '#ff6b6b';
-                    container.appendChild(particle);
-                }
-                
-                setTimeout(() => container.remove(), 600);
-            }, 200);
-        }
-        
-        // 英雄死亡特效
-        function showHeroDeathEffect(element) {
-            element.classList.add('hero-death-anim');
-        }
-        
-        // 怒气满特效
-        function updateRageReadyEffect(element, isReady) {
-            if (isReady) {
-                element.classList.add('rage-ready-glow');
-                // 星星闪烁
-                const rageText = element.querySelector('.rage-text');
-                if (rageText) {
-                    rageText.classList.add('star-blink');
-                }
-            } else {
-                element.classList.remove('rage-ready-glow');
-                const rageText = element.querySelector('.rage-text');
-                if (rageText) {
-                    rageText.classList.remove('star-blink');
-                }
-            }
-        }
-        
-        // 治疗特效
-        function showHealEffect(element, amount) {
-            const rect = element.getBoundingClientRect();
-            
-            // 治疗光圈
-            const heal = document.createElement('div');
-            heal.className = 'heal-effect';
-            heal.style.left = `${rect.left + rect.width / 2 - 30}px`;
-            heal.style.top = `${rect.top + rect.height / 2 - 30}px`;
-            document.body.appendChild(heal);
-            setTimeout(() => heal.remove(), 600);
-            
-            // 治疗数字
-            setTimeout(() => {
-                const num = document.createElement('div');
-                num.className = 'heal-plus';
-                num.textContent = `+${amount}`;
-                num.style.left = `${rect.left + rect.width / 2 - 20}px`;
-                num.style.top = `${rect.top}px`;
-                document.body.appendChild(num);
-                setTimeout(() => num.remove(), 800);
-            }, 200);
-        }
-        
-        // 行动条高亮切换
-        function highlightCurrentAction(element) {
-            element.classList.add('current');
-        }
-        
         // ==================== 存档系统 ====================
         const SAVE_KEY = 'cangqiongjie_v7_save';
         const LEVEL_PROGRESS_KEY = 'cangqiongjie_level_progress';
@@ -2308,114 +1375,6 @@
         
         function clearSave() { localStorage.removeItem(SAVE_KEY); }
         
-        // ==================== 关卡进度系统 ====================
-        function saveLevelProgress(levelId) {
-            try {
-                let progress = JSON.parse(localStorage.getItem(LEVEL_PROGRESS_KEY) || '{}');
-                progress[levelId] = true;
-                localStorage.setItem(LEVEL_PROGRESS_KEY, JSON.stringify(progress));
-            } catch (e) { console.error('保存进度失败:', e); }
-        }
-        
-        function loadLevelProgress() {
-            try {
-                return JSON.parse(localStorage.getItem(LEVEL_PROGRESS_KEY) || '{}');
-            } catch (e) { return {}; }
-        }
-        
-        function updateLevelCards() {
-            const progress = loadLevelProgress();
-            const cards = document.querySelectorAll('.level-card');
-            cards.forEach((card, index) => {
-                const levelId = index + 1;
-                if (progress[levelId]) {
-                    const tag = card.querySelector('.level-tag');
-                    if (tag && !tag.classList.contains('combat')) {
-                        tag.textContent = '已完成';
-                        tag.style.background = '#3a4a3a';
-                        tag.style.color = '#6bff6b';
-                    }
-                }
-            });
-        }
-        
-        // ==================== 战斗音效系统 ====================
-        let audioCtx = null;
-        
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
-        
-        function playAttackSound() {
-            initAudio();
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.frequency.value = 200;
-                osc.type = 'square';
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } catch(e) { console.error('音效播放失败:', e); }
-        }
-        
-        function playSkillSound() {
-            initAudio();
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.frequency.value = 400;
-                osc.type = 'sawtooth';
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.2);
-            } catch(e) { console.error('音效播放失败:', e); }
-        }
-        
-        function playHitSound() {
-            initAudio();
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.frequency.value = 150;
-                osc.type = 'triangle';
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.08);
-            } catch(e) { console.error('音效播放失败:', e); }
-        }
-        
-        function playVictorySound() {
-            initAudio();
-            try {
-                [523, 659, 784].forEach((freq, i) => {
-                    setTimeout(() => {
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.connect(gain);
-                        gain.connect(audioCtx.destination);
-                        osc.frequency.value = freq;
-                        osc.type = 'sine';
-                        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.15);
-                    }, i * 150);
-                });
-            } catch(e) { console.error('音效播放失败:', e); }
-        }
-        
         function resetAllData() {
             if (confirm('确定要重置所有数据吗？')) {
                 localStorage.removeItem(SAVE_KEY);
@@ -2426,9 +1385,7 @@
         
         // ==================== UI 逻辑 ====================
         function showMissionIntro(levelId) {
-            console.log('点击关卡卡片，levelId:', levelId);
             const level = LEVELS[levelId];
-            console.log('关卡数据:', level);
             currentLevel = levelId;
             
             const content = document.getElementById('missionContent');
@@ -2772,7 +1729,7 @@
         }
         
         function showSettlement() {
-            saveLevelProgress(currentLevel);
+            clearSave();
             
             const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
             const minutes = Math.floor(elapsed / 60);
@@ -2957,7 +1914,6 @@
         
         // 英雄自动普攻
         function heroAutoAttack(heroId) {
-            playAttackSound(); // 普攻音效
             const hero = battleState.heroes.find(h => h.id === heroId);
             if (!hero || hero.hp <= 0) {
                 battleState.actionQueue.find(a => a.id === heroId).acted = true;
@@ -2974,44 +1930,14 @@
             
             const target = aliveEnemies.reduce((min, e) => e.hp < min.hp ? e : min);
             
-            // 计算伤害（15%暴击率）
-            const isCrit = Math.random() < 0.15;
-            const damage = calculateDamage(hero.atk, target.def, isCrit);
+            // 计算伤害
+            const damage = calculateDamage(hero.atk, target.def);
             target.hp = Math.max(0, target.hp - damage);
             
             // 获得怒气
             hero.rage = Math.min(100, hero.rage + 20);
             
-            // === 触发动效 ===
-            // 找到目标DOM元素并触发特效
-            setTimeout(() => {
-                const enemyElements = document.querySelectorAll('.enemy-unit');
-                const targetIndex = battleState.enemies.findIndex(e => e.id === target.id);
-                if (enemyElements[targetIndex]) {
-                    const targetEl = enemyElements[targetIndex];
-                    
-                    // 伤害飘字
-                    showDamageNumber(targetEl, damage, isCrit ? 'crit' : 'damage');
-                    
-                    // 受击抖动
-                    shakeElement(targetEl, battleState.isBoss);
-                    
-                    // Boss受击屏幕震动
-                    if (battleState.isBoss) {
-                        screenShake();
-                    }
-                    
-                    // 普攻特效
-                    showAttackEffect(heroId, targetEl);
-                    
-                    // 如果击杀，触发死亡特效
-                    if (target.hp <= 0) {
-                        setTimeout(() => showDeathEffect(targetEl, battleState.isBoss), 200);
-                    }
-                }
-            }, 100);
-            
-            addBattleLog(`${hero.icon}${hero.name} 对 ${target.icon}${target.name} 发动普攻${isCrit ? '，暴击！' : '，造成'} ${damage} 点伤害！`, 'player-attack');
+            addBattleLog(`${hero.icon}${hero.name} 对 ${target.icon}${target.name} 发动普攻，造成 ${damage} 点伤害！`, 'player-attack');
             
             // 检查敌人死亡
             if (target.hp <= 0) {
@@ -3036,7 +1962,6 @@
         
         // 英雄释放技能（插队）
         function heroUseSkill(heroId) {
-            playSkillSound(); // 技能音效
             const hero = battleState.heroes.find(h => h.id === heroId);
             if (!hero || hero.hp <= 0 || hero.rage < 100) return;
             
@@ -3046,40 +1971,14 @@
             
             const target = aliveEnemies.reduce((min, e) => e.hp < min.hp ? e : min);
             
-            // 技能伤害150%（必定暴击）
-            const damage = Math.floor(calculateDamage(hero.atk * 1.5, target.def, true));
+            // 技能伤害150%
+            const damage = Math.floor(calculateDamage(hero.atk * 1.5, target.def));
             target.hp = Math.max(0, target.hp - damage);
             
             // 怒气归零
             hero.rage = 0;
             
-            // === 触发动效 ===
-            setTimeout(() => {
-                const enemyElements = document.querySelectorAll('.enemy-unit');
-                const targetIndex = battleState.enemies.findIndex(e => e.id === target.id);
-                if (enemyElements[targetIndex]) {
-                    const targetEl = enemyElements[targetIndex];
-                    
-                    // 技能伤害飘字（必定暴击）
-                    showDamageNumber(targetEl, damage, 'crit');
-                    
-                    // 严重抖动
-                    shakeElement(targetEl, true);
-                    
-                    // 屏幕震动
-                    screenShake();
-                    
-                    // 技能特效
-                    showSkillEffect(heroId, targetEl);
-                    
-                    // 如果击杀，触发死亡特效
-                    if (target.hp <= 0) {
-                        setTimeout(() => showDeathEffect(targetEl, battleState.isBoss), 300);
-                    }
-                }
-            }, 100);
-            
-            addBattleLog(`${hero.icon}${hero.name} 释放终极技能！对 ${target.icon}${target.name} 造成 ${damage} 点暴击伤害！`, 'player-skill');
+            addBattleLog(`${hero.icon}${hero.name} 释放技能！对 ${target.icon}${target.name} 造成 ${damage} 点伤害！`, 'player-skill');
             
             // 检查敌人死亡
             if (target.hp <= 0) {
@@ -3093,12 +1992,11 @@
                 if (battleState.enemies.every(e => e.hp <= 0)) {
                     endBattle();
                 }
-            }, 800);
+            }, 600);
         }
         
         // 敌人攻击
         function enemyAttack(enemyId) {
-            playHitSound(); // 受击音效
             const enemy = battleState.enemies.find(e => e.id === enemyId);
             if (!enemy || enemy.hp <= 0) {
                 battleState.actionQueue.find(a => a.id === enemyId).acted = true;
@@ -3121,29 +2019,6 @@
             
             // 目标获得怒气
             target.rage = Math.min(100, target.rage + 5);
-            
-            // === 触发动效 ===
-            setTimeout(() => {
-                const heroElements = document.querySelectorAll('.hero-unit');
-                const targetIndex = battleState.heroes.findIndex(h => h.id === target.id);
-                if (heroElements[targetIndex]) {
-                    const targetEl = heroElements[targetIndex];
-                    
-                    // 伤害飘字
-                    showDamageNumber(targetEl, damage, 'damage');
-                    
-                    // 受击抖动
-                    shakeElement(targetEl);
-                    
-                    // 闪烁效果
-                    flashElement(targetEl);
-                    
-                    // 如果击杀，触发死亡特效
-                    if (target.hp <= 0) {
-                        setTimeout(() => showHeroDeathEffect(targetEl), 200);
-                    }
-                }
-            }, 100);
             
             addBattleLog(`${enemy.icon}${enemy.name} 对 ${target.icon}${target.name} 发动攻击，造成 ${damage} 点伤害！`, 'enemy-attack');
             
@@ -3168,14 +2043,10 @@
         }
         
         // 计算伤害
-        function calculateDamage(atk, def, isCrit = false) {
+        function calculateDamage(atk, def) {
             const baseDamage = Math.max(1, atk - def);
             const variance = Math.floor(Math.random() * 5) - 2;
-            let damage = Math.max(1, baseDamage + variance);
-            if (isCrit) {
-                damage = Math.floor(damage * 1.5); // 暴击150%伤害
-            }
-            return damage;
+            return Math.max(1, baseDamage + variance);
         }
         
         // 添加战斗日志
@@ -3238,19 +2109,19 @@
                 const isClickable = !isDead && isRageReady && battleState.isRunning;
                 
                 return `
-                    <div class="hero-unit ${isDead ? 'dead' : ''} ${isRageReady ? 'ready' : ''} ${isCurrentTurn ? 'current-turn' : ''} ${isRageReady ? 'rage-ready-glow' : ''}"
+                    <div class="hero-unit ${isDead ? 'dead' : ''} ${isRageReady ? 'ready' : ''} ${isCurrentTurn ? 'current-turn' : ''}"
                          ${isClickable ? `onclick="heroUseSkill('${h.id}')"` : ''}>
-                        <div class="hero-icon ${isRageReady ? 'star-blink' : ''}">${h.icon}</div>
+                        <div class="hero-icon">${h.icon}</div>
                         <div class="hero-name">${h.name}</div>
                         <div class="hero-hp-bar">
                             <div class="hero-hp-fill" style="width:${(h.hp/h.maxHp)*100}%"></div>
                         </div>
                         <div class="hero-hp-text">${h.hp}/${h.maxHp}</div>
                         <div class="rage-bar">
-                            <div class="rage-fill rage-fill-animate ${h.rage >= 100 ? 'full' : ''}" style="width:${h.rage}%"></div>
+                            <div class="rage-fill ${h.rage >= 100 ? 'full' : ''}" style="width:${h.rage}%"></div>
                         </div>
-                        <div class="rage-text ${h.rage >= 100 ? 'full' : ''} ${isRageReady ? 'star-blink' : ''}">
-                            ${h.rage >= 100 ? '★ 点击放技能' : `怒气 ${h.rage}/100`}
+                        <div class="rage-text ${h.rage >= 100 ? 'full' : ''}">
+                            ${h.rage >= 100 ? '★ 可放技能' : `怒气 ${h.rage}/100`}
                         </div>
                     </div>
                 `;
@@ -3289,7 +2160,6 @@
         
         // 战斗胜利
         function battleVictory() {
-            playVictorySound(); // 胜利音效
             gameState.battleCount++;
             gameState.killedEnemies += battleState.enemies.filter(e => e.hp <= 0).length;
             gameState.objectives.battles.current++;
@@ -3303,20 +2173,9 @@
             // 疲劳消耗=HP损失
             gameState.fatigue = Math.max(0, gameState.fatigue - totalDamage);
             
-            // 英雄HP回满并显示治疗特效
-            battleState.heroes.forEach((h, idx) => {
-                const healAmount = h.maxHp - h.hp;
+            // 英雄HP回满
+            battleState.heroes.forEach(h => {
                 h.hp = h.maxHp;
-                
-                // 延迟显示治疗特效
-                if (healAmount > 0) {
-                    setTimeout(() => {
-                        const heroElements = document.querySelectorAll('.hero-unit');
-                        if (heroElements[idx]) {
-                            showHealEffect(heroElements[idx], healAmount);
-                        }
-                    }, idx * 150);
-                }
             });
             battleHeroes = [...battleState.heroes];
             
@@ -3328,19 +2187,14 @@
             const bonusGold = isPerfect ? 100 : 0;
             gameState.gold += bonusGold;
             
-            // === 战斗胜利特效 ===
-            const battleModal = document.getElementById('battleModal');
-            battleModal.classList.add('battle-victory-glow');
-            
             // 显示胜利界面
             document.getElementById('battleLog').innerHTML += `
-                <div class="battle-log-entry" style="text-align:center;font-size:14px;color:#6bff6b;padding:10px;animation:pulse-glow 0.5s;">
+                <div class="battle-log-entry" style="text-align:center;font-size:14px;color:#6bff6b;padding:10px;">
                     🎉 战斗胜利！获得 ${goldReward} 金币！
                 </div>
             `;
             
             setTimeout(() => {
-                battleModal.classList.remove('battle-victory-glow');
                 document.getElementById('battleModal').classList.remove('active');
                 
                 // 如果是Boss战（星棺）
@@ -3357,10 +2211,6 @@
         
         // 战斗失败
         function battleDefeat() {
-            // === 战斗失败特效 ===
-            const battleModal = document.getElementById('battleModal');
-            battleModal.classList.add('battle-defeat-dark');
-            
             document.getElementById('battleLog').innerHTML += `
                 <div class="battle-log-entry" style="text-align:center;font-size:14px;color:#ff6b6b;padding:10px;">
                     💀 队伍全军覆没...
@@ -3368,7 +2218,6 @@
             `;
             
             setTimeout(() => {
-                battleModal.classList.remove('battle-defeat-dark');
                 document.getElementById('battleModal').classList.remove('active');
                 addLog('战斗失败...勉强撤退', 'danger');
                 
@@ -3409,7 +2258,6 @@
         
         // 第三关通关
         function completeLevel3(isPerfect) {
-            saveLevelProgress(currentLevel);
             const modal = document.getElementById('missionModal');
             const content = document.getElementById('missionContent');
             
@@ -3449,23 +2297,6 @@
             // 初始化英雄数据
             initBattleHeroes();
             renderParty();
-            updateLevelCards();
-            
-            // 移动端兼容：动态绑定关卡卡片点击事件
-            document.querySelectorAll('.level-card').forEach((card, index) => {
-                const levelId = index + 1;
-                // 同时绑定 click 和 touchend 事件
-                card.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    showMissionIntro(levelId);
-                });
-                card.addEventListener('touchend', function(e) {
-                    e.preventDefault();
-                    showMissionIntro(levelId);
-                });
-            });
-            
-            console.log('关卡卡片事件绑定完成，共', document.querySelectorAll('.level-card').length, '个');
         });
     </script>
 </body>
