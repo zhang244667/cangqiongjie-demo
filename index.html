@@ -2426,7 +2426,9 @@
         
         // ==================== UI 逻辑 ====================
         function showMissionIntro(levelId) {
+            console.log('点击关卡卡片，levelId:', levelId);
             const level = LEVELS[levelId];
+            console.log('关卡数据:', level);
             currentLevel = levelId;
             
             const content = document.getElementById('missionContent');
