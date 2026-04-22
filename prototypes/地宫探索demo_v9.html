@@ -1823,13 +1823,13 @@
             },
             3: {
                 name: '星陨古墓',
-                type: 'structured',
+                type: 'fixed',
                 mapSize: 16,
                 story: `<p>传说<span class="highlight">星陨古墓</span>是一颗坠落天星砸出的深坑...</p>
-                <p style="margin-top:12px;color:#ffcc00;">【战斗动效版】</p>
-                <p style="margin-top:8px;font-size:11px;color:#888;">• 英雄独立血条<br>• 行动条系统<br>• 怒气技能系统<br>• <span style="color:#ff6b6b;">战斗动效系统</span></p>`,
+                <p style="margin-top:12px;color:#ffcc00;">【固定地图 + 自动寻路版】</p>
+                <p style="margin-top:8px;font-size:11px;color:#888;">• 第3关使用固定地图设计<br>• 支持点击远处自动寻路<br>• A*算法智能绕开敌人</p>`,
                 objectives: [
-                    { icon: '⚰️', title: '打开星棺', reward: '主要目标' },
+                    { icon: '⚰️', title: '击败星棺守卫', reward: '主要目标' },
                     { icon: '👹', title: '击败所有怪物', reward: '完美通关' }
                 ],
                 hasCombat: true,
@@ -1844,6 +1844,88 @@
                 ]
             }
         };
+        
+        // ==================== 第3关固定地图数据 ====================
+        // 地图尺寸：16×16
+        // W=墙壁, .=地板, E=敌人, B=Boss, S=出口, A=攻击Buff, R=休息点, 1=运气机关, 2=知识机关
+        const FIXED_MAP_LEVEL3 = [
+            "WWWWWWWWWWWWWWWW",
+            "W··············W",
+            "W·E··········E·W",
+            "W··WWWWWWWWW···W",
+            "W··············W",
+            "W··W··1········W",
+            "W··············W",
+            "W··············W",
+            "W··············W",
+            "W··············W",
+            "W··W··2········W",
+            "W··WWAWWWWBB···W",
+            "W·E··········E·W",
+            "W··············W",
+            "W············RSW",
+            "WWWWWWWWWWWWWWWW"
+        ];
+        
+        // 解析固定地图数据
+        function parseFixedMap(mapData) {
+            const map = [];
+            const size = mapData.length;
+            
+            for (let y = 0; y < size; y++) {
+                map[y] = [];
+                const row = mapData[y];
+                for (let x = 0; x < row.length; x++) {
+                    const char = row[x];
+                    let cell = { x, y, type: 'floor', revealed: true };
+                    
+                    switch(char) {
+                        case 'W': cell.type = 'wall'; break;
+                        case 'P': 
+                            cell.type = 'player';
+                            cell.revealed = true;
+                            break;
+                        case 'E': 
+                            cell.type = 'enemy';
+                            gameState.totalEnemies++;
+                            break;
+                        case 'B': 
+                            cell.type = 'boss';
+                            gameState.totalEnemies++;
+                            break;
+                        case 'S': cell.type = 'stairs'; break;
+                        case 'A': cell.type = 'buff-attack'; break;
+                        case 'R': cell.type = 'buff-fatigue'; break;
+                        case '1': 
+                            cell.type = 'mechanism-luck';
+                            gameState.mechanismTotal++;
+                            break;
+                        case '2': 
+                            cell.type = 'mechanism-knowledge';
+                            gameState.mechanismTotal++;
+                            break;
+                        case '3': 
+                            cell.type = 'mechanism-hero';
+                            gameState.mechanismTotal++;
+                            break;
+                        default: cell.type = 'floor';
+                    }
+                    map[y][x] = cell;
+                }
+            }
+            return map;
+        }
+        
+        // 清除固定地图中的敌人格子（在战斗后调用）
+        function clearCellAfterBattle(x, y) {
+            if (gameState.map[y] && gameState.map[y][x]) {
+                const cell = gameState.map[y][x];
+                if (cell.type === 'enemy' || cell.type === 'boss') {
+                    gameState.map[y][x].type = 'floor';
+                    gameState.map[y][x].revealed = true;
+                }
+            }
+        }
         
         // ==================== 游戏状态 ====================
         let currentLevel = 1;
@@ -2507,6 +2589,26 @@
             const size = gameState.mapSize;
             gameState.map = [];
             
+            // 第3关使用固定地图
+            if (LEVELS[levelId] && LEVELS[levelId].type === 'fixed') {
+                gameState.map = parseFixedMap(FIXED_MAP_LEVEL3);
+                // 找到玩家起点
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        if (FIXED_MAP_LEVEL3[y][x] === 'P') {
+                            gameState.playerPos = { x, y };
+                            break;
+                        }
+                    }
+                }
+                // 默认起点为(1,1)
+                if (!gameState.playerPos) {
+                    gameState.playerPos = { x: 1, y: 1 };
+                }
+                return;
+            }
+            
+            // 随机地图生成（原逻辑）
             for (let y = 0; y < size; y++) {
                 gameState.map[y] = [];
                 for (let x = 0; x < size; x++) {
@@ -2600,7 +2702,234 @@
             container.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
         }
         
+        // ==================== A* 寻路系统 ====================
+        let autoMoveQueue = [];      // 自动移动路径队列
+        let isAutoMoving = false;    // 是否正在自动移动
+        let pathHighlightCells = []; // 当前高亮路径
+        
+        // A* 寻路算法
+        function findPath(startX, startY, endX, endY, avoidEnemies = true) {
+            const size = gameState.mapSize;
+            const openList = [];
+            const closedList = [];
+            const directions = [
+                { dx: 0, dy: -1 }, // 上
+                { dx: 0, dy: 1 },  // 下
+                { dx: -1, dy: 0 }, // 左
+                { dx: 1, dy: 0 }   // 右
+            ];
+            
+            // 启发函数（曼哈顿距离）
+            const heuristic = (x, y) => Math.abs(x - endX) + Math.abs(y - endY);
+            
+            // 创建起始节点
+            const startNode = {
+                x: startX,
+                y: startY,
+                g: 0,
+                h: heuristic(startX, startY),
+                f: heuristic(startX, startY),
+                parent: null
+            };
+            
+            openList.push(startNode);
+            
+            while (openList.length > 0) {
+                // 找到f值最小的节点
+                let lowestIndex = 0;
+                for (let i = 1; i < openList.length; i++) {
+                    if (openList[i].f < openList[lowestIndex].f) {
+                        lowestIndex = i;
+                    }
+                }
+                
+                const current = openList[lowestIndex];
+                
+                // 找到终点
+                if (current.x === endX && current.y === endY) {
+                    // 回溯路径
+                    const path = [];
+                    let node = current;
+                    while (node.parent) {
+                        path.unshift({ x: node.x, y: node.y });
+                        node = node.parent;
+                    }
+                    return path;
+                }
+                
+                // 移动当前节点到关闭列表
+                openList.splice(lowestIndex, 1);
+                closedList.push(`${current.x},${current.y}`);
+                
+                // 检查相邻格子
+                for (const dir of directions) {
+                    const nx = current.x + dir.dx;
+                    const ny = current.y + dir.dy;
+                    
+                    // 越界检查
+                    if (nx < 0 || nx >= size || ny < 0 || ny >= size) continue;
+                    
+                    // 已在关闭列表
+                    if (closedList.includes(`${nx},${ny}`)) continue;
+                    
+                    const cell = gameState.map[ny][nx];
+                    
+                    // 墙壁不可通行
+                    if (cell.type === 'wall') continue;
+                    
+                    // 避让敌人/宝箱（除非终点就是敌人）
+                    if (avoidEnemies) {
+                        const avoidTypes = ['enemy', 'boss', 'coffin'];
+                        if (avoidTypes.includes(cell.type) && !(nx === endX && ny === endY)) continue;
+                    }
+                    
+                    const g = current.g + 1;
+                    const h = heuristic(nx, ny);
+                    const f = g + h;
+                    
+                    // 检查是否已在开放列表
+                    const existingIndex = openList.findIndex(n => n.x === nx && n.y === ny);
+                    if (existingIndex !== -1) {
+                        if (g < openList[existingIndex].g) {
+                            openList[existingIndex].g = g;
+                            openList[existingIndex].f = f;
+                            openList[existingIndex].parent = current;
+                        }
+                    } else {
+                        openList.push({
+                            x: nx,
+                            y: ny,
+                            g: g,
+                            h: h,
+                            f: f,
+                            parent: current
+                        });
+                    }
+                }
+            }
+            
+            // 无路径
+            return null;
+        }
+        
+        // 高亮显示路径
+        function highlightPath(path) {
+            // 清除旧高亮
+            clearPathHighlight();
+            
+            if (!path || path.length === 0) return;
+            
+            pathHighlightCells = path;
+            const container = document.getElementById('gameMap');
+            const size = gameState.mapSize;
+            
+            path.forEach((pos, index) => {
+                const cellIndex = pos.y * size + pos.x;
+                const cellEl = container.children[cellIndex];
+                if (cellEl) {
+                    cellEl.style.boxShadow = '0 0 10px rgba(100, 200, 255, 0.8)';
+                    cellEl.style.border = '2px solid rgba(100, 200, 255, 0.8)';
+                    cellEl.style.background = 'rgba(100, 200, 255, 0.2)';
+                }
+            });
+        }
+        
+        // 清除路径高亮
+        function clearPathHighlight() {
+            const container = document.getElementById('gameMap');
+            if (!container) return;
+            
+            pathHighlightCells.forEach(pos => {
+                const size = gameState.mapSize;
+                const cellIndex = pos.y * size + pos.x;
+                const cellEl = container.children[cellIndex];
+                if (cellEl) {
+                    cellEl.style.boxShadow = '';
+                    cellEl.style.border = '';
+                    cellEl.style.background = '';
+                }
+            });
+            pathHighlightCells = [];
+        }
+        
+        // 自动移动（沿路径逐步移动）
+        function startAutoMove(targetX, targetY) {
+            const path = findPath(
+                gameState.playerPos.x,
+                gameState.playerPos.y,
+                targetX,
+                targetY,
+                true // 避让敌人
+            );
+            
+            if (!path || path.length === 0) {
+                addLog('无法找到通往目标的路径', 'info');
+                return;
+            }
+            
+            // 高亮路径
+            highlightPath(path);
+            
+            // 设置移动队列
+            autoMoveQueue = path;
+            isAutoMoving = true;
+            
+            // 开始移动
+            processNextMove();
+        }
+        
+        // 处理下一步移动
+        function processNextMove() {
+            if (!isAutoMoving || autoMoveQueue.length === 0) {
+                isAutoMoving = false;
+                clearPathHighlight();
+                return;
+            }
+            
+            const nextPos = autoMoveQueue.shift();
+            const cell = gameState.map[nextPos.y][nextPos.x];
+            
+            // 如果是墙壁或敌人，停止移动
+            if (cell.type === 'wall' || cell.type === 'enemy' || cell.type === 'boss') {
+                isAutoMoving = false;
+                clearPathHighlight();
+                return;
+            }
+            
+            // 执行移动
+            movePlayerTo(nextPos.x, nextPos.y);
+            
+            // 检查是否到达终点或触发战斗
+            if (cell.type === 'enemy' || cell.type === 'boss' || cell.type === 'coffin') {
+                isAutoMoving = false;
+                clearPathHighlight();
+                return;
+            }
+            
+            // 如果还有路径，继续移动
+            if (autoMoveQueue.length > 0) {
+                setTimeout(processNextMove, 350); // 350ms移动一格
+            } else {
+                isAutoMoving = false;
+                clearPathHighlight();
+            }
+        }
+        
+        // 取消自动移动
+        function cancelAutoMove() {
+            isAutoMoving = false;
+            autoMoveQueue = [];
+            clearPathHighlight();
+        }
+        
+        // 处理格子点击
         function handleCellClick(x, y) {
+            // 取消当前自动移动
+            if (isAutoMoving) {
+                cancelAutoMove();
+                return;
+            }
+            
             const cell = gameState.map[y][x];
             if (cell.type === 'wall' || cell.type === 'player') return;
             
@@ -2608,7 +2937,11 @@
             const dy = Math.abs(y - gameState.playerPos.y);
             
             if (dx + dy === 1) {
+                // 相邻格子，直接移动
                 movePlayerTo(x, y);
+            } else {
+                // 远处格子，启动自动寻路
+                startAutoMove(x, y);
             }
         }
         
@@ -3330,6 +3663,12 @@
             const battleModal = document.getElementById('battleModal');
             battleModal.classList.add('battle-victory-glow');
             
+            // 清除当前格子上的敌人/Boss
+            const currentCell = gameState.map[gameState.playerPos.y][gameState.playerPos.x];
+            if (currentCell.type === 'enemy' || currentCell.type === 'boss') {
+                currentCell.type = 'floor';
+            }
+            
             // 显示胜利界面
             document.getElementById('battleLog').innerHTML += `
                 <div class="battle-log-entry" style="text-align:center;font-size:14px;color:#6bff6b;padding:10px;animation:pulse-glow 0.5s;">
@@ -3341,13 +3680,22 @@
                 battleModal.classList.remove('battle-victory-glow');
                 document.getElementById('battleModal').classList.remove('active');
                 
-                // 如果是Boss战（星棺）
-                if (battleState.isBoss) {
-                    completeLevel3(isPerfect);
+                // 如果是Boss战（第3关）
+                if (battleState.isBoss && currentLevel === 3) {
+                    addLog(`击败星棺守卫！找到出口！`, 'success');
+                    // 将玩家位置改为出口
+                    gameState.map[gameState.playerPos.y][gameState.playerPos.x].type = 'player';
+                    // 更新目标为到达出口
+                    addLog(`向出口前进...`, 'info');
+                    renderMap();
+                    updateStats();
+                    renderParty();
+                    saveGame();
                 } else {
                     addLog(`战斗胜利！获得 ${goldReward} 金币`, 'success');
                     updateStats();
                     renderParty();
+                    renderMap(); // 重新渲染地图，清除敌人
                     saveGame();
                 }
             }, 1500);
