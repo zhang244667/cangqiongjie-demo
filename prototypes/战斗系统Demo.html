@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>《苍穹劫》战斗系统 Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            min-height: 100vh;
+            color: #c0c0c0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .demo-title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .demo-title h1 { color: #d4af37; font-size: 24px; margin-bottom: 5px; }
+        .demo-title p { color: #666; font-size: 12px; }
+        .start-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #4a6fa5, #3a5a8a);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .start-btn:active { transform: scale(0.95); }
+        
+        /* 战斗系统样式 */
+        .battle-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 3500;
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+        }
+        .battle-modal.active { display: flex; }
+        .battle-header {
+            text-align: center;
+            padding: 8px;
+            background: rgba(30, 20, 50, 0.8);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .battle-title { font-size: 16px; color: #d4af37; }
+        .battle-turn { font-size: 12px; color: #888; margin-top: 3px; }
+        .enemy-area { display: flex; justify-content: center; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+        .enemy-unit, .hero-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            background: rgba(40, 50, 80, 0.5);
+            border-radius: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .enemy-unit { min-width: 80px; }
+        .hero-unit { min-width: 80px; }
+        .enemy-unit.dead, .hero-unit.dead { opacity: 0.4; filter: grayscale(0.8); }
+        .hero-unit.ready { border: 2px solid #6bff6b; box-shadow: 0 0 10px rgba(107, 255, 107, 0.4); }
+        .enemy-icon, .hero-icon { font-size: 28px; margin-bottom: 5px; }
+        .enemy-name, .hero-name { font-size: 11px; color: #ff6b6b; margin-bottom: 5px; }
+        .hero-name { color: #6bcfff; }
+        .hp-bar { width: 70px; height: 8px; background: #2a2040; border-radius: 4px; overflow: hidden; margin-bottom: 3px; }
+        .hp-fill { height: 100%; background: linear-gradient(90deg, #4a6fa5, #6b9fd5); transition: width 0.3s; }
+        .hp-fill.low { background: linear-gradient(90deg, #8b3a3a, #ff6b6b); }
+        .hp-text { font-size: 10px; color: #aaa; margin-bottom: 5px; }
+        .rage-bar { width: 70px; height: 6px; background: #2a2040; border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+        .rage-fill { height: 100%; background: linear-gradient(90deg, #ffa500, #ffcc00); transition: width 0.3s; }
+        .rage-fill.full { background: linear-gradient(90deg, #ff6b6b, #ffcc00); }
+        .rage-text { font-size: 9px; color: #ffa500; }
+        .rage-text.full { color: #ffcc00; font-weight: bold; }
+        .action-bar-area { padding: 8px; background: rgba(20, 15, 30, 0.8); border-radius: 8px; margin-bottom: 10px; }
+        .action-bar { display: flex; gap: 5px; overflow-x: auto; padding: 5px 0; }
+        .action-slot {
+            min-width: 40px; height: 40px;
+            background: rgba(40, 40, 60, 0.5);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: 2px solid transparent;
+            flex-shrink: 0;
+        }
+        .action-slot.current { border: 2px solid #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
+        .action-slot.hero { background: rgba(60, 80, 120, 0.5); }
+        .action-slot.enemy { background: rgba(100, 60, 60, 0.5); }
+        .hero-area { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .battle-log {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 8px;
+            overflow-y: auto;
+            font-size: 11px;
+            min-height: 80px;
+            max-height: 120px;
+            margin-bottom: 10px;
+        }
+        .battle-log-entry { margin: 4px 0; padding: 4px 8px; border-radius: 4px; background: rgba(40, 40, 60, 0.3); }
+        .battle-log-entry.player-attack { color: #6bcfff; }
+        .battle-log-entry.player-skill { color: #ffcc00; }
+        .battle-log-entry.enemy-attack { color: #ff6b6b; }
+        .battle-log-entry.enemy-death { color: #6bff6b; }
+        .battle-actions { display: flex; gap: 10px; padding: 10px; background: rgba(30, 20, 50, 0.8); border-radius: 8px; }
+        .battle-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .battle-btn:active { transform: scale(0.95); }
+        .battle-btn.attack { background: linear-gradient(135deg, #4a6fa5, #3a5a8a); color: #fff; }
+        .battle-btn.skill { background: linear-gradient(135deg, #8b5a2b, #6b4a1b); color: #ffcc00; }
+        .battle-btn.retreat { background: rgba(80, 60, 60, 0.8); color: #ff8888; flex: 0.5; }
+        .battle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .damage-number {
+            position: absolute;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+            animation: damage-float 1s forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .damage-number.crit { color: #ffcc00; font-size: 22px; }
+        @keyframes damage-float { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-30px); } }
+        .shake { animation: shake 0.3s; }
+        .shake-heavy { animation: shake-heavy 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        @keyframes shake-heavy { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-10px); } 80% { transform: translateX(10px); } }
+        .enemy-death-anim { animation: death 0.5s forwards; }
+        @keyframes death { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.5); } }
+        .battle-victory-glow { animation: victory-glow 0.5s ease-in-out 3; }
+        @keyframes victory-glow { 0%, 100% { box-shadow: 0 0 20px rgba(107, 255, 107, 0.3); } 50% { box-shadow: 0 0 40px rgba(107, 255, 107, 0.6); } }
+    </style>
+</head>
+<body>
+    <div class="demo-title">
+        <h1>《苍穹劫》战斗系统</h1>
+        <p>v9 - 独立测试版</p>
+    </div>
+    <button class="start-btn" onclick="startDemo()">开始战斗</button>
+    <p style="color:#888;font-size:12px;">点击开始体验战斗系统</p>
+
+    <div class="battle-modal" id="battleModal">
+        <div class="battle-header">
+            <div class="battle-title" id="battleTitle">⚔️ 遭遇战斗</div>
+            <div class="battle-turn" id="battleTurn">回合 0</div>
+        </div>
+        <div class="enemy-area" id="enemyArea"></div>
+        <div class="action-bar-area" id="actionBarArea"></div>
+        <div class="hero-area" id="heroArea"></div>
+        <div class="battle-log" id="battleLog"></div>
+        <div class="battle-actions" id="battleActions">
+            <button class="battle-btn attack" onclick="doAutoBattle()">自动战斗</button>
+            <button class="battle-btn skill" onclick="doBossBattle()">Boss战</button>
+            <button class="battle-btn retreat" onclick="closeBattle()">退出</button>
+        </div>
+    </div>
+
+    <script>
+        // 英雄配置
+        const HERO_STATS = {
+            tieZhu: { name: '铁柱', icon: '💪', hp: 120, atk: 20, def: 8, speed: 85 },
+            xingJiSi: { name: '星祭司', icon: '🔮', hp: 75, atk: 24, def: 4, speed: 110 },
+            moJinShou: { name: '摸金手', icon: '🔭', hp: 90, atk: 22, def: 5, speed: 105 },
+            banShanKe: { name: '搬山客', icon: '🔧', hp: 95, atk: 21, def: 6, speed: 95 }
+        };
+
+        let battleHeroes = [];
+        let battleState = { heroes: [], enemies: [], actionQueue: [], currentIndex: 0, turn: 0, logs: [], isRunning: false, isBoss: false };
+
+        function initBattleHeroes() {
+            battleHeroes = [
+                { ...HERO_STATS.tieZhu, id: 'tieZhu', hp: HERO_STATS.tieZhu.hp, maxHp: HERO_STATS.tieZhu.hp, rage: 0 },
+                { ...HERO_STATS.xingJiSi, id: 'xingJiSi', hp: HERO_STATS.xingJiSi.hp, maxHp: HERO_STATS.xingJiSi.hp, rage: 0 },
+                { ...HERO_STATS.moJinShou, id: 'moJinShou', hp: HERO_STATS.moJinShou.hp, maxHp: HERO_STATS.moJinShou.hp, rage: 0 },
+                { ...HERO_STATS.banShanKe, id: 'banShanKe', hp: HERO_STATS.banShanKe.hp, maxHp: HERO_STATS.banShanKe.hp, rage: 0 }
+            ];
+            battleState.heroes = [...battleHeroes];
+        }
+
+        function startDemo() {
+            startBattle(false);
+        }
+
+        function doAutoBattle() {
+            closeBattle();
+            setTimeout(() => startBattle(false), 300);
+        }
+
+        function doBossBattle() {
+            closeBattle();
+            setTimeout(() => startBattle(true), 300);
+        }
+
+        function startBattle(isBoss = false) {
+            battleState.isBoss = isBoss;
+            battleState.turn = 0;
+            battleState.logs = [];
+            battleState.isRunning = false;
+
+            initBattleHeroes();
+
+            const enemyCount = isBoss ? 2 : 3;
+            battleState.enemies = [];
+            for (let i = 0; i < enemyCount; i++) {
+                battleState.enemies.push({
+                    id: `enemy_${i}`,
+                    name: isBoss ? '星棺守卫' : '墓穴守卫',
+                    icon: isBoss ? '💀' : '👹',
+                    hp: isBoss ? 120 : 50,
+                    maxHp: isBoss ? 120 : 50,
+                    atk: isBoss ? 18 : 12,
+                    def: isBoss ? 8 : 4,
+                    speed: isBoss ? 75 : 90
+                });
+            }
+
+            rebuildActionQueue();
+            battleState.turn = 1;
+
+            document.getElementById('battleTitle').textContent = isBoss ? '💀 Boss战' : '⚔️ 遭遇战斗';
+            document.getElementById('battleModal').classList.add('active');
+
+            renderBattle();
+
+            setTimeout(() => {
+                battleState.isRunning = true;
+                executeNextAction();
+            }, 1000);
+        }
+
+        function closeBattle() {
+            document.getElementById('battleModal').classList.remove('active');
+        }
+
+        function rebuildActionQueue() {
+            battleState.actionQueue = [];
+            battleState.heroes.forEach(hero => {
+                if (hero.hp > 0) battleState.actionQueue.push({ type: 'hero', id: hero.id, acted: false });
+            });
+            battleState.enemies.forEach(enemy => {
+                if (enemy.hp > 0) battleState.actionQueue.push({ type: 'enemy', id: enemy.id, acted: false });
+            });
+            battleState.actionQueue.sort((a, b) => {
+                const aSpeed = a.type === 'hero' ? battleState.heroes.find(h => h.id === a.id).speed : battleState.enemies.find(e => e.id === a.id).speed;
+                const bSpeed = b.type === 'hero' ? battleState.heroes.find(h => h.id === b.id).speed : battleState.enemies.find(e => e.id === b.id).speed;
+                return bSpeed - aSpeed;
+            });
+        }
+
+        function renderBattle() {
+            const enemyArea = document.getElementById('enemyArea');
+            enemyArea.innerHTML = battleState.enemies.map(e => `
+                <div class="enemy-unit ${e.hp <= 0 ? 'dead' : ''}" id="enemy-${e.id}">
+                    <div class="enemy-icon">${e.icon}</div>
+                    <div class="enemy-name">${e.name}</div>
+                    <div class="hp-bar"><div class="hp-fill ${e.hp/e.maxHp < 0.3 ? 'low' : ''}" style="width:${(e.hp/e.maxHp)*100}%"></div></div>
+                    <div class="hp-text">${e.hp}/${e.maxHp}</div>
+                </div>
+            `).join('');
+
+            const heroArea = document.getElementById('heroArea');
+            heroArea.innerHTML = battleState.heroes.map(h => `
+                <div class="hero-unit ${h.hp <= 0 ? 'dead' : ''} ${h.rage >= 100 ? 'ready' : ''}" id="hero-${h.id}">
+                    <div class="hero-icon">${HERO_STATS[h.id].icon}</div>
+                    <div class="hero-name">${h.name}</div>
+                    <div class="hp-bar"><div class="hp-fill ${h.hp/h.maxHp < 0.3 ? 'low' : ''}" style="width:${(h.hp/h.maxHp)*100}%"></div></div>
+                    <div class="hp-text">${h.hp}/${h.maxHp}</div>
+                    <div class="rage-bar"><div class="rage-fill ${h.rage >= 100 ? 'full' : ''}" style="width:${h.rage}%"></div></div>
+                    <div class="rage-text ${h.rage >= 100 ? 'full' : ''}">怒气 ${h.rage}</div>
+                </div>
+            `).join('');
+
+            const actionBar = document.getElementById('actionBarArea');
+            actionBar.innerHTML = '<div class="action-bar">' + battleState.actionQueue.map(a => {
+                const icon = a.type === 'hero' ? HERO_STATS[a.id].icon : (battleState.isBoss ? '💀' : '👹');
+                return `<div class="action-slot ${a.type} ${a.acted ? 'acted' : ''}">${icon}</div>`;
+            }).join('') + '</div>';
+
+            document.getElementById('battleTurn').textContent = `回合 ${battleState.turn}`;
+            document.getElementById('battleLog').innerHTML = battleState.logs.slice(-5).map(l => `<div class="battle-log-entry ${l.type}">${l.text}</div>`).join('');
+        }
+
+        function addBattleLog(text, type) {
+            battleState.logs.push({ text, type });
+        }
+
+        function calculateDamage(atk, def, isCrit = false) {
+            const base = Math.max(1, atk - def * 0.5);
+            const variance = base * 0.2;
+            let damage = Math.floor(base + (Math.random() * 2 - 1) * variance);
+            if (isCrit) damage = Math.floor(damage * 1.5);
+            return damage;
+        }
+
+        function executeNextAction() {
+            if (!battleState.isRunning) return;
+
+            const aliveHeroes = battleState.heroes.filter(h => h.hp > 0);
+            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
+
+            if (aliveEnemies.length === 0) {
+                endBattle(true);
+                return;
+            }
+            if (aliveHeroes.length === 0) {
+                endBattle(false);
+                return;
+            }
+
+            const current = battleState.actionQueue.find(a => !a.acted && (a.type === 'hero' ? battleState.heroes.find(h => h.id === a.id).hp > 0 : battleState.enemies.find(e => e.id === a.id).hp > 0));
+
+            if (!current) {
+                battleState.turn++;
+                battleState.actionQueue.forEach(a => a.acted = false);
+                rebuildActionQueue();
+                renderBattle();
+                setTimeout(() => executeNextAction(), 500);
+                return;
+            }
+
+            current.acted = true;
+
+            if (current.type === 'hero') {
+                const hero = battleState.heroes.find(h => h.id === current.id);
+                if (hero.rage >= 100) {
+                    heroUseSkill(current.id);
+                } else {
+                    heroAttack(current.id);
+                }
+            } else {
+                enemyAttack(current.id);
+            }
+        }
+
+        function heroAttack(heroId) {
+            const hero = battleState.heroes.find(h => h.id === heroId);
+            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
+            const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+
+            const isCrit = Math.random() < 0.15;
+            const damage = calculateDamage(hero.atk, target.def, isCrit);
+            target.hp = Math.max(0, target.hp - damage);
+            hero.rage = Math.min(100, hero.rage + 10);
+
+            setTimeout(() => {
+                const el = document.getElementById(`enemy-${target.id}`);
+                if (el) {
+                    showDamageNumber(el, damage, isCrit ? 'crit' : 'damage');
+                    el.classList.add('shake');
+                    setTimeout(() => el.classList.remove('shake'), 300);
+                }
+            }, 100);
+
+            addBattleLog(`${HERO_STATS[heroId].icon}${hero.name} 攻击 ${target.icon}${target.name}${isCrit ? '，暴击！' : ''}，造成 ${damage} 伤害`, 'player-attack');
+
+            if (target.hp <= 0) addBattleLog(`${target.icon}${target.name} 被击败！`, 'enemy-death');
+
+            renderBattle();
+            setTimeout(() => executeNextAction(), 600);
+        }
+
+        function heroUseSkill(heroId) {
+            const hero = battleState.heroes.find(h => h.id === heroId);
+            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
+            const target = aliveEnemies.reduce((min, e) => e.hp < min.hp ? e : min, aliveEnemies[0]);
+
+            const damage = Math.floor(calculateDamage(hero.atk * 1.5, target.def, true));
+            target.hp = Math.max(0, target.hp - damage);
+            hero.rage = 0;
+
+            setTimeout(() => {
+                const el = document.getElementById(`enemy-${target.id}`);
+                if (el) {
+                    showDamageNumber(el, damage, 'crit');
+                    el.classList.add('shake-heavy');
+                    setTimeout(() => el.classList.remove('shake-heavy'), 400);
+                }
+            }, 100);
+
+            addBattleLog(`${HERO_STATS[heroId].icon}${hero.name} 释放技能！对 ${target.icon}${target.name} 造成 ${damage} 暴击伤害！`, 'player-skill');
+            if (target.hp <= 0) addBattleLog(`${target.icon}${target.name} 被击败！`, 'enemy-death');
+
+            renderBattle();
+            setTimeout(() => executeNextAction(), 800);
+        }
+
+        function enemyAttack(enemyId) {
+            const enemy = battleState.enemies.find(e => e.id === enemyId);
+            const aliveHeroes = battleState.heroes.filter(h => h.hp > 0);
+            const target = aliveHeroes.reduce((max, h) => h.hp > max.hp ? h : max, aliveHeroes[0]);
+
+            const damage = calculateDamage(enemy.atk, target.def);
+            target.hp = Math.max(0, target.hp - damage);
+            target.rage = Math.min(100, target.rage + 5);
+
+            setTimeout(() => {
+                const el = document.getElementById(`hero-${target.id}`);
+                if (el) {
+                    showDamageNumber(el, damage, 'damage');
+                    el.classList.add('shake');
+                    setTimeout(() => el.classList.remove('shake'), 300);
+                }
+            }, 100);
+
+            addBattleLog(`${enemy.icon}${enemy.name} 攻击 ${HERO_STATS[target.id].icon}${target.name}，造成 ${damage} 伤害`, 'enemy-attack');
+
+            renderBattle();
+            setTimeout(() => executeNextAction(), 600);
+        }
+
+        function showDamageNumber(element, damage, type) {
+            const rect = element.getBoundingClientRect();
+            const num = document.createElement('div');
+            num.className = `damage-number ${type}`;
+            num.textContent = damage;
+            num.style.left = `${rect.left + rect.width/2 - 15}px`;
+            num.style.top = `${rect.top}px`;
+            document.body.appendChild(num);
+            setTimeout(() => num.remove(), 1000);
+        }
+
+        function endBattle(isVictory) {
+            battleState.isRunning = false;
+            const modal = document.getElementById('battleModal');
+            if (isVictory) {
+                modal.classList.add('battle-victory-glow');
+                addBattleLog('🎉 战斗胜利！', 'enemy-death');
+            } else {
+                addBattleLog('💀 战斗失败...', 'enemy-attack');
+            }
+            renderBattle();
+            setTimeout(() => modal.classList.remove('battle-victory-glow'), 1500);
+        }
+    </script>
+</body>
+</html>
