@@ -1159,7 +1159,7 @@
             atk: 20, 
             def: 8, 
             speed: 85, 
-            portrait: 'https://www.coze.cn/s/GShA-7yOypU/', 
+            portrait: 'assets/tiezhu_portrait.jpg', 
             job: '重装战士', 
             attackType: 'gold', 
             skillColor: '#ffd700', 
@@ -1172,7 +1172,7 @@
             atk: 24, 
             def: 4, 
             speed: 110, 
-            portrait: 'https://www.coze.cn/s/EmbK-qYRUvw/', 
+            portrait: 'assets/xingjisi_portrait.jpg', 
             job: '秘法师', 
             attackType: 'star', 
             skillColor: '#aaddff', 
@@ -1185,7 +1185,7 @@
             atk: 22, 
             def: 5, 
             speed: 105, 
-            portrait: 'https://www.coze.cn/s/G4cwsF_5a1A/', 
+            portrait: 'assets/mojinshou_portrait.jpg', 
             job: '风水师', 
             attackType: 'rune', 
             skillColor: '#88ff88', 
@@ -1198,7 +1198,7 @@
             atk: 21, 
             def: 6, 
             speed: 95, 
-            portrait: 'https://www.coze.cn/s/IfrAhL1vG6I/', 
+            portrait: 'assets/banshanke_portrait.jpg', 
             job: '机关师', 
             attackType: 'gear', 
             skillColor: '#ffaa66', 
@@ -1221,8 +1221,8 @@
     };
     
     const ENEMY_PORTRAITS = {
-        normal: ['https://www.coze.cn/s/GiEfwGxwWbs/'],
-        boss: ['https://www.coze.cn/s/G1CDLZ4vzMs/']
+        normal: ['assets/tomb_guard.jpg'],
+        boss: ['assets/boss_guard.jpg']
     };
 
     // ============================================
@@ -1769,6 +1769,12 @@
         }
         
         const modal = document.getElementById('battleModal');
+        
+        // 延迟关闭战斗界面
+        setTimeout(() => {
+            modal.classList.remove('active');
+            closeBattle();
+        }, 2000);
         
         if (isVictory) {
             modal.classList.add('battle-victory-glow');
