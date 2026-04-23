@@ -1949,6 +1949,7 @@
             }
 
             showDialogue(dialogue) {
+                console.log('showDialogue called:', dialogue.speaker, '-', dialogue.text.substring(0, 20));
                 // 先停止之前的打字机效果，防止残留
                 this.stopTyping();
                 
@@ -1978,6 +1979,7 @@
                     } else {
                         // 打字完成
                         self.stopTyping();
+                        console.log('Typing complete for:', dialogue.speaker);
                     }
                 };
                 
@@ -1986,7 +1988,7 @@
                 
                 // 点击事件处理 - 使用闭包保存当前对话文本
                 const handleClick = function(e) {
-                    console.log('StoryScene click event triggered', self.isTyping, self.currentDialogueIndex);
+                    console.log('StoryScene click event triggered, isTyping:', self.isTyping, 'currentDialogueIndex:', self.currentDialogueIndex);
                     
                     // 如果点击的是选择按钮，不处理
                     if (e.target.classList.contains('choice-btn')) return;
@@ -2000,7 +2002,7 @@
                         // 打字完成后点击：进入下一条对话
                         hint.style.display = 'none';
                         self.currentDialogueIndex++;
-                        console.log('Moving to dialogue', self.currentDialogueIndex);
+                        console.log('Moving to dialogue index:', self.currentDialogueIndex, 'total:', self.dialogues.length);
                         self.startDialogues();
                     }
                 };
@@ -2011,6 +2013,9 @@
 
             onDialoguesComplete() {
                 console.log('onDialoguesComplete, choices:', this.choices.length, 'hasNext:', !!this.onNext);
+                // 立即移除点击事件，防止等待期间重复触发
+                this.container.onclick = null;
+                
                 if (this.choices.length > 0) {
                     this.showChoices();
                 } else if (this.onNext) {
