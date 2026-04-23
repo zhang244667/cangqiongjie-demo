@@ -1939,9 +1939,11 @@
             }
 
             startDialogues() {
+                console.log('startDialogues called, index:', this.currentDialogueIndex, 'total:', this.dialogues.length);
                 if (this.currentDialogueIndex < this.dialogues.length) {
                     this.showDialogue(this.dialogues[this.currentDialogueIndex]);
                 } else {
+                    console.log('All dialogues complete, calling onDialoguesComplete');
                     this.onDialoguesComplete();
                 }
             }
@@ -2008,11 +2010,17 @@
             }
 
             onDialoguesComplete() {
+                console.log('onDialoguesComplete, choices:', this.choices.length, 'hasNext:', !!this.onNext);
                 if (this.choices.length > 0) {
                     this.showChoices();
                 } else if (this.onNext) {
-                    setTimeout(() => this.onNext(), 1000);
+                    console.log('Calling onNext in 1 second');
+                    setTimeout(() => {
+                        console.log('Calling onNext now');
+                        this.onNext();
+                    }, 1000);
                 } else {
+                    console.log('No callback, hiding');
                     this.hide();
                 }
             }
