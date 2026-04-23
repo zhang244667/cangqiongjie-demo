@@ -2090,7 +2090,10 @@
             }
 
             async playScene(index) {
+                console.log("playScene called with index:", index, "scenes.length:", this.scenes.length);
                 if (index >= this.scenes.length) {
+                    // 隐藏当前场景
+                    if (this.currentScene) this.currentScene.hide();
                     this.isPlaying = false;
                     if (this.onComplete) this.onComplete();
                     return;
