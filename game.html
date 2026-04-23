@@ -3494,23 +3494,23 @@
         // ==================== 新战斗系统（使用外部模块） ====================
         // 调用battle-system.js中的战斗系统
         function initBattleHeroes() {
-            battleSystem.initBattleHeroes();
-            battleHeroes = battleSystem.getBattleHeroes();
+            BattleSystem.initBattleHeroes();
+            battleHeroes = BattleSystem.getBattleHeroes();
         }
         
         function startBattle(isBoss = false) {
             // 如果是Boss战，先播放Boss出场剧情
             if (isBoss && currentLevel) {
                 playBossIntro(currentLevel, function() {
-                    battleSystem.startBattle(isBoss);
+                    BattleSystem.startBattle(isBoss);
                 });
             } else {
-                battleSystem.startBattle(isBoss);
+                BattleSystem.startBattle(isBoss);
             }
         }
         
         function doBattleRetreat() {
-            battleSystem.closeBattle();
+            BattleSystem.closeBattle();
             addLog('你选择了撤退...', 'info');
             gameState.fatigue = Math.max(0, gameState.fatigue - 10);
             updateStats();
@@ -3556,7 +3556,7 @@
     <script src="battle-system.js"></script>
     <script>
         // 设置战斗结束回调
-        battleSystem.setOnBattleEndCallback(function(isVictory, isBoss) {
+        BattleSystem.setOnBattleEndCallback(function(isVictory, isBoss) {
             if (isVictory) {
                 const goldReward = isBoss ? 100 : 50;
                 gameState.gold += goldReward;
