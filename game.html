@@ -1777,6 +1777,7 @@
     
     <!-- ========== 战斗系统 ========== -->
     <div class="battle-modal" id="battleModal">
+        <canvas id="particleCanvas"></canvas>
         <div class="battle-header">
             <div class="battle-title" id="battleTitle">⚔️ 遭遇战斗</div>
             <div class="battle-turn" id="battleTurn">回合 0</div>
@@ -3490,19 +3491,54 @@
         function toggleLogDrawer() { document.getElementById('logDrawer').classList.toggle('open'); }
         function toggleStoryDrawer() { document.getElementById('storyDrawer').classList.toggle('open'); }
         
-        // ==================== 新战斗系统 ====================
-        let battleState = {
-            heroes: [],
-            enemies: [],
-            actionQueue: [],
-            currentIndex: 0,
-            turn: 0,
-            logs: [],
-            isRunning: false,
-            isBoss: false
-        };
+        // ==================== 新战斗系统（使用外部模块） ====================
+        // 调用battle-system.js中的战斗系统
+        function startBattle(isBoss = false) {
+            // 如果是Boss战，先播放Boss出场剧情
+            if (isBoss && currentLevel) {
+                playBossIntro(currentLevel, function() {
+                    battleSystem.startBattle(isBoss);
+                });
+            } else {
+                battleSystem.startBattle(isBoss);
+            }
+        }
         
-        // 初始化英雄数据
+        function doBattleRetreat() {
+            battleSystem.closeBattle();
+            addLog('你选择了撤退...', 'info');
+            gameState.fatigue = Math.max(0, gameState.fatigue - 10);
+            updateStats();
+        }
+        
+        // 战斗胜利回调
+        function onBattleVictory(isBoss) {
+            const goldReward = isBoss ? 100 : 50;
+            gameState.gold += goldReward;
+            gameState.battleCount++;
+            gameState.killedEnemies++;
+            
+            addLog(`战斗胜利！获得 ${goldReward} 金币`, 'success');
+            
+            // 计算疲劳消耗
+            const totalHpLoss = battleHeroes.reduce((sum, h) => {
+                const maxHp = HERO_STATS[h.id].hp;
+                return sum + (maxHp - h.hp);
+            }, 0);
+            gameState.fatigue = Math.max(0, gameState.fatigue - totalHpLoss);
+            
+            updateStats();
+            checkObjectives();
+        }
+        
+        // 战斗失败回调
+        function onBattleDefeat() {
+            addLog('战斗失败...', 'danger');
+            gameState.fatigue = Math.max(0, gameState.fatigue - 15);
+            updateStats();
+        }
+        
+// 初始化英雄数据
         function initBattleHeroes() {
             battleHeroes = [
                 { ...HERO_STATS.tieZhu, id: 'tieZhu', hp: HERO_STATS.tieZhu.hp, maxHp: HERO_STATS.tieZhu.hp, rage: 0 },
@@ -4147,6 +4183,24 @@
             initBattleHeroes();
             renderParty();
             updateLevelCards();
+        });
+    </script>
+    <script src="battle-system.js"></script>
+    <script>
+        // 设置战斗结束回调
+        battleSystem.setOnBattleEndCallback(function(isVictory, isBoss) {
+            if (isVictory) {
+                const goldReward = isBoss ? 100 : 50;
+                gameState.gold += goldReward;
+                gameState.battleCount++;
+                gameState.killedEnemies++;
+                addLog('战斗胜利！获得 ' + goldReward + ' 金币', 'success');
+            } else {
+                addLog('战斗失败...', 'danger');
+                gameState.fatigue = Math.max(0, gameState.fatigue - 15);
+            }
+            updateStats();
+            checkObjectives();
         });
     </script>
 </body>

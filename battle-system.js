@@ -1206,6 +1206,13 @@
         }
     };
     
+    // 战斗结束回调
+    let onBattleEndCallback = null;
+    
+    function setOnBattleEndCallback(callback) {
+        onBattleEndCallback = callback;
+    }
+    
     const RAGE_CONFIG = { 
         initial: 30, 
         perAttack: 20, 
@@ -1755,6 +1762,12 @@
 
     function endBattle(isVictory) {
         battleState.isRunning = false;
+        
+        // 调用外部回调
+        if (onBattleEndCallback) {
+            onBattleEndCallback(isVictory, battleState.isBoss);
+        }
+        
         const modal = document.getElementById('battleModal');
         
         if (isVictory) {
@@ -1793,6 +1806,7 @@
         // 启动战斗
         startBattle: startBattle,
         closeBattle: closeBattle,
+        setOnBattleEndCallback: setOnBattleEndCallback,
         
         // 访问器
         getAudioSystem: () => audioSystem,
