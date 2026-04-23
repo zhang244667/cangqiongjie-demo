@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>《苍穹劫》地宫探索 Demo v5</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            height: 100vh;
+            color: #c0c0c0;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        /* 主容器 - 手机风格全屏布局 */
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        /* 顶部状态栏 */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(20, 15, 30, 0.95);
+            border-bottom: 1px solid #3a2a5a;
+            flex-shrink: 0;
+        }
+        
+        .floor-info {
+            font-size: 14px;
+            color: #d4af37;
+            font-weight: bold;
+        }
+        
+        .hp-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .hp-bar-wrapper {
+            width: 120px;
+            height: 12px;
+            background: #2a2040;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .hp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ff8888);
+            transition: width 0.3s;
+        }
+        
+        .hp-text {
+            font-size: 12px;
+            color: #ff6b6b;
+            min-width: 45px;
+        }
+        
+        .torch-info {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            color: #ffa500;
+        }
+        
+        /* 目标追踪栏 */
+        .objective-bar {
+            background: rgba(30, 20, 40, 0.95);
+            padding: 8px 15px;
+            border-bottom: 1px solid #3a2a5a;
+            flex-shrink: 0;
+        }
+        
+        .objective-title {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        
+        .objective-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #d4af37;
+        }
+        
+        .objective-icon {
+            font-size: 16px;
+        }
+        
+        .objective-progress {
+            font-size: 12px;
+            color: #6bcfff;
+        }
+        
+        /* 地图主区域 */
+        .map-section {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: rgba(10, 10, 20, 0.9);
+        }
+        
+        .map-viewport {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .map-scroll-container {
+            position: absolute;
+            transition: transform 0.15s ease-out;
+        }
+        
+        #gameMap {
+            display: grid;
+            grid-template-columns: repeat(20, 1fr);
+            gap: 1px;
+            padding: 5px;
+        }
+        
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #1a1a25;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        
+        .cell.fog {
+            background: #0a0a10;
+            color: #333;
+        }
+        
+        .cell.fog:active {
+            background: #151520;
+        }
+        
+        .cell.player {
+            background: linear-gradient(135deg, #4a6fa5, #3a5a8a);
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(74, 111, 165, 0.6);
+            cursor: default;
+            border: 2px solid #6a9fd5;
+        }
+        
+        .cell.wall { background: #2a2a35; color: #444; cursor: default; }
+        .cell.enemy { background: #8b3a3a; color: #ff6b6b; }
+        .cell.chest { background: #3a3a2a; color: #ffd700; }
+        .cell.mechanism-luck { background: #2a4a3a; color: #6bff6b; }
+        .cell.mechanism-knowledge { background: #3a4a5a; color: #6bcfff; }
+        .cell.mechanism-hero { background: #4a3a5a; color: #ff6bff; }
+        .cell.boss { background: #5a2a5a; color: #ff00ff; font-weight: bold; }
+        .cell.stairs { background: linear-gradient(135deg, #2a4a3a, #3a5a4a); color: #6bff6b; border: 2px solid #4a8a5a; }
+        
+        .cell:active:not(.player):not(.wall) {
+            transform: scale(0.95);
+        }
+        
+        /* 底部操作栏 */
+        .bottom-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            padding: 10px 15px;
+            background: rgba(20, 15, 30, 0.95);
+            border-top: 1px solid #3a2a5a;
+            flex-shrink: 0;
+        }
+        
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 5px;
+            background: rgba(60, 50, 80, 0.8);
+            border: 1px solid #4a4a6a;
+            border-radius: 8px;
+            color: #ddd;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:active {
+            background: rgba(80, 70, 100, 0.9);
+            transform: scale(0.95);
+        }
+        
+        .action-btn .btn-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        .action-btn .btn-label {
+            font-size: 10px;
+            color: #888;
+        }
+        
+        /* 资源显示 */
+        .resources-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 15px;
+            background: rgba(25, 18, 35, 0.95);
+            border-top: 1px solid #3a2a5a;
+            flex-shrink: 0;
+        }
+        
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        
+        .resource-icon {
+            font-size: 16px;
+        }
+        
+        .gold-value { color: #ffd700; }
+        .mechanism-value { color: #6bff6b; }
+        
+        /* 弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 100%);
+            border: 2px solid #d4af37;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        /* 目标弹窗 */
+        .objective-modal .modal-content {
+            text-align: center;
+        }
+        
+        .objective-modal .level-title {
+            font-size: 20px;
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+        
+        .objective-modal .level-desc {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        
+        .objective-list {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .objective-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(40, 30, 60, 0.5);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .objective-item .obj-icon {
+            font-size: 24px;
+        }
+        
+        .objective-item .obj-text {
+            flex: 1;
+        }
+        
+        .objective-item .obj-title {
+            font-size: 14px;
+            color: #ddd;
+            margin-bottom: 2px;
+        }
+        
+        .objective-item .obj-reward {
+            font-size: 11px;
+            color: #ffa500;
+        }
+        
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #d4af37, #b8962d);
+            border: none;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* 机关弹窗 */
+        .mechanism-image {
+            width: 100%;
+            height: 120px;
+            background: #0a0a15;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 48px;
+        }
+        
+        .mechanism-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .mechanism-type.luck { background: #2a4a3a; color: #6bff6b; }
+        .mechanism-type.knowledge { background: #3a4a5a; color: #6bcfff; }
+        .mechanism-type.hero { background: #4a3a5a; color: #ff6bff; }
+        
+        .mechanism-title {
+            font-size: 18px;
+            color: #d4af37;
+            margin-bottom: 8px;
+        }
+        
+        .mechanism-desc {
+            color: #aaa;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        
+        .mechanism-question {
+            background: rgba(50, 40, 70, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .hero-hint {
+            background: rgba(255, 165, 0, 0.1);
+            border: 1px solid #ffa500;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #ffa500;
+        }
+        
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .option-btn {
+            padding: 12px 15px;
+            background: rgba(60, 50, 80, 0.8);
+            border: 1px solid #4a4a6a;
+            border-radius: 8px;
+            color: #ddd;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        
+        .option-btn:active {
+            background: rgba(80, 70, 100, 0.9);
+            border-color: #d4af37;
+        }
+        
+        .option-btn .option-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        
+        .option-btn .option-tag.matched { background: #2a4a3a; color: #6bff6b; }
+        .option-btn .option-tag.unmatched { background: #4a3a3a; color: #ff6b6b; }
+        
+        .result-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .result-box.success { background: rgba(107, 255, 107, 0.1); border: 1px solid #6bff6b; color: #6bff6b; }
+        .result-box.partial { background: rgba(255, 200, 100, 0.1); border: 1px solid #ffc864; color: #ffc864; }
+        .result-box.fail { background: rgba(255, 107, 107, 0.1); border: 1px solid #ff6b6b; color: #ff6b6b; }
+        
+        .close-btn {
+            margin-top: 15px;
+            padding: 12px 20px;
+            background: #d4af37;
+            border: none;
+            border-radius: 8px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        /* 队伍抽屉 */
+        .party-drawer {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100%;
+            background: rgba(20, 15, 30, 0.98);
+            border-left: 2px solid #3a2a5a;
+            z-index: 900;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .party-drawer.open {
+            right: 0;
+        }
+        
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3a2a5a;
+        }
+        
+        .drawer-title {
+            font-size: 16px;
+            color: #d4af37;
+        }
+        
+        .drawer-close {
+            font-size: 24px;
+            color: #888;
+            cursor: pointer;
+        }
+        
+        .party-member {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(40, 30, 60, 0.5);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            background: #3a3a5a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .member-info { flex: 1; }
+        .member-name { font-size: 13px; color: #ddd; font-weight: bold; }
+        .member-trait { font-size: 11px; color: #ffa500; }
+        .member-hp { font-size: 11px; color: #888; margin-top: 2px; }
+        
+        .hp-bar-mini {
+            width: 100%;
+            height: 4px;
+            background: #2a2040;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .hp-fill-mini {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ff8888);
+        }
+        
+        /* 日志抽屉 */
+        .log-drawer {
+            position: fixed;
+            bottom: -250px;
+            left: 0;
+            right: 0;
+            height: 250px;
+            background: rgba(20, 15, 30, 0.98);
+            border-top: 2px solid #3a2a5a;
+            z-index: 900;
+            transition: bottom 0.3s ease;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .log-drawer.open {
+            bottom: 0;
+        }
+        
+        .log-entry {
+            padding: 6px 0;
+            border-bottom: 1px solid #2a2a3a;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .log-entry.success { color: #6bff6b; }
+        .log-entry.danger { color: #ff6b6b; }
+        .log-entry.info { color: #6bcfff; }
+        .log-entry.gold { color: #ffd700; }
+        
+        /* 结算界面 */
+        .settlement-modal .modal-content {
+            text-align: center;
+        }
+        
+        .settlement-title {
+            font-size: 24px;
+            color: #d4af37;
+            margin-bottom: 15px;
+        }
+        
+        .settlement-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(40, 30, 60, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .stat-card .stat-label {
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .stat-card.gold .stat-value { color: #ffd700; }
+        .stat-card.mechanism .stat-value { color: #6bff6b; }
+        .stat-card.battle .stat-value { color: #ff6b6b; }
+        .stat-card.time .stat-value { color: #6bcfff; }
+        
+        .rewards-section {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .rewards-title {
+            font-size: 14px;
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+        
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #ddd;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 顶部状态栏 -->
+        <div class="top-bar">
+            <div class="floor-info">📍 地宫第一层</div>
+            <div class="hp-container">
+                <div class="hp-bar-wrapper">
+                    <div class="hp-bar-fill" id="hpBar"></div>
+                </div>
+                <div class="hp-text" id="hpText">100%</div>
+            </div>
+            <div class="torch-info">
+                🔥 <span id="torchValue">5</span>
+            </div>
+        </div>
+        
+        <!-- 目标追踪栏 -->
+        <div class="objective-bar">
+            <div class="objective-title">当前目标</div>
+            <div class="objective-content">
+                <span class="objective-icon">🚪</span>
+                <span id="objectiveText">找到出口楼梯</span>
+                <span class="objective-progress" id="objectiveProgress"></span>
+            </div>
+        </div>
+        
+        <!-- 地图主区域 -->
+        <div class="map-section">
+            <div class="map-viewport">
+                <div class="map-scroll-container" id="mapScrollContainer">
+                    <div id="gameMap"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部资源栏 -->
+        <div class="resources-bar">
+            <div class="resource-item">
+                <span class="resource-icon">💰</span>
+                <span class="gold-value" id="goldValue">0</span>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">🔧</span>
+                <span class="mechanism-value" id="mechanismCount">0/0</span>
+            </div>
+            <div class="resource-item">
+                <span class="resource-icon">⚔️</span>
+                <span id="battleCount">0</span>
+            </div>
+        </div>
+        
+        <!-- 底部操作栏 -->
+        <div class="bottom-bar">
+            <div class="action-btn" onclick="togglePartyDrawer()">
+                <span class="btn-icon">👥</span>
+                <span class="btn-label">队伍</span>
+            </div>
+            <div class="action-btn" onclick="toggleLogDrawer()">
+                <span class="btn-icon">📜</span>
+                <span class="btn-label">日志</span>
+            </div>
+            <div class="action-btn" onclick="showObjectives()">
+                <span class="btn-icon">🎯</span>
+                <span class="btn-label">目标</span>
+            </div>
+            <div class="action-btn" onclick="resetGame()">
+                <span class="btn-icon">🔄</span>
+                <span class="btn-label">重置</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 队伍抽屉 -->
+    <div class="party-drawer" id="partyDrawer">
+        <div class="drawer-header">
+            <span class="drawer-title">探险队伍</span>
+            <span class="drawer-close" onclick="togglePartyDrawer()">×</span>
+        </div>
+        <div id="partyList"></div>
+    </div>
+    
+    <!-- 日志抽屉 -->
+    <div class="log-drawer" id="logDrawer">
+        <div class="drawer-header">
+            <span class="drawer-title">探索日志</span>
+            <span class="drawer-close" onclick="toggleLogDrawer()">×</span>
+        </div>
+        <div id="logList"></div>
+    </div>
+    
+    <!-- 目标弹窗 -->
+    <div class="modal-overlay objective-modal" id="objectiveModal">
+        <div class="modal-content">
+            <div class="level-title">📍 地宫第一层</div>
+            <div class="level-desc">古老的墓穴深处，隐藏着无数机关与宝藏...</div>
+            <div class="objective-list">
+                <div class="objective-item">
+                    <span class="obj-icon">🚪</span>
+                    <div class="obj-text">
+                        <div class="obj-title">找到出口楼梯</div>
+                        <div class="obj-reward">主要目标</div>
+                    </div>
+                </div>
+                <div class="objective-item">
+                    <span class="obj-icon">🔧</span>
+                    <div class="obj-text">
+                        <div class="obj-title">破解机关 x3</div>
+                        <div class="obj-reward">奖励: +100金币</div>
+                    </div>
+                </div>
+                <div class="objective-item">
+                    <span class="obj-icon">👹</span>
+                    <div class="obj-text">
+                        <div class="obj-title">击败怪物 x2</div>
+                        <div class="obj-reward">奖励: +50金币</div>
+                    </div>
+                </div>
+            </div>
+            <button class="start-btn" onclick="closeObjectiveModal()">开始探索</button>
+        </div>
+    </div>
+    
+    <!-- 机关弹窗 -->
+    <div class="modal-overlay" id="mechanismModal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+    
+    <!-- 结算弹窗 -->
+    <div class="modal-overlay settlement-modal" id="settlementModal">
+        <div class="modal-content">
+            <div class="settlement-title">🎉 探索完成!</div>
+            <div class="settlement-stats">
+                <div class="stat-card gold">
+                    <div class="stat-label">获得金币</div>
+                    <div class="stat-value" id="finalGold">0</div>
+                </div>
+                <div class="stat-card mechanism">
+                    <div class="stat-label">破解机关</div>
+                    <div class="stat-value" id="finalMechanism">0</div>
+                </div>
+                <div class="stat-card battle">
+                    <div class="stat-label">战斗次数</div>
+                    <div class="stat-value" id="finalBattle">0</div>
+                </div>
+                <div class="stat-card time">
+                    <div class="stat-label">用时</div>
+                    <div class="stat-value" id="finalTime">0:00</div>
+                </div>
+            </div>
+            <div class="rewards-section">
+                <div class="rewards-title">🎁 结算奖励</div>
+                <div class="reward-item">💰 基础奖励: <span id="baseReward">50</span> 金币</div>
+                <div class="reward-item">⭐ 目标奖励: <span id="bonusReward">0</span> 金币</div>
+            </div>
+            <button class="start-btn" onclick="resetGame()">继续探索</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            mapSize: 20,
+            map: [],
+            playerPos: { x: 1, y: 1 },
+            hp: 100,
+            maxHp: 100,
+            torch: 5,
+            gold: 0,
+            floor: 1,
+            mechanismSolved: 0,
+            mechanismTotal: 0,
+            battleCount: 0,
+            startTime: null,
+            objectives: {
+                stairs: false,
+                mechanisms: { current: 0, target: 3 },
+                battles: { current: 0, target: 2 }
+            }
+        };
+        
+        // 队伍数据
+        const party = [
+            { name: '铁柱', icon: '💪', trait: '辰宿卸岭', traitType: 'strength', hp: 150, maxHp: 150 },
+            { name: '搬山客', icon: '🔧', trait: '璇玑搬山', traitType: 'mechanism', hp: 120, maxHp: 120 },
+            { name: '摸金手', icon: '🔭', trait: '星纹摸金', traitType: 'astro', hp: 100, maxHp: 100 },
+            { name: '星祭司', icon: '🔮', trait: '天枢发丘', traitType: 'seal', hp: 90, maxHp: 90 }
+        ];
+        
+        // 机关数据
+        const mechanisms = {
+            luck: [
+                {
+                    name: '神秘宝箱',
+                    icon: '🎁',
+                    desc: '一个看起来很可疑的宝箱...',
+                    question: '要打开这个宝箱吗？',
+                    options: [
+                        { text: 'A. 直接打开', result: 'random', successRate: 0.5 },
+                        { text: 'B. 小心检查后打开', result: 'safe' },
+                        { text: 'C. 放弃离开', result: 'skip' }
+                    ]
+                },
+                {
+                    name: '赌博石盘',
+                    icon: '🎰',
+                    desc: '古老的石盘上有奇怪的符号...',
+                    question: '转动石盘试试运气？',
+                    options: [
+                        { text: 'A. 转动石盘', result: 'dice' },
+                        { text: 'B. 不碰它', result: 'skip' }
+                    ]
+                },
+                {
+                    name: '岔路口',
+                    icon: '🔀',
+                    desc: '三条路，不知通向何处...',
+                    question: '选择一条路：',
+                    options: [
+                        { text: 'A. 左边的路', result: 'random', successRate: 0.33 },
+                        { text: 'B. 中间的路', result: 'random', successRate: 0.33 },
+                        { text: 'C. 右边的路', result: 'random', successRate: 0.34 }
+                    ]
+                }
+            ],
+            knowledge: [
+                {
+                    name: '天干地支锁',
+                    icon: '🔐',
+                    desc: '石门上刻着古老的符号...',
+                    question: '甲、乙、丙、丁之后是？',
+                    hintTrait: 'astro',
+                    hint: '摸金手提示：这是天干排序，甲乙丙丁戊己庚辛壬癸',
+                    options: [
+                        { text: 'A. 戊', correct: true },
+                        { text: 'B. 子', correct: false },
+                        { text: 'C. 己', correct: false }
+                    ]
+                },
+                {
+                    name: '五行谜题',
+                    icon: '☯️',
+                    desc: '墙上刻着五行相生的谜题...',
+                    question: '水生什么？',
+                    hintTrait: 'mechanism',
+                    hint: '搬山客提示：五行相生：金生水、水生木、木生火、火生土、土生金',
+                    options: [
+                        { text: 'A. 木', correct: true },
+                        { text: 'B. 金', correct: false },
+                        { text: 'C. 火', correct: false }
+                    ]
+                },
+                {
+                    name: '九宫格',
+                    icon: '🔢',
+                    desc: '地上有一个九宫格机关...',
+                    question: '九宫格中，横、竖、斜之和都是15。已知中间是5，左上角应该是？',
+                    hintTrait: 'astro',
+                    hint: '摸金手提示：九宫格口诀"二四为肩，六八为足，左三右七，戴九履一，五居中央"',
+                    options: [
+                        { text: 'A. 2', correct: false },
+                        { text: 'B. 4', correct: true },
+                        { text: 'C. 6', correct: false }
+                    ]
+                }
+            ],
+            hero: [
+                {
+                    name: '铁闸门',
+                    icon: '🚪',
+                    desc: '一道锈迹斑斑的铁门挡住去路...',
+                    question: '巨大的铁门挡住了去路，如何通过？',
+                    options: [
+                        { text: 'A. 用力推开', trait: 'strength', hasTraitResult: '铁柱发力推开铁门，成功！', noTraitResult: '你们合力推开门，但受了伤...', hasTraitEffect: { hp: 0, gold: 0 }, noTraitEffect: { hp: -15, gold: 0 } },
+                        { text: 'B. 寻找机关', trait: 'mechanism', hasTraitResult: '搬山客找到隐藏机关，完美开启！还发现了暗格！', noTraitResult: '找不到机关，只能用其他方法...', hasTraitEffect: { hp: 0, gold: 50 }, noTraitEffect: { hp: 0, gold: 0, fail: true } },
+                        { text: 'C. 硬闯过去', trait: null, hasTraitResult: '硬闯过去，受了点伤', noTraitResult: '硬闯过去，受了点伤', hasTraitEffect: { hp: -10, gold: 0 }, noTraitEffect: { hp: -20, gold: 0 } }
+                    ]
+                },
+                {
+                    name: '悬魂梯',
+                    icon: '🌀',
+                    desc: '螺旋向下的石阶，似乎走不到尽头...',
+                    question: '楼梯似乎陷入了循环，如何脱出？',
+                    options: [
+                        { text: 'A. 标记路线', trait: 'mechanism', hasTraitResult: '搬山客用分甲术标记路线，发现规律，成功脱出！还获得了隐藏奖励！', noTraitResult: '标记了路线，但还是绕了很久...', hasTraitEffect: { hp: 0, gold: 30 }, noTraitEffect: { hp: -5, gold: 0 } },
+                        { text: 'B. 用罗盘指引', trait: 'astro', hasTraitResult: '摸金手拿出罗盘，指向正确方向！', noTraitResult: '罗盘在这里失灵了...', hasTraitEffect: { hp: 0, gold: 20 }, noTraitEffect: { hp: -5, gold: 0 } },
+                        { text: 'C. 直接走下去', trait: null, hasTraitResult: '走了很久，终于出来了...', noTraitResult: '走了很久，终于出来了...', hasTraitEffect: { hp: -10, gold: 0 }, noTraitEffect: { hp: -15, gold: 0 } }
+                    ]
+                },
+                {
+                    name: '五行封印',
+                    icon: '🔮',
+                    desc: '五个元素符文需要按正确顺序激活...',
+                    question: '如何破解五行封印？',
+                    options: [
+                        { text: 'A. 按五行相生顺序', trait: 'mechanism', hasTraitResult: '搬山客念出相生口诀，完美破解！封印化为宝箱！', noTraitResult: '试着按相生顺序...好像不太对...', hasTraitEffect: { hp: 0, gold: 80 }, noTraitEffect: { hp: -10, gold: 0 } },
+                        { text: 'B. 用发丘印破解', trait: 'seal', hasTraitResult: '星祭司使用发丘印，封印瞬间解除！获得额外奖励！', noTraitResult: '没有人会用发丘印...', hasTraitEffect: { hp: 0, gold: 100 }, noTraitEffect: { hp: 0, gold: 0, fail: true } },
+                        { text: 'C. 强行打破', trait: 'strength', hasTraitResult: '铁柱一击粉碎封印，但触发了警报！', noTraitResult: '合力打破封印，受伤并触发战斗！', hasTraitEffect: { hp: -5, gold: 30, battle: true }, noTraitEffect: { hp: -20, gold: 20, battle: true } }
+                    ]
+                }
+            ]
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            gameState.startTime = Date.now();
+            generateMap();
+            renderParty();
+            renderMap();
+            updateStats();
+            showObjectiveModal();
+            addLog('你踏入了古老的地宫...', 'info');
+        }
+        
+        // 生成地图
+        function generateMap() {
+            const size = gameState.mapSize;
+            gameState.map = [];
+            gameState.mechanismTotal = 0;
+            
+            for (let y = 0; y < size; y++) {
+                gameState.map[y] = [];
+                for (let x = 0; x < size; x++) {
+                    const cell = { x, y, type: 'fog', revealed: false };
+                    
+                    if (x === 0 || x === size - 1 || y === 0 || y === size - 1) {
+                        cell.type = 'wall';
+                    } else if (x === 1 && y === 1) {
+                        cell.type = 'player';
+                        cell.revealed = true;
+                    } else {
+                        const rand = Math.random();
+                        if (rand < 0.06) cell.type = 'enemy';
+                        else if (rand < 0.10) cell.type = 'chest';
+                        else if (rand < 0.14) { cell.type = 'mechanism-luck'; gameState.mechanismTotal++; }
+                        else if (rand < 0.18) { cell.type = 'mechanism-knowledge'; gameState.mechanismTotal++; }
+                        else if (rand < 0.22) { cell.type = 'mechanism-hero'; gameState.mechanismTotal++; }
+                        else if (rand < 0.24) cell.type = 'boss';
+                        else if (rand < 0.26) cell.type = 'stairs';
+                        else cell.type = 'floor';
+                    }
+                    gameState.map[y][x] = cell;
+                }
+            }
+        }
+        
+        // 渲染队伍
+        function renderParty() {
+            document.getElementById('partyList').innerHTML = party.map(m => `
+                <div class="party-member">
+                    <div class="member-avatar">${m.icon}</div>
+                    <div class="member-info">
+                        <div class="member-name">${m.name}</div>
+                        <div class="member-trait">${m.trait}</div>
+                        <div class="member-hp">HP: ${m.hp}/${m.maxHp}</div>
+                        <div class="hp-bar-mini">
+                            <div class="hp-fill-mini" style="width: ${(m.hp / m.maxHp) * 100}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染地图
+        function renderMap() {
+            const container = document.getElementById('gameMap');
+            const icons = {
+                'wall': '▪️', 'floor': '·', 'player': '👤', 'enemy': '👹',
+                'chest': '📦', 'mechanism-luck': '🍀', 'mechanism-knowledge': '📖',
+                'mechanism-hero': '⚡', 'boss': '💀', 'stairs': '🚪', 'fog': '?'
+            };
+            
+            let html = '';
+            for (let y = 0; y < gameState.mapSize; y++) {
+                for (let x = 0; x < gameState.mapSize; x++) {
+                    const cell = gameState.map[y][x];
+                    const displayType = cell.revealed ? cell.type : 'fog';
+                    html += `<div class="cell ${displayType}" data-x="${x}" data-y="${y}" onclick="handleCellClick(${x}, ${y})">${icons[displayType] || '?'}</div>`;
+                }
+            }
+            container.innerHTML = html;
+            
+            // 滚动到玩家位置
+            scrollToPlayer();
+        }
+        
+        // 滚动地图使玩家居中
+        function scrollToPlayer() {
+            const viewport = document.querySelector('.map-viewport');
+            const container = document.getElementById('mapScrollContainer');
+            const cellSize = 42; // 40px + 2px gap
+            
+            const viewportWidth = viewport.clientWidth;
+            const viewportHeight = viewport.clientHeight;
+            
+            const scrollX = -(gameState.playerPos.x * cellSize - viewportWidth / 2 + cellSize / 2);
+            const scrollY = -(gameState.playerPos.y * cellSize - viewportHeight / 2 + cellSize / 2);
+            
+            // 限制滚动范围
+            const maxScrollX = 0;
+            const minScrollX = -(gameState.mapSize * cellSize - viewportWidth);
+            const maxScrollY = 0;
+            const minScrollY = -(gameState.mapSize * cellSize - viewportHeight);
+            
+            const clampedX = Math.max(minScrollX, Math.min(maxScrollX, scrollX));
+            const clampedY = Math.max(minScrollY, Math.min(maxScrollY, scrollY));
+            
+            container.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+        }
+        
+        // 是否正在自动移动
+        let isAutoMoving = false;
+        
+        // 处理格子点击
+        function handleCellClick(x, y) {
+            const cell = gameState.map[y][x];
+            
+            // 不能点击墙壁和当前位置
+            if (cell.type === 'wall' || cell.type === 'player') return;
+            
+            // 正在自动移动中，忽略点击
+            if (isAutoMoving) return;
+            
+            const playerPos = gameState.playerPos;
+            const dx = Math.abs(x - playerPos.x);
+            const dy = Math.abs(y - playerPos.y);
+            
+            // 相邻格子（上下左右）- 直接移动
+            if (dx + dy === 1) {
+                movePlayerTo(x, y);
+            }
+            // 已解锁区域且距离较远 - 自动寻路
+            else if (cell.revealed && cell.type !== 'fog') {
+                const path = findPath(playerPos.x, playerPos.y, x, y);
+                if (path && path.length > 1) {
+                    autoMove(path);
+                }
+            }
+        }
+        
+        // 移动玩家到指定位置
+        function movePlayerTo(x, y) {
+            const cell = gameState.map[y][x];
+            const originalType = cell.type;
+            
+            // 更新玩家位置
+            const oldPos = gameState.playerPos;
+            gameState.map[oldPos.y][oldPos.x].type = 'floor';
+            gameState.map[oldPos.y][oldPos.x].revealed = true;
+            gameState.playerPos = { x, y };
+            cell.type = 'player';
+            cell.revealed = true;
+            
+            // 揭示周围两格范围
+            revealArea(x, y, 2);
+            
+            renderMap();
+            
+            // 处理格子事件
+            handleCellType(originalType, x, y);
+        }
+        
+        // BFS寻路算法
+        function findPath(startX, startY, endX, endY) {
+            const size = gameState.mapSize;
+            const visited = Array(size).fill(null).map(() => Array(size).fill(false));
+            const queue = [{ x: startX, y: startY, path: [{ x: startX, y: startY }] }];
+            visited[startY][startX] = true;
+            
+            // 四个方向
+            const directions = [[0, -1], [0, 1], [-1, 0], [1, 0]];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                
+                // 到达目标
+                if (current.x === endX && current.y === endY) {
+                    return current.path;
+                }
+                
+                for (const [dx, dy] of directions) {
+                    const nx = current.x + dx;
+                    const ny = current.y + dy;
+                    
+                    // 边界检查
+                    if (nx < 0 || nx >= size || ny < 0 || ny >= size) continue;
+                    if (visited[ny][nx]) continue;
+                    
+                    const nextCell = gameState.map[ny][nx];
+                    // 只能走已解锁的非墙壁格子
+                    if (nextCell.type === 'wall') continue;
+                    if (!nextCell.revealed && nextCell.type !== 'stairs') continue;
+                    
+                    visited[ny][nx] = true;
+                    queue.push({
+                        x: nx,
+                        y: ny,
+                        path: [...current.path, { x: nx, y: ny }]
+                    });
+                }
+            }
+            
+            return null; // 无法到达
+        }
+        
+        // 自动移动（带动画）
+        async function autoMove(path) {
+            isAutoMoving = true;
+            
+            for (let i = 1; i < path.length; i++) {
+                const pos = path[i];
+                const cell = gameState.map[pos.y][pos.x];
+                
+                // 如果遇到未探索区域，停止
+                if (!cell.revealed || cell.type === 'fog') {
+                    break;
+                }
+                
+                // 如果遇到事件格子，停止并触发
+                if (['enemy', 'chest', 'mechanism-luck', 'mechanism-knowledge', 'mechanism-hero', 'boss'].includes(cell.type)) {
+                    movePlayerTo(pos.x, pos.y);
+                    break;
+                }
+                
+                // 移动到该格子
+                movePlayerTo(pos.x, pos.y);
+                
+                // 等待一下再继续移动
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            isAutoMoving = false;
+        }
+        
+        // 揭示指定范围内的格子
+        function revealArea(centerX, centerY, radius) {
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const x = centerX + dx;
+                    const y = centerY + dy;
+                    
+                    // 边界检查
+                    if (x < 0 || x >= gameState.mapSize || y < 0 || y >= gameState.mapSize) continue;
+                    
+                    // 只揭示未揭示的格子
+                    if (!gameState.map[y][x].revealed) {
+                        gameState.map[y][x].revealed = true;
+                    }
+                }
+            }
+        }
+        
+        // 处理不同类型的格子 - 接收原始类型参数
+        function handleCellType(originalType, x, y) {
+            switch (originalType) {
+                case 'enemy':
+                    showBattleModal();
+                    break;
+                case 'chest':
+                    const gold = Math.floor(Math.random() * 30) + 10;
+                    gameState.gold += gold;
+                    addLog(`发现宝箱！获得 ${gold} 金币`, 'gold');
+                    updateStats();
+                    break;
+                case 'mechanism-luck':
+                    showMechanismModal('luck');
+                    break;
+                case 'mechanism-knowledge':
+                    showMechanismModal('knowledge');
+                    break;
+                case 'mechanism-hero':
+                    showMechanismModal('hero');
+                    break;
+                case 'boss':
+                    showBattleModal(true);
+                    break;
+                case 'stairs':
+                    gameState.objectives.stairs = true;
+                    addLog('发现出口楼梯！', 'success');
+                    checkObjectives();
+                    break;
+            }
+        }
+        
+        // 显示机关弹窗
+        function showMechanismModal(type) {
+            const mechanismList = mechanisms[type];
+            const mechanism = mechanismList[Math.floor(Math.random() * mechanismList.length)];
+            
+            const modal = document.getElementById('mechanismModal');
+            const content = document.getElementById('modalContent');
+            
+            let optionsHtml = '';
+            
+            if (type === 'luck') {
+                optionsHtml = mechanism.options.map((opt, idx) => `
+                    <button class="option-btn" onclick="handleLuckChoice(${idx}, ${mechanism.successRate || 0.5})">${opt.text}</button>
+                `).join('');
+            } else if (type === 'knowledge') {
+                const hasHint = party.some(p => p.traitType === mechanism.hintTrait);
+                const hintHtml = hasHint ? `<div class="hero-hint">💡 ${mechanism.hint}</div>` : '';
+                optionsHtml = mechanism.options.map((opt, idx) => `
+                    <button class="option-btn" onclick="handleKnowledgeChoice(${idx}, ${opt.correct})">${opt.text}</button>
+                `).join('');
+                
+                content.innerHTML = `
+                    <div class="mechanism-type knowledge">🔵 知识型机关</div>
+                    <div class="mechanism-image">${mechanism.icon}</div>
+                    <div class="mechanism-title">${mechanism.name}</div>
+                    <div class="mechanism-desc">${mechanism.desc}</div>
+                    <div class="mechanism-question">${mechanism.question}</div>
+                    ${hintHtml}
+                    <div class="options-list" id="optionsContainer">${optionsHtml}</div>
+                `;
+                content.dataset.mechanismType = type;
+                content.dataset.mechanism = JSON.stringify(mechanism);
+                modal.classList.add('active');
+                return;
+            } else if (type === 'hero') {
+                optionsHtml = mechanism.options.map((opt, idx) => {
+                    const hasTrait = opt.trait && party.some(p => p.traitType === opt.trait);
+                    const tagHtml = opt.trait ? 
+                        `<span class="option-tag ${hasTrait ? 'matched' : 'unmatched'}">${hasTrait ? '✓ 有传承' : '✗ 无传承'}</span>` : 
+                        '<span class="option-tag" style="background:#3a3a4a;color:#888;">无关联</span>';
+                    return `<button class="option-btn" onclick="handleHeroChoice(${idx})">${opt.text}${tagHtml}</button>`;
+                }).join('');
+            }
+            
+            const typeNames = { luck: '运气型机关', knowledge: '知识型机关', hero: '英雄型机关' };
+            const typeColors = { luck: 'luck', knowledge: 'knowledge', hero: 'hero' };
+            const typeIcons = { luck: '🟢', knowledge: '🔵', hero: '🟣' };
+            
+            content.innerHTML = `
+                <div class="mechanism-type ${typeColors[type]}">${typeIcons[type]} ${typeNames[type]}</div>
+                <div class="mechanism-image">${mechanism.icon}</div>
+                <div class="mechanism-title">${mechanism.name}</div>
+                <div class="mechanism-desc">${mechanism.desc}</div>
+                <div class="mechanism-question">${mechanism.question}</div>
+                <div class="options-list" id="optionsContainer">${optionsHtml}</div>
+            `;
+            
+            content.dataset.mechanismType = type;
+            content.dataset.mechanism = JSON.stringify(mechanism);
+            
+            modal.classList.add('active');
+        }
+        
+        // 处理运气型机关选择
+        function handleLuckChoice(optionIdx, successRate) {
+            const content = document.getElementById('modalContent');
+            const mechanism = JSON.parse(content.dataset.mechanism);
+            const option = mechanism.options[optionIdx];
+            
+            let resultHtml = '', hpChange = 0, goldChange = 0;
+            
+            if (option.result === 'skip') {
+                resultHtml = '<div class="result-box partial">你选择了放弃，安全但一无所获...</div>';
+            } else if (option.result === 'safe') {
+                goldChange = Math.floor(Math.random() * 20) + 10;
+                resultHtml = `<div class="result-box success">小心检查后打开宝箱，安全获得 ${goldChange} 金币！</div>`;
+            } else if (option.result === 'dice') {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                if (roll >= 4) {
+                    goldChange = Math.floor(Math.random() * 50) + 30;
+                    resultHtml = `<div class="result-box success">🎲 掷出 ${roll} 点！成功！获得 ${goldChange} 金币！</div>`;
+                } else {
+                    hpChange = -10;
+                    resultHtml = `<div class="result-box fail">🎲 掷出 ${roll} 点...失败！触发陷阱，损失 ${Math.abs(hpChange)} 生命！</div>`;
+                }
+            } else {
+                const success = Math.random() < successRate;
+                if (success) {
+                    goldChange = Math.floor(Math.random() * 30) + 20;
+                    resultHtml = `<div class="result-box success">走对了！发现隐藏宝物，获得 ${goldChange} 金币！</div>`;
+                } else {
+                    hpChange = -15;
+                    resultHtml = `<div class="result-box fail">触发陷阱！损失 ${Math.abs(hpChange)} 生命！</div>`;
+                }
+            }
+            
+            // 更新状态
+            gameState.hp = Math.max(0, gameState.hp + hpChange);
+            gameState.gold += goldChange;
+            gameState.mechanismSolved++;
+            gameState.objectives.mechanisms.current++;
+            
+            addLog(`[运气机关] ${mechanism.name} - ${hpChange < 0 ? '失败' : goldChange > 0 ? '成功' : '放弃'}`, hpChange < 0 ? 'danger' : 'success');
+            updateStats();
+            checkObjectives();
+            
+            // 显示结果
+            document.getElementById('optionsContainer').innerHTML = resultHtml + `
+                <button class="close-btn" onclick="closeModal()">继续探索</button>
+            `;
+        }
+        
+        // 处理知识型机关选择
+        function handleKnowledgeChoice(optionIdx, correct) {
+            const content = document.getElementById('modalContent');
+            const mechanism = JSON.parse(content.dataset.mechanism);
+            
+            let hpChange = 0, goldChange = 0;
+            
+            if (correct) {
+                goldChange = Math.floor(Math.random() * 50) + 30;
+                document.getElementById('optionsContainer').innerHTML = `
+                    <div class="result-box success">回答正确！机关解开，获得 ${goldChange} 金币！</div>
+                    <button class="close-btn" onclick="closeModal()">继续探索</button>
+                `;
+            } else {
+                hpChange = -10;
+                document.getElementById('optionsContainer').innerHTML = `
+                    <div class="result-box fail">回答错误！触发陷阱，损失 ${Math.abs(hpChange)} 生命！</div>
+                    <button class="close-btn" onclick="closeModal()">继续探索</button>
+                `;
+            }
+            
+            applyMechanismResult(hpChange, goldChange, mechanism.name, '知识');
+        }
+        
+        // 处理英雄型机关选择
+        function handleHeroChoice(optionIdx) {
+            const content = document.getElementById('modalContent');
+            const mechanism = JSON.parse(content.dataset.mechanism);
+            const option = mechanism.options[optionIdx];
+            
+            const hasTrait = option.trait && party.some(p => p.traitType === option.trait);
+            
+            let resultText, effect, resultClass;
+            
+            if (hasTrait) {
+                resultText = option.hasTraitResult;
+                effect = option.hasTraitEffect;
+                resultClass = effect.fail ? 'partial' : 'success';
+            } else {
+                resultText = option.noTraitResult;
+                effect = option.noTraitEffect;
+                resultClass = effect.fail || effect.hp < 0 ? 'fail' : 'partial';
+            }
+            
+            if (effect) {
+                if (effect.hp) gameState.hp = Math.max(0, gameState.hp + effect.hp);
+                if (effect.gold) gameState.gold += effect.gold;
+                if (effect.battle) {
+                    gameState.battleCount++;
+                    gameState.objectives.battles.current++;
+                }
+            }
+            
+            gameState.mechanismSolved++;
+            gameState.objectives.mechanisms.current++;
+            
+            addLog(`[英雄机关] ${mechanism.name} - ${hasTrait ? '传承匹配成功' : '普通破解'}`, hasTrait ? 'success' : 'danger');
+            updateStats();
+            checkObjectives();
+            
+            document.getElementById('optionsContainer').innerHTML = `
+                <div class="result-box ${resultClass}">${resultText}</div>
+                <button class="close-btn" onclick="closeModal()">继续探索</button>
+            `;
+        }
+        
+        // 应用机关结果
+        function applyMechanismResult(hpChange, goldChange, name, type) {
+            gameState.hp = Math.max(0, gameState.hp + hpChange);
+            gameState.gold += goldChange;
+            gameState.mechanismSolved++;
+            gameState.objectives.mechanisms.current++;
+            
+            addLog(`[${type}机关] ${name} - ${hpChange < 0 ? '失败' : goldChange > 0 ? '成功' : '放弃'}`, hpChange < 0 ? 'danger' : 'success');
+            updateStats();
+            checkObjectives();
+            
+            document.getElementById('optionsContainer').innerHTML += `
+                <button class="close-btn" onclick="closeModal()">继续探索</button>
+            `;
+        }
+        
+        // 显示战斗弹窗
+        function showBattleModal(isBoss = false) {
+            gameState.battleCount++;
+            gameState.objectives.battles.current++;
+            
+            const enemyName = isBoss ? '古墓守护者' : '墓穴怪物';
+            const goldReward = isBoss ? Math.floor(Math.random() * 100) + 50 : Math.floor(Math.random() * 30) + 10;
+            
+            gameState.gold += goldReward;
+            
+            const modal = document.getElementById('mechanismModal');
+            const content = document.getElementById('modalContent');
+            
+            content.innerHTML = `
+                <div class="mechanism-image">${isBoss ? '💀' : '👹'}</div>
+                <div class="mechanism-title">${enemyName}</div>
+                <div class="mechanism-desc">战斗结束！</div>
+                <div class="result-box success">
+                    ${isBoss ? '击败了强大的古墓守护者！' : '击败了墓穴怪物！'}<br>
+                    获得 ${goldReward} 金币
+                </div>
+                <button class="close-btn" onclick="closeModal()">继续探索</button>
+            `;
+            
+            modal.classList.add('active');
+            addLog(`战斗胜利！击败${enemyName}，获得 ${goldReward} 金币`, 'success');
+            updateStats();
+            checkObjectives();
+        }
+        
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('mechanismModal').classList.remove('active');
+        }
+        
+        // 显示目标弹窗
+        function showObjectiveModal() {
+            document.getElementById('objectiveModal').classList.add('active');
+        }
+        
+        // 关闭目标弹窗
+        function closeObjectiveModal() {
+            document.getElementById('objectiveModal').classList.remove('active');
+        }
+        
+        // 显示目标
+        function showObjectives() {
+            showObjectiveModal();
+        }
+        
+        // 检查目标完成情况
+        function checkObjectives() {
+            const obj = gameState.objectives;
+            
+            // 更新目标进度显示
+            let progressText = '';
+            if (obj.mechanisms.current >= obj.mechanisms.target) {
+                progressText = '🔧✓ ';
+            }
+            if (obj.battles.current >= obj.battles.target) {
+                progressText += '⚔️✓ ';
+            }
+            document.getElementById('objectiveProgress').textContent = progressText;
+            
+            // 检查是否完成主要目标
+            if (obj.stairs) {
+                showSettlement();
+            }
+        }
+        
+        // 显示结算界面
+        function showSettlement() {
+            const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            
+            document.getElementById('finalGold').textContent = gameState.gold;
+            document.getElementById('finalMechanism').textContent = gameState.mechanismSolved;
+            document.getElementById('finalBattle').textContent = gameState.battleCount;
+            document.getElementById('finalTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // 计算奖励
+            let bonus = 0;
+            if (gameState.objectives.mechanisms.current >= gameState.objectives.mechanisms.target) bonus += 100;
+            if (gameState.objectives.battles.current >= gameState.objectives.battles.target) bonus += 50;
+            
+            document.getElementById('baseReward').textContent = '50';
+            document.getElementById('bonusReward').textContent = bonus;
+            
+            document.getElementById('settlementModal').classList.add('active');
+        }
+        
+        // 更新状态显示
+        function updateStats() {
+            document.getElementById('hpBar').style.width = `${gameState.hp}%`;
+            document.getElementById('hpText').textContent = `${gameState.hp}%`;
+            document.getElementById('torchValue').textContent = gameState.torch;
+            document.getElementById('goldValue').textContent = gameState.gold;
+            document.getElementById('mechanismCount').textContent = `${gameState.mechanismSolved}/${gameState.mechanismTotal}`;
+            document.getElementById('battleCount').textContent = gameState.battleCount;
+        }
+        
+        // 添加日志
+        function addLog(text, type = 'info') {
+            const logList = document.getElementById('logList');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = text;
+            logList.insertBefore(entry, logList.firstChild);
+        }
+        
+        // 切换队伍抽屉
+        function togglePartyDrawer() {
+            document.getElementById('partyDrawer').classList.toggle('open');
+        }
+        
+        // 切换日志抽屉
+        function toggleLogDrawer() {
+            document.getElementById('logDrawer').classList.toggle('open');
+        }
+        
+        // 重置游戏
+        function resetGame() {
+            document.getElementById('settlementModal').classList.remove('active');
+            document.getElementById('mechanismModal').classList.remove('active');
+            
+            gameState.playerPos = { x: 1, y: 1 };
+            gameState.hp = 100;
+            gameState.torch = 5;
+            gameState.gold = 0;
+            gameState.mechanismSolved = 0;
+            gameState.mechanismTotal = 0;
+            gameState.battleCount = 0;
+            gameState.startTime = Date.now();
+            gameState.objectives = {
+                stairs: false,
+                mechanisms: { current: 0, target: 3 },
+                battles: { current: 0, target: 2 }
+            };
+            
+            document.getElementById('logList').innerHTML = '';
+            document.getElementById('objectiveProgress').textContent = '';
+            
+            initGame();
+        }
+        
+        // 窗口大小改变时重新滚动
+        window.addEventListener('resize', scrollToPlayer);
+        
+        // 启动游戏
+        initGame();
+    </script>
+</body>
+</html>

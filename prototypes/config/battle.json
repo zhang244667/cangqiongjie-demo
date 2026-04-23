@@ -1,0 +1,29 @@
+{
+  "version": "1.0.0",
+  "description": "战斗系统参数配置",
+  "rage": {
+    "initial": 30,
+    "gainOnAttack": 20,
+    "gainOnHit": 15,
+    "max": 100,
+    "autoReleaseAtMax": true
+  },
+  "damage": {
+    "baseFormula": "atk * skillMultiplier - def * 0.5",
+    "criticalChance": 0.15,
+    "criticalMultiplier": 1.5,
+    "dodgeChance": 0.05
+  },
+  "battle": {
+    "actionInterval": 800,
+    "turnDelay": 500,
+    "victoryDelay": 1000
+  },
+  "targetSelection": {
+    "defaultMode": "random",
+    "priorityRules": {
+      "lowHpFirst": false,
+      "highThreatFirst": false
+    }
+  }
+}

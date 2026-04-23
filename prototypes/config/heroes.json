@@ -1,0 +1,82 @@
+{
+  "version": "1.0.0",
+  "description": "英雄角色配置表",
+  "heroes": {
+    "tieZhu": {
+      "id": "tieZhu",
+      "name": "铁柱",
+      "icon": "💪",
+      "class": "重装战士",
+      "description": "团队坦克，高血量高防御",
+      "stats": {
+        "hp": 120,
+        "atk": 20,
+        "def": 8,
+        "speed": 85
+      },
+      "skill": {
+        "name": "冲锋",
+        "description": "向前冲锋，对敌人造成大量伤害",
+        "rageCost": 100,
+        "damageMultiplier": 1.5
+      }
+    },
+    "xingJiSi": {
+      "id": "xingJiSi",
+      "name": "星祭司",
+      "icon": "🔮",
+      "class": "秘法师",
+      "description": "团队输出，高攻击高速度",
+      "stats": {
+        "hp": 75,
+        "atk": 24,
+        "def": 4,
+        "speed": 110
+      },
+      "skill": {
+        "name": "星辰坠落",
+        "description": "召唤星辰之力，对敌人造成毁灭性打击",
+        "rageCost": 100,
+        "damageMultiplier": 2.0
+      }
+    },
+    "moJinShou": {
+      "id": "moJinShou",
+      "name": "摸金手",
+      "icon": "🔭",
+      "class": "风水师",
+      "description": "平衡型角色，擅长发现宝藏",
+      "stats": {
+        "hp": 90,
+        "atk": 22,
+        "def": 5,
+        "speed": 105
+      },
+      "skill": {
+        "name": "寻龙诀",
+        "description": "洞察地脉，对敌人造成精准打击",
+        "rageCost": 100,
+        "damageMultiplier": 1.8
+      }
+    },
+    "banShanKe": {
+      "id": "banShanKe",
+      "name": "搬山客",
+      "icon": "🔧",
+      "class": "机关师",
+      "description": "技术型角色，擅长破解机关",
+      "stats": {
+        "hp": 95,
+        "atk": 21,
+        "def": 6,
+        "speed": 95
+      },
+      "skill": {
+        "name": "机关破解",
+        "description": "运用机关术，对敌人造成致命伤害",
+        "rageCost": 100,
+        "damageMultiplier": 1.6
+      }
+    }
+  }
+}

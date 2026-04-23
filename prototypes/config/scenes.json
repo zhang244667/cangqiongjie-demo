@@ -1,0 +1,41 @@
+{
+  "version": "1.0.0",
+  "description": "场景背景配置表",
+  "scenes": {
+    "tomb_entrance": {
+      "id": "tomb_entrance",
+      "name": "古老墓穴入口",
+      "image": "场景/tomb_entrance.jpg",
+      "gradient": "linear-gradient(180deg, #0f0f08 0%, #1a1a12 50%, #0a0a05 100%)",
+      "description": "布满灰尘的古老石门，隐约可见神秘的符文"
+    },
+    "ancient_corridor": {
+      "id": "ancient_corridor",
+      "name": "沉银走廊",
+      "image": "场景/ancient_corridor.jpg",
+      "gradient": "linear-gradient(180deg, #0a0a15 0%, #1a1a2a 50%, #0f0f1a 100%)",
+      "description": "银色墙壁闪烁着神秘光芒的古老走廊"
+    },
+    "boss_room": {
+      "id": "boss_room",
+      "name": "Boss房间",
+      "image": "场景/boss_room.jpg",
+      "gradient": "linear-gradient(180deg, #1a0a0a 0%, #2a1515 50%, #0f0808 100%)",
+      "description": "充满压迫感的战斗场地"
+    },
+    "starlight_hall": {
+      "id": "starlight_hall",
+      "name": "星光大厅",
+      "image": "场景/starlight_hall.jpg",
+      "gradient": "linear-gradient(180deg, #0a0a1a 0%, #15152a 50%, #080810 100%)",
+      "description": "星光璀璨的神秘大厅"
+    },
+    "victory_scene": {
+      "id": "victory_scene",
+      "name": "胜利场景",
+      "image": "场景/victory_scene.jpg",
+      "gradient": "linear-gradient(180deg, #1a1a0a 0%, #2a2a15 50%, #0f0f05 100%)",
+      "description": "战斗胜利后的荣耀时刻"
+    }
+  }
+}

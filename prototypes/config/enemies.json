@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "description": "怪物配置表",
+  "enemyTypes": {
+    "tombGuardian": {
+      "id": "tombGuardian",
+      "name": "墓穴守卫",
+      "icon": "👹",
+      "description": "普通的墓穴守卫，行动敏捷",
+      "stats": {
+        "hp": 50,
+        "atk": 12,
+        "def": 4,
+        "speed": 90
+      },
+      "dropItems": [
+        { "itemId": "gold", "chance": 0.8, "amount": [10, 20] },
+        { "itemId": "healingPotion", "chance": 0.1, "amount": 1 }
+      ]
+    },
+    "starCoffinGuardian": {
+      "id": "starCoffinGuardian",
+      "name": "星棺守卫",
+      "icon": "💀",
+      "description": "Boss级怪物，拥有强大的力量",
+      "stats": {
+        "hp": 120,
+        "atk": 18,
+        "def": 8,
+        "speed": 75
+      },
+      "isBoss": true,
+      "dropItems": [
+        { "itemId": "gold", "chance": 1.0, "amount": [50, 100] },
+        { "itemId": "rareMaterial", "chance": 0.5, "amount": 1 }
+      ]
+    }
+  },
+  "encounterConfigs": {
+    "normal": {
+      "enemyCount": 3,
+      "enemyPool": ["tombGuardian"]
+    },
+    "boss": {
+      "enemyCount": 2,
+      "enemyPool": ["starCoffinGuardian", "tombGuardian"]
+    }
+  }
+}

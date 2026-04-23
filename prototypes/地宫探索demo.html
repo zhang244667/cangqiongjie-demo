@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《苍穹劫》地宫探索Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f0f23 100%);
+            min-height: 100vh;
+            color: #e0d4f7;
+            overflow-x: hidden;
+        }
+        
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 顶部信息栏 */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            font-size: 14px;
+            color: #a0a0a0;
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(30, 20, 50, 0.8);
+            border: 1px solid #4a3f6b;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .hp-value { color: #ff6b6b; }
+        .star-value { color: #ffd700; }
+        .floor-value { color: #6bcfff; }
+        .key-value { color: #6bff6b; }
+        
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #2a2040;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .hp-fill { background: linear-gradient(90deg, #ff6b6b, #ff8e8e); }
+        .star-fill { background: linear-gradient(90deg, #ffd700, #ffed4a); }
+        
+        /* 地图区域 */
+        .map-container {
+            background: rgba(20, 15, 35, 0.9);
+            border: 2px solid #4a3f6b;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .map-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #a0a0ff;
+        }
+        
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .cell.wall {
+            background: #1a1525;
+            cursor: not-allowed;
+        }
+        
+        .cell.fog {
+            background: linear-gradient(135deg, #2a2540, #1a1525);
+            border: 1px dashed #4a3f6b;
+            animation: fogPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes fogPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        .cell.fog:hover {
+            background: linear-gradient(135deg, #3a3550, #2a2540);
+            transform: scale(1.05);
+        }
+        
+        .cell.explored {
+            background: #252035;
+            border: 1px solid #3a3050;
+        }
+        
+        .cell.current {
+            background: linear-gradient(135deg, #4a3060, #3a2050);
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+        
+        .cell.enemy {
+            background: linear-gradient(135deg, #4a2030, #3a1525);
+            border: 1px solid #6a3040;
+        }
+        
+        .cell.boss {
+            background: linear-gradient(135deg, #5a2040, #4a1530);
+            border: 2px solid #ff4444;
+            animation: bossGlow 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes bossGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(255, 68, 68, 0.8); }
+        }
+        
+        .cell.treasure {
+            background: linear-gradient(135deg, #4a4020, #3a3515);
+            border: 1px solid #6a5a30;
+        }
+        
+        .cell.trap {
+            background: linear-gradient(135deg, #3a3040, #2a2535);
+            border: 1px solid #5a4060;
+        }
+        
+        .cell.puzzle {
+            background: linear-gradient(135deg, #304050, #253545);
+            border: 1px solid #405060;
+        }
+        
+        .cell.stairs {
+            background: linear-gradient(135deg, #305030, #254025);
+            border: 2px solid #50ff50;
+            animation: stairsGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes stairsGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(80, 255, 80, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(80, 255, 80, 0.6); }
+        }
+        
+        .cell.heal {
+            background: linear-gradient(135deg, #203040, #152535);
+            border: 1px solid #306080;
+        }
+        
+        /* 消息日志 */
+        .message-log {
+            background: rgba(20, 15, 35, 0.9);
+            border: 1px solid #4a3f6b;
+            border-radius: 10px;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .message {
+            margin-bottom: 8px;
+            padding-left: 10px;
+            border-left: 3px solid #4a3f6b;
+        }
+        
+        .message.battle { border-left-color: #ff6b6b; color: #ffaaaa; }
+        .message.treasure { border-left-color: #ffd700; color: #ffed4a; }
+        .message.trap { border-left-color: #ff4444; color: #ff8888; }
+        .message.puzzle { border-left-color: #6bcfff; color: #aaddff; }
+        .message.story { border-left-color: #b06bff; color: #d0a0ff; }
+        .message.heal { border-left-color: #6bff6b; color: #aaffaa; }
+        
+        /* 战斗面板 */
+        .battle-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .battle-content {
+            background: linear-gradient(135deg, #1a0a2e, #16213e);
+            border: 2px solid #4a3f6b;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .battle-title {
+            font-size: 24px;
+            color: #ff6b6b;
+            margin-bottom: 20px;
+        }
+        
+        .enemy-info {
+            margin-bottom: 30px;
+        }
+        
+        .enemy-name {
+            font-size: 20px;
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .enemy-hp-bar {
+            width: 100%;
+            height: 20px;
+            background: #2a2040;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .enemy-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            transition: width 0.3s ease;
+        }
+        
+        .battle-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .battle-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .battle-btn.attack {
+            background: linear-gradient(135deg, #ff6b6b, #ff4444);
+            color: white;
+        }
+        
+        .battle-btn.skill {
+            background: linear-gradient(135deg, #6b6bff, #4444ff);
+            color: white;
+        }
+        
+        .battle-btn.flee {
+            background: linear-gradient(135deg, #6b6b6b, #444444);
+            color: white;
+        }
+        
+        .battle-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* 解谜面板 */
+        .puzzle-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .puzzle-content {
+            background: linear-gradient(135deg, #1a0a2e, #16213e);
+            border: 2px solid #6bcfff;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .puzzle-title {
+            font-size: 20px;
+            color: #6bcfff;
+            margin-bottom: 20px;
+        }
+        
+        .puzzle-hint {
+            color: #a0a0a0;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .puzzle-btn {
+            padding: 20px;
+            border: 2px solid #4a3f6b;
+            border-radius: 10px;
+            background: rgba(74, 63, 107, 0.3);
+            color: #ffd700;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .puzzle-btn:hover {
+            background: rgba(107, 191, 255, 0.3);
+            border-color: #6bcfff;
+        }
+        
+        .puzzle-btn.correct {
+            background: rgba(107, 255, 107, 0.3);
+            border-color: #6bff6b;
+        }
+        
+        .puzzle-btn.wrong {
+            background: rgba(255, 107, 107, 0.3);
+            border-color: #ff6b6b;
+        }
+        
+        /* 宝箱面板 */
+        .treasure-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .treasure-content {
+            background: linear-gradient(135deg, #1a0a2e, #16213e);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .treasure-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: treasureBounce 1s ease-in-out infinite;
+        }
+        
+        @keyframes treasureBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .treasure-title {
+            font-size: 24px;
+            color: #ffd700;
+            margin-bottom: 15px;
+        }
+        
+        .treasure-item {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid #ffd700;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .close-btn {
+            margin-top: 20px;
+            padding: 12px 40px;
+            background: linear-gradient(135deg, #ffd700, #ffed4a);
+            border: none;
+            border-radius: 25px;
+            color: #1a0a2e;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        
+        /* 结算面板 */
+        .result-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .result-content {
+            background: linear-gradient(135deg, #1a0a2e, #16213e);
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+        
+        .result-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        .result-title.win { color: #ffd700; }
+        .result-title.lose { color: #ff4444; }
+        
+        .result-stats {
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .result-stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+        }
+        
+        .restart-btn {
+            padding: 15px 50px;
+            background: linear-gradient(135deg, #6b6bff, #4444ff);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(107, 107, 255, 0.5);
+        }
+        
+        /* 提示 */
+        .hint {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        /* 图例 */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(20, 15, 35, 0.5);
+            border-radius: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        /* 技能冷却提示 */
+        .skill-cooldown {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>《苍穹劫》地宫探索</h1>
+            <div class="subtitle">第1章·序章 - 爷爷失踪的古墓</div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="stat-item">
+                <div class="stat-label">生命值</div>
+                <div class="stat-value hp-value" id="hp-value">100/100</div>
+                <div class="progress-bar">
+                    <div class="progress-fill hp-fill" id="hp-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">星元</div>
+                <div class="stat-value star-value" id="star-value">10</div>
+                <div class="progress-bar">
+                    <div class="progress-fill star-fill" id="star-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">层数</div>
+                <div class="stat-value floor-value" id="floor-value">1/3</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">星核</div>
+                <div class="stat-value key-value" id="key-value">0</div>
+            </div>
+        </div>
+        
+        <div class="map-container">
+            <div class="map-title">📍 青龙古墓 - 第 <span id="current-floor">1</span> 层</div>
+            <div class="map-grid" id="map-grid"></div>
+            <div class="legend">
+                <div class="legend-item"><span class="legend-icon" style="background:#3a2050;border:2px solid #ffd700;">⭐</span> 你的位置</div>
+                <div class="legend-item"><span class="legend-icon" style="background:#4a2030;">👹</span> 怪物</div>
+                <div class="legend-item"><span class="legend-icon" style="background:#4a4020;">📦</span> 宝箱</div>
+                <div class="legend-item"><span class="legend-icon" style="background:#3a3040;">⚡</span> 陷阱</div>
+                <div class="legend-item"><span class="legend-icon" style="background:#304050;">🔮</span> 机关</div>
+                <div class="legend-item"><span class="legend-icon" style="background:#203040;">💧</span> 星气</div>
+                <div class="legend-item"><span class="legend-icon" style="background:#305030;border:2px solid #50ff50;">🚪</span> 通道</div>
+                <div class="legend-item"><span class="legend-icon" style="background:#5a2040;border:2px solid #ff4444;">💀</span> Boss</div>
+            </div>
+        </div>
+        
+        <div class="message-log" id="message-log">
+            <div class="message story">📜 你站在古墓入口，爷爷的笔记上写着："青龙墓中，藏有第一颗星核..."</div>
+            <div class="message">💡 点击迷雾格子进行探索，消耗1星元揭示内容。</div>
+        </div>
+        
+        <div class="hint">点击带有 ? 的格子进行探索 | 探索所有区域后找到通道进入下一层</div>
+    </div>
+    
+    <!-- 战斗面板 -->
+    <div class="battle-panel" id="battle-panel">
+        <div class="battle-content">
+            <div class="battle-title">⚔️ 遭遇敌人！</div>
+            <div class="enemy-info">
+                <div class="enemy-name" id="enemy-name">守墓傀儡</div>
+                <div class="enemy-hp-bar">
+                    <div class="enemy-hp-fill" id="enemy-hp-fill" style="width: 100%"></div>
+                </div>
+                <div style="margin-top: 10px; color: #888;" id="enemy-hp-text">HP: 50/50</div>
+            </div>
+            <div style="margin-bottom: 20px; color: #aaa;">你的攻击力: <span id="player-atk">15</span> | 技能伤害: <span id="skill-dmg">25</span></div>
+            <div class="battle-actions">
+                <button class="battle-btn attack" onclick="playerAttack()">⚔️ 普通攻击</button>
+                <button class="battle-btn skill" onclick="useSkill()">✨ 星纹斩</button>
+                <button class="battle-btn flee" onclick="fleeBattle()">🏃 撤退</button>
+            </div>
+            <div class="skill-cooldown" id="skill-cd"></div>
+        </div>
+    </div>
+    
+    <!-- 解谜面板 -->
+    <div class="puzzle-panel" id="puzzle-panel">
+        <div class="puzzle-content">
+            <div class="puzzle-title">🔮 星轨石板机关</div>
+            <div class="puzzle-hint">按正确顺序点击星纹：从小到大 (1→2→3)</div>
+            <div class="puzzle-grid" id="puzzle-grid"></div>
+            <div id="puzzle-result" style="margin-top: 10px;"></div>
+        </div>
+    </div>
+    
+    <!-- 宝箱面板 -->
+    <div class="treasure-panel" id="treasure-panel">
+        <div class="treasure-content">
+            <div class="treasure-icon">📦</div>
+            <div class="treasure-title">发现宝箱！</div>
+            <div id="treasure-items"></div>
+            <button class="close-btn" onclick="closeTreasure()">收下</button>
+        </div>
+    </div>
+    
+    <!-- 结算面板 -->
+    <div class="result-panel" id="result-panel">
+        <div class="result-content">
+            <div class="result-title" id="result-title">🎉 探索完成！</div>
+            <div class="result-stats" id="result-stats"></div>
+            <button class="restart-btn" onclick="restartGame()">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            player: {
+                hp: 100,
+                maxHp: 100,
+                star: 10,
+                maxStar: 10,
+                atk: 15,
+                skillDmg: 25,
+                skillCooldown: 0
+            },
+            currentFloor: 1,
+            maxFloor: 3,
+            keys: 0,
+            explored: 0,
+            totalCells: 0,
+            enemiesDefeated: 0,
+            treasuresFound: 0,
+            puzzlesSolved: 0,
+            damageDealt: 0,
+            damageTaken: 0,
+            map: [],
+            playerPos: { x: 0, y: 0 },
+            stairsPos: { x: 0, y: 0 },
+            bossDefeated: false,
+            gameOver: false,
+            victory: false
+        };
+        
+        // 敌人配置
+        const enemies = {
+            normal: [
+                { name: '守墓傀儡', hp: 40, atk: 8, icon: '👹' },
+                { name: '墓室蝙蝠', hp: 25, atk: 5, icon: '🦇' },
+                { name: '骷髅兵', hp: 35, atk: 7, icon: '💀' },
+                { name: '星噬蠕虫', hp: 30, atk: 6, icon: '🐍' }
+            ],
+            boss: [
+                { name: '青龙守护者', hp: 120, atk: 12, icon: '🐉' },
+                { name: '墓主之灵', hp: 150, atk: 15, icon: '👻' }
+            ]
+        };
+        
+        // 宝物配置
+        const treasures = [
+            { name: '星核碎片', icon: '💎', effect: 'keys', value: 1 },
+            { name: '星元药剂', icon: '⭐', effect: 'star', value: 3 },
+            { name: '生命精华', icon: '❤️', effect: 'hp', value: 30 },
+            { name: '古币', icon: '🪙', effect: 'gold', value: 50 },
+            { name: '破旧的笔记', icon: '📜', effect: 'story', value: 0 }
+        ];
+        
+        // 初始化地图
+        function initMap() {
+            const mapSize = 7;
+            gameState.map = [];
+            gameState.totalCells = 0;
+            
+            // 创建空白地图
+            for (let y = 0; y < mapSize; y++) {
+                gameState.map[y] = [];
+                for (let x = 0; x < mapSize; x++) {
+                    // 边缘是墙
+                    if (x === 0 || y === 0 || x === mapSize - 1 || y === mapSize - 1) {
+                        gameState.map[y][x] = { type: 'wall', revealed: true };
+                    } else {
+                        gameState.map[y][x] = { type: 'fog', revealed: false };
+                        gameState.totalCells++;
+                    }
+                }
+            }
+            
+            // 放置玩家起始位置（左上角附近）
+            gameState.playerPos = { x: 1, y: 1 };
+            gameState.map[1][1] = { type: 'current', revealed: true };
+            gameState.totalCells--;
+            
+            // 生成关卡内容
+            generateFloorContent();
+        }
+        
+        // 生成关卡内容
+        function generateFloorContent() {
+            const floor = gameState.currentFloor;
+            const mapSize = 7;
+            const cells = [];
+            
+            // 收集可用格子
+            for (let y = 1; y < mapSize - 1; y++) {
+                for (let x = 1; x < mapSize - 1; x++) {
+                    if (!(x === 1 && y === 1) && gameState.map[y][x].type === 'fog') {
+                        cells.push({ x, y });
+                    }
+                }
+            }
+            
+            // 打乱顺序
+            shuffleArray(cells);
+            
+            // 根据层数配置内容比例
+            let enemyCount = 3 + floor;
+            let treasureCount = 2;
+            let trapCount = 2;
+            let puzzleCount = 1;
+            let healCount = 1;
+            let bossCount = (floor === gameState.maxFloor) ? 1 : 0;
+            
+            // 放置内容
+            let idx = 0;
+            
+            // 放置楼梯/Boss
+            if (bossCount > 0) {
+                const pos = cells[idx++];
+                gameState.map[pos.y][pos.x] = { type: 'boss', revealed: false };
+            } else {
+                const pos = cells[idx++];
+                gameState.stairsPos = pos;
+                gameState.map[pos.y][pos.x] = { type: 'stairs', revealed: false };
+            }
+            
+            // 放置敌人
+            for (let i = 0; i < enemyCount && idx < cells.length; i++) {
+                const pos = cells[idx++];
+                gameState.map[pos.y][pos.x] = { type: 'enemy', revealed: false };
+            }
+            
+            // 放置宝箱
+            for (let i = 0; i < treasureCount && idx < cells.length; i++) {
+                const pos = cells[idx++];
+                gameState.map[pos.y][pos.x] = { type: 'treasure', revealed: false };
+            }
+            
+            // 放置陷阱
+            for (let i = 0; i < trapCount && idx < cells.length; i++) {
+                const pos = cells[idx++];
+                gameState.map[pos.y][pos.x] = { type: 'trap', revealed: false };
+            }
+            
+            // 放置机关
+            for (let i = 0; i < puzzleCount && idx < cells.length; i++) {
+                const pos = cells[idx++];
+                gameState.map[pos.y][pos.x] = { type: 'puzzle', revealed: false };
+            }
+            
+            // 放置恢复点
+            for (let i = 0; i < healCount && idx < cells.length; i++) {
+                const pos = cells[idx++];
+                gameState.map[pos.y][pos.x] = { type: 'heal', revealed: false };
+            }
+        }
+        
+        // 打乱数组
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        // 渲染地图
+        function renderMap() {
+            const grid = document.getElementById('map-grid');
+            grid.innerHTML = '';
+            
+            for (let y = 0; y < gameState.map.length; y++) {
+                for (let x = 0; x < gameState.map[y].length; x++) {
+                    const cell = gameState.map[y][x];
+                    const div = document.createElement('div');
+                    div.className = 'cell ' + cell.type;
+                    div.dataset.x = x;
+                    div.dataset.y = y;
+                    
+                    if (cell.revealed) {
+                        div.innerHTML = getCellIcon(cell.type);
+                        if (cell.type === 'fog') {
+                            div.innerHTML = '?';
+                        }
+                    } else {
+                        div.innerHTML = '?';
+                    }
+                    
+                    if (cell.type !== 'wall' && !cell.revealed) {
+                        div.onclick = () => exploreCell(x, y);
+                    } else if (cell.type === 'enemy' || cell.type === 'boss') {
+                        div.onclick = () => startBattle(x, y);
+                    } else if (cell.type === 'treasure') {
+                        div.onclick = () => openTreasure(x, y);
+                    } else if (cell.type === 'puzzle') {
+                        div.onclick = () => startPuzzle(x, y);
+                    } else if (cell.type === 'heal') {
+                        div.onclick = () => useHeal(x, y);
+                    } else if (cell.type === 'stairs') {
+                        div.onclick = () => goToNextFloor();
+                    }
+                    
+                    grid.appendChild(div);
+                }
+            }
+        }
+        
+        // 获取格子图标
+        function getCellIcon(type) {
+            const icons = {
+                'current': '⭐',
+                'enemy': '👹',
+                'boss': '🐉',
+                'treasure': '📦',
+                'trap': '⚡',
+                'puzzle': '🔮',
+                'heal': '💧',
+                'stairs': '🚪',
+                'explored': '·',
+                'wall': ''
+            };
+            return icons[type] || '?';
+        }
+        
+        // 探索格子
+        function exploreCell(x, y) {
+            if (gameState.player.star <= 0) {
+                addMessage('⚠️ 星元不足！无法继续探索。', 'trap');
+                return;
+            }
+            
+            const cell = gameState.map[y][x];
+            if (cell.revealed) return;
+            
+            // 消耗星元
+            gameState.player.star--;
+            updateStats();
+            
+            // 揭示格子
+            cell.revealed = true;
+            gameState.explored++;
+            
+            // 判断内容
+            switch (cell.type) {
+                case 'enemy':
+                    addMessage('👹 遭遇敌人！点击格子开始战斗。', 'battle');
+                    break;
+                case 'treasure':
+                    addMessage('📦 发现宝箱！点击打开。', 'treasure');
+                    break;
+                case 'trap':
+                    triggerTrap(x, y);
+                    break;
+                case 'puzzle':
+                    addMessage('🔮 发现星轨机关！点击尝试破解。', 'puzzle');
+                    break;
+                case 'heal':
+                    addMessage('💧 发现星气节点！点击恢复。', 'heal');
+                    break;
+                case 'stairs':
+                    addMessage('🚪 发现向下通道！点击进入下一层。', 'story');
+                    break;
+                case 'boss':
+                    addMessage('🐉 Boss房间！准备战斗。', 'battle');
+                    break;
+            }
+            
+            renderMap();
+            checkGameOver();
+        }
+        
+        // 触发陷阱
+        function triggerTrap(x, y) {
+            const damage = 10 + Math.floor(Math.random() * 10);
+            gameState.player.hp = Math.max(0, gameState.player.hp - damage);
+            gameState.damageTaken += damage;
+            gameState.map[y][x].type = 'explored';
+            
+            addMessage(`⚡ 触发陷阱！受到 ${damage} 点伤害。`, 'trap');
+            updateStats();
+        }
+        
+        // 当前战斗状态
+        let currentBattle = {
+            enemy: null,
+            hp: 0,
+            maxHp: 0,
+            x: 0,
+            y: 0,
+            isBoss: false
+        };
+        
+        // 开始战斗
+        function startBattle(x, y) {
+            const cell = gameState.map[y][x];
+            if (!cell.revealed) return;
+            
+            let enemyList;
+            let isBoss = cell.type === 'boss';
+            
+            if (isBoss) {
+                enemyList = enemies.boss;
+            } else {
+                enemyList = enemies.normal;
+            }
+            
+            const enemy = enemyList[Math.floor(Math.random() * enemyList.length)];
+            
+            currentBattle = {
+                enemy: enemy,
+                hp: enemy.hp,
+                maxHp: enemy.hp,
+                x: x,
+                y: y,
+                isBoss: isBoss
+            };
+            
+            document.getElementById('enemy-name').textContent = enemy.icon + ' ' + enemy.name;
+            document.getElementById('enemy-hp-fill').style.width = '100%';
+            document.getElementById('enemy-hp-text').textContent = `HP: ${enemy.hp}/${enemy.hp}`;
+            document.getElementById('battle-panel').style.display = 'flex';
+            
+            addMessage(`⚔️ 进入战斗：${enemy.name}`, 'battle');
+        }
+        
+        // 玩家攻击
+        function playerAttack() {
+            const damage = gameState.player.atk + Math.floor(Math.random() * 5);
+            currentBattle.hp = Math.max(0, currentBattle.hp - damage);
+            gameState.damageDealt += damage;
+            
+            document.getElementById('enemy-hp-fill').style.width = (currentBattle.hp / currentBattle.maxHp * 100) + '%';
+            document.getElementById('enemy-hp-text').textContent = `HP: ${currentBattle.hp}/${currentBattle.maxHp}`;
+            
+            addMessage(`⚔️ 你造成 ${damage} 点伤害！`, 'battle');
+            
+            if (currentBattle.hp <= 0) {
+                endBattle(true);
+            } else {
+                // 敌人反击
+                setTimeout(() => enemyAttack(), 500);
+            }
+        }
+        
+        // 使用技能
+        function useSkill() {
+            if (gameState.player.skillCooldown > 0) {
+                addMessage('⚠️ 技能冷却中！', 'trap');
+                return;
+            }
+            
+            const damage = gameState.player.skillDmg + Math.floor(Math.random() * 10);
+            currentBattle.hp = Math.max(0, currentBattle.hp - damage);
+            gameState.damageDealt += damage;
+            gameState.player.skillCooldown = 3;
+            
+            document.getElementById('enemy-hp-fill').style.width = (currentBattle.hp / currentBattle.maxHp * 100) + '%';
+            document.getElementById('enemy-hp-text').textContent = `HP: ${currentBattle.hp}/${currentBattle.maxHp}`;
+            document.getElementById('skill-cd').textContent = `技能冷却: ${gameState.player.skillCooldown} 回合`;
+            
+            addMessage(`✨ 星纹斩！造成 ${damage} 点伤害！`, 'battle');
+            
+            if (currentBattle.hp <= 0) {
+                endBattle(true);
+            } else {
+                setTimeout(() => enemyAttack(), 500);
+            }
+        }
+        
+        // 敌人攻击
+        function enemyAttack() {
+            const damage = currentBattle.enemy.atk + Math.floor(Math.random() * 3);
+            gameState.player.hp = Math.max(0, gameState.player.hp - damage);
+            gameState.damageTaken += damage;
+            
+            addMessage(`💥 ${currentBattle.enemy.name}造成 ${damage} 点伤害！`, 'trap');
+            updateStats();
+            
+            if (gameState.player.hp <= 0) {
+                endBattle(false);
+            }
+            
+            // 减少技能冷却
+            if (gameState.player.skillCooldown > 0) {
+                gameState.player.skillCooldown--;
+                document.getElementById('skill-cd').textContent = gameState.player.skillCooldown > 0 
+                    ? `技能冷却: ${gameState.player.skillCooldown} 回合` : '';
+            }
+        }
+        
+        // 撤退
+        function fleeBattle() {
+            const damage = Math.floor(currentBattle.enemy.atk * 1.5);
+            gameState.player.hp = Math.max(0, gameState.player.hp - damage);
+            gameState.damageTaken += damage;
+            
+            addMessage(`🏃 撤退成功，但受到 ${damage} 点伤害！`, 'trap');
+            updateStats();
+            
+            document.getElementById('battle-panel').style.display = 'none';
+            
+            if (gameState.player.hp <= 0) {
+                checkGameOver();
+            }
+        }
+        
+        // 结束战斗
+        function endBattle(victory) {
+            document.getElementById('battle-panel').style.display = 'none';
+            
+            if (victory) {
+                gameState.enemiesDefeated++;
+                gameState.map[currentBattle.y][currentBattle.x].type = 'explored';
+                
+                addMessage(`🎉 击败 ${currentBattle.enemy.name}！`, 'battle');
+                
+                if (currentBattle.isBoss) {
+                    gameState.bossDefeated = true;
+                    gameState.victory = true;
+                    showResult(true);
+                }
+                
+                // 随机掉落
+                if (Math.random() < 0.3) {
+                    gameState.player.star = Math.min(gameState.player.maxStar, gameState.player.star + 2);
+                    addMessage('✨ 获得星元 +2', 'treasure');
+                    updateStats();
+                }
+            } else {
+                addMessage(`💀 你被 ${currentBattle.enemy.name} 击败...`, 'trap');
+                showResult(false);
+            }
+            
+            renderMap();
+        }
+        
+        // 打开宝箱
+        function openTreasure(x, y) {
+            const cell = gameState.map[y][x];
+            if (!cell.revealed) return;
+            
+            const treasure = treasures[Math.floor(Math.random() * treasures.length)];
+            
+            let itemHtml = `<div class="treasure-item">${treasure.icon} ${treasure.name}</div>`;
+            
+            switch (treasure.effect) {
+                case 'keys':
+                    gameState.keys += treasure.value;
+                    itemHtml += `<div style="color: #ffd700;">星核碎片 +${treasure.value}</div>`;
+                    break;
+                case 'star':
+                    gameState.player.star = Math.min(gameState.player.maxStar, gameState.player.star + treasure.value);
+                    itemHtml += `<div style="color: #ffd700;">星元 +${treasure.value}</div>`;
+                    break;
+                case 'hp':
+                    gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + treasure.value);
+                    itemHtml += `<div style="color: #ff6b6b;">生命 +${treasure.value}</div>`;
+                    break;
+                case 'story':
+                    itemHtml += `<div style="color: #d0a0ff;">"${getRandomLore()}"</div>`;
+                    break;
+            }
+            
+            document.getElementById('treasure-items').innerHTML = itemHtml;
+            document.getElementById('treasure-panel').style.display = 'flex';
+            
+            gameState.treasuresFound++;
+            gameState.map[y][x].type = 'explored';
+            
+            addMessage(`📦 获得物品：${treasure.name}`, 'treasure');
+            updateStats();
+            renderMap();
+        }
+        
+        // 关闭宝箱面板
+        function closeTreasure() {
+            document.getElementById('treasure-panel').style.display = 'none';
+        }
+        
+        // 获取随机剧情文本
+        function getRandomLore() {
+            const lores = [
+                '爷爷的笔记：青龙星核，藏于墓中深处...',
+                '古墓已有千年历史，据说是一位星祭师的安息之所。',
+                '墙上刻着星图，似乎指向某个位置...',
+                '这块石碑记载着：星纹传人，方可开启封印。',
+                '一张残破的地图，标注着四象古墓的位置。'
+            ];
+            return lores[Math.floor(Math.random() * lores.length)];
+        }
+        
+        // 使用恢复点
+        function useHeal(x, y) {
+            const cell = gameState.map[y][x];
+            if (!cell.revealed || cell.type !== 'heal') return;
+            
+            const healAmount = 20;
+            gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + healAmount);
+            gameState.player.star = Math.min(gameState.player.maxStar, gameState.player.star + 2);
+            
+            gameState.map[y][x].type = 'explored';
+            
+            addMessage(`💧 星气节点！生命 +${healAmount}，星元 +2`, 'heal');
+            updateStats();
+            renderMap();
+        }
+        
+        // 开始解谜
+        function startPuzzle(x, y) {
+            const cell = gameState.map[y][x];
+            if (!cell.revealed || cell.type !== 'puzzle') return;
+            
+            currentPuzzle = { x, y };
+            
+            // 生成随机顺序
+            const numbers = [1, 2, 3];
+            shuffleArray(numbers);
+            
+            const puzzleGrid = document.getElementById('puzzle-grid');
+            puzzleGrid.innerHTML = '';
+            
+            numbers.forEach((num, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'puzzle-btn';
+                btn.textContent = num;
+                btn.dataset.num = num;
+                btn.onclick = () => checkPuzzle(num, btn);
+                puzzleGrid.appendChild(btn);
+            });
+            
+            document.getElementById('puzzle-result').textContent = '';
+            document.getElementById('puzzle-panel').style.display = 'flex';
+        }
+        
+        // 当前解谜状态
+        let currentPuzzle = { x: 0, y: 0, next: 1 };
+        
+        // 检查解谜
+        function checkPuzzle(num, btn) {
+            if (num === currentPuzzle.next) {
+                btn.classList.add('correct');
+                btn.disabled = true;
+                currentPuzzle.next++;
+                
+                if (currentPuzzle.next > 3) {
+                    // 解谜成功
+                    setTimeout(() => {
+                        document.getElementById('puzzle-panel').style.display = 'none';
+                        gameState.puzzlesSolved++;
+                        gameState.map[currentPuzzle.y][currentPuzzle.x].type = 'explored';
+                        
+                        // 奖励
+                        gameState.player.star = Math.min(gameState.player.maxStar, gameState.player.star + 3);
+                        
+                        addMessage('🔮 机关解除！星元 +3', 'puzzle');
+                        updateStats();
+                        renderMap();
+                        
+                        currentPuzzle.next = 1;
+                    }, 500);
+                }
+            } else {
+                // 解谜失败
+                btn.classList.add('wrong');
+                const damage = 5;
+                gameState.player.hp = Math.max(0, gameState.player.hp - damage);
+                gameState.damageTaken += damage;
+                
+                document.getElementById('puzzle-result').innerHTML = `<span style="color: #ff6b6b;">触发陷阱！受到 ${damage} 点伤害</span>`;
+                
+                updateStats();
+                
+                if (gameState.player.hp <= 0) {
+                    setTimeout(() => {
+                        document.getElementById('puzzle-panel').style.display = 'none';
+                        checkGameOver();
+                    }, 1000);
+                }
+            }
+        }
+        
+        // 进入下一层
+        function goToNextFloor() {
+            if (gameState.currentFloor >= gameState.maxFloor) {
+                addMessage('🚪 这已经是最后一层了！找到Boss击败它！', 'story');
+                return;
+            }
+            
+            gameState.currentFloor++;
+            document.getElementById('current-floor').textContent = gameState.currentFloor;
+            document.getElementById('floor-value').textContent = `${gameState.currentFloor}/${gameState.maxFloor}`;
+            
+            addMessage(`🚪 进入第 ${gameState.currentFloor} 层...`, 'story');
+            
+            // 恢复一些资源
+            gameState.player.star = Math.min(gameState.player.maxStar, gameState.player.star + 3);
+            gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 20);
+            
+            updateStats();
+            initMap();
+            renderMap();
+        }
+        
+        // 添加消息
+        function addMessage(text, type = '') {
+            const log = document.getElementById('message-log');
+            const msg = document.createElement('div');
+            msg.className = 'message ' + type;
+            msg.textContent = text;
+            log.appendChild(msg);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        // 更新状态显示
+        function updateStats() {
+            const p = gameState.player;
+            document.getElementById('hp-value').textContent = `${p.hp}/${p.maxHp}`;
+            document.getElementById('hp-bar').style.width = (p.hp / p.maxHp * 100) + '%';
+            document.getElementById('star-value').textContent = p.star;
+            document.getElementById('star-bar').style.width = (p.star / p.maxStar * 100) + '%';
+            document.getElementById('key-value').textContent = gameState.keys;
+        }
+        
+        // 检查游戏结束
+        function checkGameOver() {
+            if (gameState.player.hp <= 0) {
+                showResult(false);
+            }
+        }
+        
+        // 显示结算
+        function showResult(victory) {
+            gameState.gameOver = true;
+            
+            const title = document.getElementById('result-title');
+            const stats = document.getElementById('result-stats');
+            
+            if (victory) {
+                title.className = 'result-title win';
+                title.textContent = '🎉 探索成功！';
+            } else {
+                title.className = 'result-title lose';
+                title.textContent = '💀 探索失败...';
+            }
+            
+            stats.innerHTML = `
+                <div class="result-stat"><span>探索进度</span><span>${gameState.explored}/${gameState.totalCells} 格</span></div>
+                <div class="result-stat"><span>到达层数</span><span>${gameState.currentFloor}/${gameState.maxFloor}</span></div>
+                <div class="result-stat"><span>击败敌人</span><span>${gameState.enemiesDefeated}</span></div>
+                <div class="result-stat"><span>发现宝箱</span><span>${gameState.treasuresFound}</span></div>
+                <div class="result-stat"><span>破解机关</span><span>${gameState.puzzlesSolved}</span></div>
+                <div class="result-stat"><span>造成伤害</span><span>${gameState.damageDealt}</span></div>
+                <div class="result-stat"><span>承受伤害</span><span>${gameState.damageTaken}</span></div>
+                <div class="result-stat"><span>获得星核</span><span>💎 × ${gameState.keys}</span></div>
+            `;
+            
+            document.getElementById('result-panel').style.display = 'flex';
+        }
+        
+        // 重新开始
+        function restartGame() {
+            // 重置状态
+            gameState.player.hp = 100;
+            gameState.player.star = 10;
+            gameState.player.skillCooldown = 0;
+            gameState.currentFloor = 1;
+            gameState.keys = 0;
+            gameState.explored = 0;
+            gameState.enemiesDefeated = 0;
+            gameState.treasuresFound = 0;
+            gameState.puzzlesSolved = 0;
+            gameState.damageDealt = 0;
+            gameState.damageTaken = 0;
+            gameState.bossDefeated = false;
+            gameState.gameOver = false;
+            gameState.victory = false;
+            
+            document.getElementById('current-floor').textContent = '1';
+            document.getElementById('floor-value').textContent = '1/3';
+            document.getElementById('result-panel').style.display = 'none';
+            document.getElementById('message-log').innerHTML = `
+                <div class="message story">📜 你站在古墓入口，爷爷的笔记上写着："青龙墓中，藏有第一颗星核..."</div>
+                <div class="message">💡 点击迷雾格子进行探索，消耗1星元揭示内容。</div>
+            `;
+            
+            updateStats();
+            initMap();
+            renderMap();
+        }
+        
+        // 初始化游戏
+        window.onload = function() {
+            initMap();
+            renderMap();
+            updateStats();
+        };
+    </script>
+</body>
+</html>

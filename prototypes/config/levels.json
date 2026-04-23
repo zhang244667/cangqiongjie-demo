@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "description": "关卡配置表",
+  "levels": {
+    "1": {
+      "id": 1,
+      "name": "古老墓穴",
+      "type": "random",
+      "mapSize": 20,
+      "chapter": "第一章：初入地宫",
+      "description": "你收到消息，城外山中有一座被遗忘的古墓...",
+      "objectives": [
+        { "id": "exit", "icon": "🚪", "title": "找到出口楼梯", "reward": "主要目标" },
+        { "id": "mechanism", "icon": "🔧", "title": "破解机关 x3", "reward": "+100金币" }
+      ],
+      "mechanics": {
+        "mechanismTarget": 3,
+        "battleTarget": 2
+      },
+      "unlockCondition": null
+    },
+    "2": {
+      "id": 2,
+      "name": "沉银地宫",
+      "type": "structured",
+      "mapSize": 16,
+      "chapter": "第一章：初入地宫",
+      "description": "明末崇祯年间，一批神秘的宝藏被埋藏于此...",
+      "objectives": [
+        { "id": "investigate", "icon": "🔍", "title": "调查地宫真相", "reward": "主要目标" },
+        { "id": "mechanism", "icon": "🔧", "title": "破解机关 x4", "reward": "+120金币" }
+      ],
+      "mechanics": {
+        "mechanismTarget": 4,
+        "battleTarget": 0
+      },
+      "unlockCondition": { "levelId": 1, "completed": true }
+    },
+    "3": {
+      "id": 3,
+      "name": "星陨古墓",
+      "type": "structured",
+      "mapSize": 16,
+      "chapter": "第二章：深渊之下",
+      "description": "传说星陨古墓是一颗坠落天星砸出的深坑，其中埋藏着来自天外的神秘力量...",
+      "objectives": [
+        { "id": "starCoffin", "icon": "⚰️", "title": "打开星棺", "reward": "主要目标" },
+        { "id": "monsters", "icon": "👹", "title": "击败所有怪物", "reward": "完美通关" }
+      ],
+      "mechanics": {
+        "mechanismTarget": 4,
+        "battleTarget": 0
+      },
+      "unlockCondition": { "levelId": 2, "completed": true }
+    }
+  }
+}

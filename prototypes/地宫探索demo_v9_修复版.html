@@ -365,7 +365,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.9);
-            z-index: 3000;
+            z-index: 1000;
             justify-content: center;
             align-items: center;
             padding: 15px;
@@ -617,7 +617,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.95);
-            z-index: 3500;
+            z-index: 2000;
             display: none;
             flex-direction: column;
             padding: 10px;
@@ -1604,21 +1604,6 @@
 <body>
     <!-- 关卡选择界面 -->
     <div class="level-select-screen" id="levelSelectScreen">
-        <!-- 返回主界面按钮 -->
-        <div style="position: absolute; top: 15px; left: 15px; z-index: 100;">
-            <button onclick="window.location.href='主界面.html'" style="
-                background: rgba(30, 20, 50, 0.9);
-                border: 1px solid #d4af37;
-                border-radius: 20px;
-                padding: 8px 16px;
-                color: #d4af37;
-                font-size: 14px;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-            ">← 返回营地</button>
-        </div>
         <div class="game-title">
             <h1>《苍穹劫》地宫探索</h1>
             <div class="subtitle">v9 - 战斗音效版 Demo</div>
@@ -1806,382 +1791,6 @@
     </div>
 
     <script>
-        // ==================== 剧情演出系统 ====================
-        // 场景背景配置：优先使用图片，图片不存在时使用渐变背景
-        const SCENE_CONFIGS = {
-            boss_room: { 
-                image: '../场景/boss_room.jpg', 
-                gradient: 'linear-gradient(180deg, #1a0a0a 0%, #2a1515 50%, #0f0808 100%)' 
-            },
-            ancient_corridor: { 
-                image: '../场景/ancient_corridor.jpg', 
-                gradient: 'linear-gradient(180deg, #0a0a15 0%, #1a1a2a 50%, #0f0f1a 100%)' 
-            },
-            tomb_entrance: { 
-                image: '../场景/tomb_entrance.jpg', 
-                gradient: 'linear-gradient(180deg, #0f0f08 0%, #1a1a12 50%, #0a0a05 100%)' 
-            },
-            starlight_hall: { 
-                image: '../场景/starlight_hall.jpg', 
-                gradient: 'linear-gradient(180deg, #0a0a1a 0%, #15152a 50%, #080810 100%)' 
-            },
-            victory_scene: { 
-                image: '../场景/victory_scene.jpg', 
-                gradient: 'linear-gradient(180deg, #1a1a0a 0%, #2a2a15 50%, #0f0f05 100%)' 
-            }
-        };
-
-        class StoryScene {
-            constructor(config) {
-                this.background = config.background;
-                this.dialogues = config.dialogues || [];
-                this.effects = config.effects || [];
-                this.choices = config.choices || [];
-                this.onNext = config.onNext || null;
-                this.currentDialogueIndex = 0;
-                this.isTyping = false;
-                this.typingSpeed = 30;
-                this.typingTimerId = null; // 用于存储打字机定时器ID
-                this.currentText = ''; // 当前正在显示的文本
-                this.container = null;
-                this.bgImage = null;
-                this.dialogBox = null;
-                this.dialogText = null;
-                this.dialogSpeaker = null;
-                this.choiceContainer = null;
-            }
-
-            // 停止打字机效果
-            stopTyping() {
-                if (this.typingTimerId !== null) {
-                    clearTimeout(this.typingTimerId);
-                    this.typingTimerId = null;
-                }
-                this.isTyping = false;
-            }
-
-            render(containerId = 'story-container') {
-                let container = document.getElementById(containerId);
-                if (!container) {
-                    container = document.createElement('div');
-                    container.id = containerId;
-                    container.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:3000;display:flex;flex-direction:column;overflow:hidden;transition:opacity 0.5s;';
-                    document.body.appendChild(container);
-                }
-                
-                // 获取场景配置
-                const sceneConfig = SCENE_CONFIGS[this.background] || { image: '', gradient: 'linear-gradient(180deg, #0a0a0a 0%, #1a1a2a 100%)' };
-                
-                container.innerHTML = `
-                    <div class="scene-inner" style="flex:1;position:relative;background:${sceneConfig.gradient};overflow:hidden;">
-                        <div class="scene-fallback-bg" style="position:absolute;top:0;left:0;width:100%;height:100%;background:${sceneConfig.gradient};pointer-events:none;"></div>
-                        <div class="scene-background" style="position:absolute;top:0;left:0;width:100%;height:100%;background-image:url('${sceneConfig.image}');background-size:cover;background-position:center;transition:opacity 0.8s;opacity:0;pointer-events:auto;" onerror="this.style.display='none'"></div>
-                        <!-- 竖屏适配：对话框占底部30%，更大的点击区域 -->
-                        <div class="dialog-box" style="position:absolute;bottom:0;left:0;right:0;height:30%;min-height:140px;background:linear-gradient(transparent,rgba(0,0,0,0.95) 20%);padding:20px;padding-top:40px;color:#fff;display:none;z-index:10;">
-                            <div class="speaker-name" style="font-size:16px;color:#d4af37;margin-bottom:10px;font-weight:bold;"></div>
-                            <div class="dialog-text" style="font-size:18px;line-height:1.8;min-height:60px;"></div>
-                        </div>
-                        <!-- 竖屏适配：选择按钮居中偏下 -->
-                        <div class="choice-container" style="position:absolute;bottom:35%;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:12px;z-index:20;width:85%;max-width:350px;"></div>
-                        <!-- 竖屏适配：点击提示在对话框内 -->
-                        <div class="click-hint" style="position:absolute;bottom:10px;right:20px;color:rgba(255,255,255,0.6);font-size:13px;animation:pulse 1.5s infinite;display:none;">点击继续 ▼</div>
-                    </div>
-                    <style>
-                        @keyframes pulse{0%,100%{opacity:0.3}50%{opacity:1}}
-                        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
-                        @keyframes flash{0%,100%{opacity:0}50%{opacity:0.8}}
-                        .shake-effect{animation:shake 0.5s ease-in-out}
-                        .flash-effect::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:white;animation:flash 0.3s ease-in-out}
-                        /* 竖屏适配：选择按钮更大更易点击 */
-                        .choice-btn{background:rgba(30,20,50,0.95);border:2px solid rgba(212,175,55,0.8);color:#fff;padding:16px 24px;font-size:16px;cursor:pointer;transition:all 0.3s;border-radius:8px;width:100%;text-align:center;}
-                        .choice-btn:hover,.choice-btn:active{background:rgba(50,40,70,0.95);border-color:#d4af37;transform:scale(1.02);}
-                        /* 横屏适配 */
-                        @media (orientation: landscape) {
-                            .dialog-box { height: 25% !important; min-height: 100px !important; }
-                            .dialog-text { font-size: 16px !important; }
-                            .choice-container { bottom: 28% !important; }
-                        }
-                    </style>
-                `;
-                this.container = container;
-                this.bgImage = container.querySelector('.scene-background');
-                this.dialogBox = container.querySelector('.dialog-box');
-                this.dialogText = container.querySelector('.dialog-text');
-                this.dialogSpeaker = container.querySelector('.speaker-name');
-                this.choiceContainer = container.querySelector('.choice-container');
-            }
-
-            async play() {
-                await this.fadeIn();
-                this.playEffects();
-                this.startDialogues();
-            }
-
-            fadeIn() {
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        this.bgImage.style.opacity = '1';
-                        setTimeout(resolve, 800);
-                    }, 100);
-                });
-            }
-
-            playEffects() {
-                this.effects.forEach(effect => {
-                    if (effect === 'shake') {
-                        this.bgImage.parentElement.classList.add('shake-effect');
-                        setTimeout(() => this.bgImage.parentElement.classList.remove('shake-effect'), 500);
-                    } else if (effect === 'flash') {
-                        this.bgImage.parentElement.classList.add('flash-effect');
-                        setTimeout(() => this.bgImage.parentElement.classList.remove('flash-effect'), 300);
-                    }
-                });
-            }
-
-            startDialogues() {
-                if (this.currentDialogueIndex < this.dialogues.length) {
-                    this.showDialogue(this.dialogues[this.currentDialogueIndex]);
-                } else {
-                    this.onDialoguesComplete();
-                }
-            }
-
-            showDialogue(dialogue) {
-                // 先停止之前的打字机效果，防止残留
-                this.stopTyping();
-                
-                this.dialogBox.style.display = 'block';
-                this.dialogSpeaker.textContent = dialogue.speaker || '';
-                // 正确设置角色名称颜色
-                this.dialogSpeaker.style.color = dialogue.isBoss ? '#ff4444' : '#d4af37';
-                this.dialogText.textContent = '';
-                this.isTyping = true;
-                // 保存当前文本引用，避免闭包问题
-                this.currentText = dialogue.text;
-                const currentDialogueText = dialogue.text;
-                let charIndex = 0;
-                const hint = this.container.querySelector('.click-hint');
-                const self = this;
-                
-                // 一开始就显示"点击继续"提示，让用户知道可以点击
-                hint.style.display = 'block';
-                
-                const typeChar = () => {
-                    // 检查是否仍在打字状态，防止跳过后再触发
-                    if (!self.isTyping) return;
-                    if (charIndex < currentDialogueText.length) {
-                        self.dialogText.textContent += currentDialogueText[charIndex];
-                        charIndex++;
-                        self.typingTimerId = setTimeout(typeChar, self.typingSpeed);
-                    } else {
-                        // 打字完成
-                        self.stopTyping();
-                    }
-                };
-                
-                // 开始打字
-                self.typingTimerId = setTimeout(typeChar, self.typingSpeed);
-                
-                // 点击事件处理 - 使用闭包保存当前对话文本
-                const handleClick = function(e) {
-                    console.log('StoryScene click event triggered', self.isTyping, self.currentDialogueIndex);
-                    
-                    // 如果点击的是选择按钮，不处理
-                    if (e.target.classList.contains('choice-btn')) return;
-                    
-                    if (self.isTyping) {
-                        // 正在打字时点击：跳过打字效果，直接显示完整文本
-                        self.stopTyping();
-                        self.dialogText.textContent = currentDialogueText;
-                        hint.style.display = 'block';
-                    } else {
-                        // 打字完成后点击：进入下一条对话
-                        hint.style.display = 'none';
-                        self.currentDialogueIndex++;
-                        console.log('Moving to dialogue', self.currentDialogueIndex);
-                        self.startDialogues();
-                    }
-                };
-                
-                // 绑定点击事件到container
-                self.container.onclick = handleClick;
-            }
-
-            onDialoguesComplete() {
-                if (this.choices.length > 0) {
-                    this.showChoices();
-                } else if (this.onNext) {
-                    setTimeout(() => this.onNext(), 1000);
-                } else {
-                    this.hide();
-                }
-            }
-
-            showChoices() {
-                // 停止打字机效果
-                this.stopTyping();
-                // 移除背景点击事件
-                this.container.onclick = null;
-                
-                this.dialogBox.style.display = 'none';
-                this.container.querySelector('.click-hint').style.display = 'none';
-                
-                // 清空之前的选项
-                this.choiceContainer.innerHTML = '';
-                
-                this.choices.forEach(choice => {
-                    const btn = document.createElement('button');
-                    btn.className = 'choice-btn';
-                    btn.textContent = choice.text;
-                    btn.onclick = (e) => {
-                        e.stopPropagation(); // 阻止事件冒泡
-                        e.preventDefault();
-                        
-                        if (choice.action === 'startBattle' && window.startBattle) {
-                            this.hide();
-                            setTimeout(() => window.startBattle(), 800);
-                        } else if (choice.action === 'dialogue' && choice.nextScene) {
-                            this.onNext(choice.nextScene);
-                        } else if (this.onNext) {
-                            this.onNext();
-                        }
-                    };
-                    this.choiceContainer.appendChild(btn);
-                });
-            }
-
-            hide() {
-                // 清理资源
-                this.stopTyping();
-                this.container.onclick = null;
-                this.container.style.opacity = '0';
-                setTimeout(() => { if (this.container.parentNode) this.container.parentNode.removeChild(this.container); }, 800);
-            }
-        }
-
-        class StoryPlayer {
-            constructor(config) {
-                this.scenes = config.scenes || [];
-                this.currentSceneIndex = 0;
-                this.containerId = config.containerId || 'story-container';
-                this.onComplete = config.onComplete || null;
-                this.currentScene = null;
-                this.isPlaying = false;
-            }
-
-            async play() {
-                if (this.isPlaying) return;
-                this.isPlaying = true;
-                this.currentSceneIndex = 0;
-                await this.playScene(this.currentSceneIndex);
-            }
-
-            async playScene(index) {
-                if (index >= this.scenes.length) {
-                    this.isPlaying = false;
-                    if (this.onComplete) this.onComplete();
-                    return;
-                }
-                const sceneConfig = this.scenes[index];
-                this.currentScene = new StoryScene({
-                    ...sceneConfig,
-                    onNext: (nextSceneIndex) => {
-                        const nextIdx = nextSceneIndex !== undefined ? nextSceneIndex : index + 1;
-                        this.playScene(nextIdx);
-                    }
-                });
-                this.currentScene.render(this.containerId);
-                await this.currentScene.play();
-            }
-
-            stop() {
-                this.isPlaying = false;
-                if (this.currentScene) this.currentScene.hide();
-            }
-
-            isActive() { return this.isPlaying; }
-        }
-
-        // 剧情定义
-        const LEVEL_INTRO_STORIES = {
-            1: [{ background: 'tomb_entrance', dialogues: [
-                { speaker: '旁白', text: '在这座被封印千年的古老墓穴中，传说埋藏着失落王朝的宝藏...', position: 'center' },
-                { speaker: '铁柱', text: '这里就是传说中的古老墓穴吗？感觉阴森森的...', position: 'left' },
-                { speaker: '星祭司', text: '小心，这里布满了机关。跟随我的指引。', position: 'right' }
-            ]}],
-            2: [{ background: 'ancient_corridor', dialogues: [
-                { speaker: '旁白', text: '深入地宫，银色的墙壁闪烁着神秘的光芒...', position: 'center' },
-                { speaker: '星祭司', text: '这是沉银地宫，只有解开所有机关才能到达藏宝室。', position: 'right' },
-                { speaker: '铁柱', text: '管他什么机关，有宝箱就行！', position: 'left' }
-            ]}],
-            3: [{ background: 'tomb_entrance', dialogues: [
-                { speaker: '旁白', text: '星陨古墓，这里埋葬着来自天外的神秘力量...', position: 'center' },
-                { speaker: '星祭司', text: '这里的每一个角落都充满了未知的危险。', position: 'right' },
-                { speaker: '铁柱', text: '不管多危险，我都要找到最终的秘密！', position: 'left' }
-            ]}]
-        };
-
-        const BOSS_STORIES = {
-            1: [{ background: 'boss_room', dialogues: [
-                { speaker: '旁白', text: '墓穴深处，一股强大的气息正在苏醒...', position: 'center' },
-                { speaker: '石棺守卫', text: '是谁...打扰了我的沉睡...', position: 'center', isBoss: true },
-                { speaker: '铁柱', text: '你是谁？快交出宝藏！', position: 'left' },
-                { speaker: '石棺守卫', text: '愚蠢的凡人...想得到宝藏，先过我这一关！', position: 'center', isBoss: true }
-            ], effects: ['shake', 'flash'], choices: [{ text: '准备战斗！', action: 'startBattle' }] }],
-            2: [{ background: 'starlight_hall', dialogues: [
-                { speaker: '旁白', text: '巨大的银门缓缓打开，里面是传说中的藏宝大厅...', position: 'center' },
-                { speaker: '守财奴', text: '贪婪的人啊...你们永远得不到这里的宝藏！', position: 'center', isBoss: true },
-                { speaker: '铁柱', text: '什么守财奴！看打！', position: 'left' }
-            ], effects: ['shake'], choices: [{ text: '准备战斗！', action: 'startBattle' }] }],
-            3: [{ background: 'boss_room', dialogues: [
-                { speaker: '旁白', text: '巨大的星棺悬浮在空中，散发着恐怖的气息...', position: 'center' },
-                { speaker: '星主', text: '凡人...你们终于来了...', position: 'center', isBoss: true },
-                { speaker: '星主', text: '既然来了，就留下来陪葬吧！', position: 'center', isBoss: true },
-                { speaker: '铁柱', text: '少废话！接招吧！', position: 'left' }
-            ], effects: ['shake', 'flash'], choices: [{ text: '准备战斗！', action: 'startBattle' }] }]
-        };
-
-        const VICTORY_STORY = [{ background: 'victory_scene', dialogues: [
-            { speaker: '旁白', text: '战斗胜利！宝藏的光芒照亮了整个墓穴...', position: 'center' },
-            { speaker: '星祭司', text: '做得好，我们成功拿回了宝藏！', position: 'right' },
-            { speaker: '铁柱', text: '哈哈，这下发财啦！', position: 'left' }
-        ]}];
-
-        const DEFEAT_STORY = [{ background: 'boss_room', dialogues: [
-            { speaker: '旁白', text: '眼前一黑，意识逐渐模糊...', position: 'center' },
-            { speaker: '铁柱', text: '我不甘心...下次一定...', position: 'left' }
-        ], effects: ['flash'] }];
-
-        let currentStoryPlayer = null;
-        let pendingBattleLevel = null;
-
-        function playStory(scenes, onComplete) {
-            if (currentStoryPlayer && currentStoryPlayer.isActive()) return;
-            currentStoryPlayer = new StoryPlayer({ scenes, onComplete });
-            currentStoryPlayer.play();
-        }
-
-        function playLevelIntro(levelId, onComplete) {
-            const scenes = LEVEL_INTRO_STORIES[levelId];
-            if (scenes) playStory(scenes, onComplete);
-            else if (onComplete) onComplete();
-        }
-
-        function playBossIntro(levelId, onComplete) {
-            pendingBattleLevel = levelId;
-            const scenes = BOSS_STORIES[levelId];
-            if (scenes) playStory(scenes, onComplete);
-            else if (onComplete) onComplete();
-        }
-
-        function playVictoryStory(onComplete) {
-            playStory(VICTORY_STORY, onComplete);
-        }
-
-        function playDefeatStory(onComplete) {
-            playStory(DEFEAT_STORY, onComplete);
-        }
-
         // ==================== 英雄配置（新战斗系统） ====================
         const HERO_STATS = {
             tieZhu: { name: '铁柱', icon: '💪', hp: 120, atk: 20, def: 8, speed: 85, class: '重装战士' },
@@ -2817,7 +2426,9 @@
         
         // ==================== UI 逻辑 ====================
         function showMissionIntro(levelId) {
+            console.log('点击关卡卡片，levelId:', levelId);
             const level = LEVELS[levelId];
+            console.log('关卡数据:', level);
             currentLevel = levelId;
             
             const content = document.getElementById('missionContent');
@@ -2849,11 +2460,8 @@
         function startLevel(levelId) {
             closeMissionModal();
             document.getElementById('levelSelectScreen').classList.add('hidden');
-            // 播放关卡开场剧情
-            playLevelIntro(levelId, function() {
-                document.getElementById('gameContainer').style.display = 'flex';
-                initGame(levelId);
-            });
+            document.getElementById('gameContainer').style.display = 'flex';
+            initGame(levelId);
         }
         
         function exitToLevelSelect() {
@@ -3227,17 +2835,6 @@
         
         // 开始战斗
         function startBattle(isBoss = false) {
-            // 如果是Boss战，先播放Boss出场剧情
-            if (isBoss && currentLevel) {
-                playBossIntro(currentLevel, function() {
-                    doStartBattle(isBoss);
-                });
-            } else {
-                doStartBattle(isBoss);
-            }
-        }
-
-        function doStartBattle(isBoss = false) {
             battleState.isBoss = isBoss;
             battleState.turn = 0;
             battleState.logs = [];
@@ -3746,18 +3343,15 @@
                 battleModal.classList.remove('battle-victory-glow');
                 document.getElementById('battleModal').classList.remove('active');
                 
-                // 播放胜利剧情
-                playVictoryStory(function() {
-                    // 如果是Boss战（星棺）
-                    if (battleState.isBoss) {
-                        completeLevel3(isPerfect);
-                    } else {
-                        addLog(`战斗胜利！获得 ${goldReward} 金币`, 'success');
-                        updateStats();
-                        renderParty();
-                        saveGame();
-                    }
-                });
+                // 如果是Boss战（星棺）
+                if (battleState.isBoss) {
+                    completeLevel3(isPerfect);
+                } else {
+                    addLog(`战斗胜利！获得 ${goldReward} 金币`, 'success');
+                    updateStats();
+                    renderParty();
+                    saveGame();
+                }
             }, 1500);
         }
         
@@ -3776,25 +3370,21 @@
             setTimeout(() => {
                 battleModal.classList.remove('battle-defeat-dark');
                 document.getElementById('battleModal').classList.remove('active');
+                addLog('战斗失败...勉强撤退', 'danger');
                 
-                // 播放失败剧情
-                playDefeatStory(function() {
-                    addLog('战斗失败...勉强撤退', 'danger');
-                    
-                    // 撤退惩罚
-                    gameState.fatigue = Math.max(0, gameState.fatigue - 15);
-                    gameState.hp = gameState.maxHp;
-                    
-                    // 英雄HP回满
-                    battleState.heroes.forEach(h => {
-                        h.hp = h.maxHp;
-                        h.rage = 0;
-                    });
-                    battleHeroes = [...battleState.heroes];
-                    
-                    updateStats();
-                    renderParty();
+                // 撤退惩罚
+                gameState.fatigue = Math.max(0, gameState.fatigue - 15);
+                gameState.hp = gameState.maxHp;
+                
+                // 英雄HP回满
+                battleState.heroes.forEach(h => {
+                    h.hp = h.maxHp;
+                    h.rage = 0;
                 });
+                battleHeroes = [...battleState.heroes];
+                
+                updateStats();
+                renderParty();
             }, 1500);
         }
         
@@ -3860,6 +3450,7 @@
             initBattleHeroes();
             renderParty();
             updateLevelCards();
+            console.log('页面初始化完成');
         });
     </script>
 </body>

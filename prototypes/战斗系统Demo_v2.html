@@ -41,697 +41,90 @@
         }
         .start-btn:active { transform: scale(0.95); }
         
-        /* 战斗系统样式 - 升级版卡牌风格 */
-        .battle-modal {
+        /* 音量控制 */
+        .audio-controls {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            z-index: 3500;
-            display: none;
-            flex-direction: column;
-            padding: 10px;
-        }
-        .battle-modal.active { display: flex; }
-        
-        /* 暗黑哥特战斗背景 */
-        .battle-bg {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: 
-                radial-gradient(ellipse at 50% 100%, rgba(80, 40, 60, 0.4) 0%, transparent 60%),
-                radial-gradient(ellipse at 20% 50%, rgba(60, 30, 80, 0.3) 0%, transparent 40%),
-                radial-gradient(ellipse at 80% 50%, rgba(40, 60, 80, 0.3) 0%, transparent 40%),
-                linear-gradient(180deg, #0a0812 0%, #15101f 30%, #1a1525 60%, #0f0a15 100%);
-            z-index: -1;
-        }
-        
-        /* 背景装饰元素 */
-        .battle-bg::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: 
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='1' fill='%23d4af37' opacity='0.1'/%3E%3C/svg%3E");
-            background-size: 100px 100px;
-            animation: stars-twinkle 4s ease-in-out infinite;
-        }
-        @keyframes stars-twinkle { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
-        
-        .battle-header {
-            text-align: center;
-            padding: 12px;
-            background: linear-gradient(180deg, rgba(40, 20, 50, 0.9) 0%, rgba(30, 15, 40, 0.8) 100%);
-            border: 1px solid rgba(212,175,55,0.3);
-            border-radius: 12px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
-        }
-        .battle-title { font-size: 18px; color: #d4af37; text-shadow: 0 0 10px rgba(212,175,55,0.5); }
-        .battle-turn { font-size: 12px; color: #888; margin-top: 5px; }
-        
-        /* 卡牌区域容器 */
-        .battle-field {
+            top: 10px;
+            right: 10px;
+            z-index: 4000;
             display: flex;
-            flex-direction: column;
-            gap: 15px;
-            flex: 1;
-            max-width: 600px;
-            width: 100%;
-            margin: 0 auto;
-        }
-        
-        /* 敌方区域 - 上方 */
-        .enemy-area { 
-            display: flex; 
-            justify-content: center; 
-            gap: 15px; 
-            flex-wrap: wrap;
-            padding: 10px;
-        }
-        
-        /* 我方区域 - 下方 */
-        .hero-area { 
-            display: flex; 
-            justify-content: center; 
-            gap: 10px; 
-            flex-wrap: wrap;
-            padding: 10px;
-        }
-        
-        /* 卡牌单元基础样式 - 叠加式设计 */
-        .card-unit {
-            display: flex;
-            flex-direction: column;
+            gap: 10px;
             align-items: center;
-            background: linear-gradient(180deg, rgba(40, 35, 50, 0.9) 0%, rgba(25, 20, 35, 0.95) 100%);
-            border: 2px solid rgba(100, 80, 120, 0.5);
-            border-radius: 12px;
-            transition: all 0.3s;
-            cursor: pointer;
-            position: relative;
-            overflow: visible;
-            min-width: 130px;
-            min-height: 180px;
-        }
-        
-        /* 卡牌光效边框 */
-        .card-unit::before {
-            content: '';
-            position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, transparent, rgba(212,175,55,0.3), transparent);
-            border-radius: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .card-unit:hover::before { opacity: 1; }
-        
-        /* 敌方卡牌样式 */
-        .enemy-unit {
-            border-color: rgba(150, 60, 80, 0.6);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 0 20px rgba(150,60,80,0.1);
-        }
-        .enemy-unit:hover {
-            border-color: rgba(200, 80, 100, 0.8);
-            box-shadow: 0 6px 25px rgba(150,60,80,0.3);
-        }
-        
-        /* 我方卡牌样式 */
-        .hero-unit {
-            border-color: rgba(80, 120, 180, 0.6);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 0 20px rgba(80,120,180,0.1);
-        }
-        .hero-unit:hover {
-            border-color: rgba(100, 160, 220, 0.8);
-            box-shadow: 0 6px 25px rgba(80,120,180,0.3);
-        }
-        
-        /* 死亡状态 */
-        .card-unit.dead { 
-            opacity: 0.3; 
-            filter: grayscale(1) brightness(0.5);
-            transform: scale(0.9);
-        }
-        
-        /* 准备就绪状态（怒气满） */
-        .hero-unit.ready {
-            border-color: rgba(255, 200, 50, 0.8);
-            box-shadow: 0 0 20px rgba(255, 200, 50, 0.4), 0 4px 15px rgba(0,0,0,0.4);
-        }
-        .hero-unit.ready::after {
-            content: '⚡';
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            font-size: 16px;
-            animation: pulse-glow 1s ease-in-out infinite;
-        }
-        @keyframes pulse-glow { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.2); opacity: 1; } }
-        
-        /* 立绘图片容器 - 放大显示 */
-        .card-portrait {
-            width: 120px;
-            height: 160px;
-            background: linear-gradient(180deg, rgba(60,50,70,0.8) 0%, rgba(40,30,50,0.9) 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            background: rgba(30, 20, 40, 0.9);
+            padding: 8px 12px;
+            border-radius: 20px;
             border: 1px solid rgba(100,80,120,0.4);
-            position: relative;
         }
-        .card-portrait img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: top center;
-            border-radius: 7px;
-        }
-        
-        /* 怪物图标 */
-        .card-icon {
-            font-size: 32px;
-            margin-bottom: 5px;
-            filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
-        }
-        
-        /* 叠加层 - 信息面板 */
-        .card-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(180deg, rgba(25, 20, 35, 0.6) 0%, rgba(25, 20, 35, 0.6) 100%);
-            border-top: 1px solid rgba(100, 80, 120, 0.4);
-            border-radius: 0 0 10px 10px;
-            padding: 5px 8px 8px;
-            backdrop-filter: blur(3px);
-        }
-        
-        /* 叠加层角色名字 */
-        .card-name-overlay {
-            font-size: 11px;
-            font-weight: bold;
-            text-align: center;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            margin-bottom: 3px;
-        }
-        .enemy-unit .card-name-overlay { color: #ff8a8a; }
-        .hero-unit .card-name-overlay { color: #8ac4ff; }
-        
-        /* 角色名字 */
-        .card-name { 
-            font-size: 11px; 
-            font-weight: bold;
-            margin-bottom: 5px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-        }
-        .enemy-unit .card-name { color: #ff8a8a; }
-        .hero-unit .card-name { color: #8ac4ff; }
-        
-        /* 叠加层血条 */
-        .hp-bar-overlay {
-            margin-bottom: 2px;
-        }
-        .hp-bar {
-            width: 100%;
-            height: 10px;
-            background: rgba(20, 15, 30, 0.9);
-            border-radius: 5px;
-            overflow: hidden;
-            border: 1px solid rgba(80,60,100,0.5);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
-            position: relative;
-        }
-        .hp-value {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 9px;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            z-index: 1;
-            pointer-events: none;
-        }
-        .hp-fill { 
-            height: 100%; 
-            background: linear-gradient(180deg, #6b9fd5 0%, #4a6fa5 50%, #3a5a8a 100%);
-            transition: width 0.3s;
-            position: relative;
-        }
-        .hp-fill::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 50%;
-            background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 100%);
-            border-radius: 5px 5px 0 0;
-        }
-        .hp-fill.low { 
-            background: linear-gradient(180deg, #ff8a8a 0%, #cc5050 50%, #aa3030 100%);
-        }
-        .hp-fill.critical {
-            background: linear-gradient(180deg, #ff6b6b 0%, #cc2020 50%, #aa1010 100%);
-            animation: hp-critical 0.5s ease-in-out infinite;
-        }
-        @keyframes hp-critical { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        
-        .hp-text { 
-            display: none;
-        }
-        
-        /* 怒气条 */
-        .rage-bar-overlay {
-        }
-        .rage-bar {
-            width: 100%;
-            height: 6px;
-            background: rgba(20, 15, 30, 0.9);
-            border-radius: 3px;
-            overflow: hidden;
-            border: 1px solid rgba(100,80,50,0.5);
-            position: relative;
-        }
-        .rage-value {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 9px;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            z-index: 1;
-            pointer-events: none;
-        }
-        .rage-fill { 
-            height: 100%; 
-            background: linear-gradient(90deg, #cc8800, #ffaa00);
-            transition: width 0.3s;
-        }
-        .rage-fill.full { 
-            background: linear-gradient(90deg, #ff6600, #ffcc00);
-            box-shadow: 0 0 8px rgba(255,200,0,0.5);
-        }
-        .rage-text { 
-            display: none;
-        }
-        
-        /* 行动条区域 */
-        .action-bar-area { 
-            padding: 10px; 
-            background: linear-gradient(180deg, rgba(30, 20, 40, 0.9) 0%, rgba(20, 15, 30, 0.9) 100%);
-            border: 1px solid rgba(100,80,120,0.4);
-            border-radius: 10px; 
-            margin-bottom: 10px;
-        }
-        .action-bar { 
-            display: flex; 
-            gap: 6px; 
-            overflow-x: auto; 
-            padding: 8px 0;
-            justify-content: center;
-        }
-        .action-slot {
-            width: 45px; 
-            height: 45px;
-            background: linear-gradient(180deg, rgba(50, 40, 60, 0.8) 0%, rgba(35, 25, 45, 0.9) 100%);
+        .audio-btn {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
+            border: 2px solid rgba(212,175,55,0.5);
+            background: linear-gradient(180deg, rgba(60,50,70,0.8), rgba(40,30,50,0.9));
+            color: #d4af37;
+            font-size: 18px;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            border: 2px solid rgba(100,80,120,0.4);
-            flex-shrink: 0;
-            transition: all 0.3s;
-            overflow: hidden;
-        }
-        .action-slot.current { 
-            border-color: #d4af37; 
-            box-shadow: 0 0 15px rgba(212,175,55,0.6);
-            transform: scale(1.1);
-        }
-        .action-slot.acted { 
-            opacity: 0.4;
-            filter: grayscale(0.5);
-        }
-        .action-slot.hero { 
-            background: linear-gradient(180deg, rgba(60, 80, 120, 0.8) 0%, rgba(45, 60, 90, 0.9) 100%);
-            border-color: rgba(80, 120, 180, 0.5);
-        }
-        .action-slot.enemy { 
-            background: linear-gradient(180deg, rgba(120, 60, 80, 0.8) 0%, rgba(90, 45, 60, 0.9) 100%);
-            border-color: rgba(180, 80, 100, 0.5);
-        }
-        .action-slot-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            transform: scale(1.6);
-            object-position: top center;
-        }
-        .action-slot-icon {
-            font-size: 20px;
-        }
-        
-        /* 战斗日志 */
-        .battle-log {
-            flex: 1;
-            background: linear-gradient(180deg, rgba(15, 10, 25, 0.9) 0%, rgba(10, 8, 18, 0.95) 100%);
-            border: 1px solid rgba(80,60,100,0.3);
-            border-radius: 10px;
-            padding: 10px;
-            overflow-y: auto;
-            font-size: 12px;
-            min-height: 80px;
-            max-height: 120px;
-            margin-bottom: 10px;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
-        }
-        .battle-log-entry { 
-            margin: 5px 0; 
-            padding: 6px 10px; 
-            border-radius: 6px; 
-            background: rgba(40, 30, 50, 0.4);
-            border-left: 3px solid rgba(100,80,120,0.4);
-            animation: log-appear 0.3s ease-out;
-        }
-        @keyframes log-appear { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        .battle-log-entry.player-attack { color: #8ac4ff; border-left-color: #4a7fc0; }
-        .battle-log-entry.player-skill { color: #ffcc66; border-left-color: #d4af37; background: rgba(212,175,55,0.1); }
-        .battle-log-entry.enemy-attack { color: #ff9999; border-left-color: #cc6060; }
-        .battle-log-entry.enemy-death { color: #88ff88; border-left-color: #50cc50; }
-        
-        /* 战斗操作按钮 */
-        .battle-actions { 
-            display: flex; 
-            gap: 10px; 
-            padding: 12px; 
-            background: linear-gradient(180deg, rgba(30, 20, 40, 0.9) 0%, rgba(20, 15, 30, 0.9) 100%);
-            border: 1px solid rgba(100,80,120,0.4);
-            border-radius: 12px; 
-        }
-        .battle-btn {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
             transition: all 0.2s;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
-        .battle-btn:active { transform: scale(0.95); }
-        .battle-btn.attack { 
-            background: linear-gradient(180deg, #5a4a3a, #4a3a2a);
-            color: #ffcc88;
-            border: 1px solid #8a7a5a;
+        .audio-btn:hover {
+            border-color: #d4af37;
+            box-shadow: 0 0 10px rgba(212,175,55,0.5);
         }
-        .battle-btn.skill { 
-            background: linear-gradient(180deg, #6a3a2a, #5a2a1a);
-            color: #ffcc44;
-            border: 1px solid #aa6a3a;
+        .audio-btn.muted {
+            opacity: 0.5;
+            border-color: #666;
         }
-        .battle-btn.retreat { 
-            background: rgba(60, 40, 40, 0.8); 
-            color: #ff8888; 
-            flex: 0.6;
-            border: 1px solid rgba(100,60,60,0.5);
+        .volume-slider {
+            width: 80px;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(60,50,70,0.8);
+            border-radius: 3px;
+            outline: none;
         }
-        .battle-btn:hover {
-            filter: brightness(1.2);
-            box-shadow: 0 0 15px rgba(255,200,100,0.3);
-        }
-        .battle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        /* 伤害数字飘字 */
-        .damage-number {
-            position: absolute;
-            font-size: 22px;
-            font-weight: bold;
-            color: #ff6b6b;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 20px rgba(255,100,100,0.5);
-            animation: damage-float 1s forwards;
-            pointer-events: none;
-            z-index: 100;
-            font-family: 'Arial Black', sans-serif;
-        }
-        .damage-number.crit { 
-            color: #ffcc00; 
-            font-size: 28px;
-            text-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 30px rgba(255,200,0,0.8);
-        }
-        .damage-number.heal { color: #88ff88; }
-        @keyframes damage-float { 
-            0% { opacity: 1; transform: translateY(0) scale(1.2); } 
-            20% { transform: translateY(-10px) scale(1); }
-            100% { opacity: 0; transform: translateY(-50px) scale(0.8); } 
-        }
-        
-        /* 攻击动画 */
-        .shake { animation: shake 0.3s; }
-        .shake-heavy { animation: shake-heavy 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-        @keyframes shake-heavy { 
-            0%, 100% { transform: translateX(0) rotate(0); } 
-            20% { transform: translateX(-12px) rotate(-2deg); } 
-            40% { transform: translateX(12px) rotate(2deg); } 
-            60% { transform: translateX(-10px) rotate(-1deg); } 
-            80% { transform: translateX(10px) rotate(1deg); } 
-        }
-        
-        /* 死亡动画 */
-        .enemy-death-anim { animation: death 0.6s forwards; }
-        @keyframes death { 
-            0% { opacity: 1; transform: scale(1) rotate(0); } 
-            50% { transform: scale(1.1) rotate(5deg); }
-            100% { opacity: 0; transform: scale(0.3) rotate(-10deg); filter: grayscale(1) brightness(0.3); } 
-        }
-        
-        /* 攻击闪烁效果 */
-        .attack-flash {
-            animation: attack-flash 0.3s;
-        }
-        @keyframes attack-flash {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(2) saturate(1.5); }
-        }
-        
-        /* 胜利光效 */
-        .battle-victory-glow { animation: victory-glow 0.5s ease-in-out 3; }
-        @keyframes victory-glow { 
-            0%, 100% { box-shadow: inset 0 0 30px rgba(107, 255, 107, 0.2); } 
-            50% { box-shadow: inset 0 0 60px rgba(107, 255, 107, 0.4); } 
-        }
-        
-        /* 技能释放特效 */
-        .skill-effect {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100px;
-            height: 100px;
-            transform: translate(-50%, -50%);
-            background: radial-gradient(circle, rgba(255,200,0,0.6) 0%, transparent 70%);
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            animation: skill-burst 0.5s forwards;
-            pointer-events: none;
-        }
-        @keyframes skill-burst {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+            background: #d4af37;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(212,175,55,0.5);
         }
         
-        /* 攻击方向指示 */
-        .attack-arrow {
+        /* Canvas特效层 */
+        #particleCanvas {
             position: absolute;
-            font-size: 24px;
-            animation: arrow-fly 0.5s forwards;
-            z-index: 50;
-        }
-        @keyframes arrow-fly {
-            0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(30px) scale(0.5); }
-        }
-        
-        /* ============================================
-           手机端响应式适配 - 最大宽度480px
-           ============================================ */
-        @media (max-width: 480px) {
-            /* 页面整体 */
-            body {
-                padding: 10px;
-            }
-            .demo-title h1 {
-                font-size: 18px;
-            }
-            .demo-title p {
-                font-size: 10px;
-            }
-            .start-btn {
-                padding: 12px 30px;
-                font-size: 14px;
-                margin-bottom: 15px;
-            }
-            
-            /* 战斗模态框 */
-            .battle-modal {
-                padding: 5px;
-            }
-            
-            /* 战斗头部 */
-            .battle-header {
-                padding: 8px;
-                margin-bottom: 8px;
-            }
-            .battle-title {
-                font-size: 14px;
-            }
-            .battle-turn {
-                font-size: 10px;
-                margin-top: 3px;
-            }
-            
-            /* 战斗区域 */
-            .battle-field {
-                gap: 8px;
-            }
-            .enemy-area,
-            .hero-area {
-                gap: 6px;
-                padding: 6px;
-            }
-            
-            /* 卡牌单元 - 缩小尺寸 */
-            .card-unit {
-                min-width: 90px;
-                min-height: 120px;
-                border-radius: 8px;
-            }
-            
-            /* 立绘容器 - 缩小尺寸 */
-            .card-portrait {
-                width: 80px;
-                height: 100px;
-                border-radius: 6px;
-            }
-            
-            /* 叠加层面板 */
-            .card-overlay {
-                padding: 3px 5px 5px;
-            }
-            .card-name-overlay {
-                font-size: 9px;
-            }
-            .card-name {
-                font-size: 9px;
-                margin-bottom: 3px;
-            }
-            
-            /* 血条 */
-            .hp-bar {
-                height: 8px;
-            }
-            .hp-value {
-                font-size: 7px;
-            }
-            
-            /* 怒气条 */
-            .rage-bar {
-                height: 5px;
-            }
-            .rage-value {
-                font-size: 7px;
-            }
-            
-            /* 行动条区域 */
-            .action-bar-area {
-                padding: 6px;
-                margin-bottom: 6px;
-            }
-            .action-bar {
-                gap: 4px;
-                padding: 5px 0;
-            }
-            
-            /* 行动条头像 - 缩小 */
-            .action-slot {
-                width: 35px;
-                height: 35px;
-                font-size: 16px;
-                border-width: 1.5px;
-            }
-            .action-slot.current {
-                transform: scale(1.05);
-            }
-            .action-slot-icon {
-                font-size: 16px;
-            }
-            
-            /* 战斗日志 */
-            .battle-log {
-                padding: 6px;
-                font-size: 10px;
-                min-height: 60px;
-                max-height: 80px;
-                margin-bottom: 6px;
-            }
-            .battle-log-entry {
-                margin: 3px 0;
-                padding: 4px 6px;
-                border-left-width: 2px;
-            }
-            
-            /* 战斗按钮 */
-            .battle-actions {
-                gap: 6px;
-                padding: 8px;
-            }
-            .battle-btn {
-                padding: 10px 8px;
-                font-size: 11px;
-                border-radius: 8px;
-            }
-            .battle-btn.retreat {
-                flex: 0.5;
-            }
-            
-            /* 伤害数字 */
-            .damage-number {
-                font-size: 16px;
-            }
-            .damage-number.crit {
-                font-size: 20px;
-            }
-            
-            /* 就绪状态闪电图标 */
-            .hero-unit.ready::after {
-                font-size: 12px;
-                top: -3px;
-                right: -3px;
-            }
-            
-            /* 怪物图标 */
-            .card-icon {
-                font-size: 24px;
-                margin-bottom: 3px;
-            }
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 2050;
         }
     </style>
 </head>
 <body>
+    <!-- 音量控制 -->
+    <div class="audio-controls">
+        <button class="audio-btn" id="musicToggle" title="背景音乐">🎵</button>
+        <button class="audio-btn" id="sfxToggle" title="音效">🔊</button>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70" title="音量">
+    </div>
+
     <div class="demo-title">
         <h1>⚔️ 《苍穹劫》战斗系统 v2.0</h1>
-        <p>卡牌立绘风格 · 暗黑哥特美术</p>
+        <p>卡牌立绘风格 · 暗黑哥特美术 · 模块化版本</p>
     </div>
     <button class="start-btn" onclick="startDemo()">🎮 开始战斗</button>
     <p style="color:#888;font-size:12px;">点击体验全新卡牌立绘战斗系统</p>
 
+    <!-- 战斗系统容器 -->
     <div class="battle-modal" id="battleModal">
         <div class="battle-bg"></div>
+        <!-- Canvas特效层 -->
+        <canvas id="particleCanvas"></canvas>
         
         <div class="battle-header">
             <div class="battle-title" id="battleTitle">⚔️ 遭遇战斗</div>
@@ -740,13 +133,9 @@
         
         <div class="battle-field">
             <div class="enemy-area" id="enemyArea"></div>
-            
             <div class="action-bar-area" id="actionBarArea"></div>
-            
             <div class="hero-area" id="heroArea"></div>
-            
             <div class="battle-log" id="battleLog"></div>
-            
             <div class="battle-actions" id="battleActions">
                 <button class="battle-btn attack" onclick="doAutoBattle()">⚔️ 普通战斗</button>
                 <button class="battle-btn skill" onclick="doBossBattle()">💀 Boss战</button>
@@ -755,386 +144,41 @@
         </div>
     </div>
 
+    <!-- 战斗系统模块 -->
+    <script src="battle-system.js"></script>
+    
     <script>
-        // 英雄配置 - 带立绘图片（公开URL）
-        const HERO_STATS = {
-            tieZhu: { 
-                name: '铁柱', 
-                icon: '🛡️', 
-                hp: 120, atk: 20, def: 8, speed: 85,
-                portrait: 'https://www.coze.cn/s/GShA-7yOypU/',
-                job: '重装战士'
-            },
-            xingJiSi: { 
-                name: '星祭司', 
-                icon: '✨', 
-                hp: 75, atk: 24, def: 4, speed: 110,
-                portrait: 'https://www.coze.cn/s/EmbK-qYRUvw/',
-                job: '秘法师'
-            },
-            moJinShou: { 
-                name: '摸金手', 
-                icon: '🔭', 
-                hp: 90, atk: 22, def: 5, speed: 105,
-                portrait: 'https://www.coze.cn/s/G4cwsF_5a1A/',
-                job: '风水师'
-            },
-            banShanKe: { 
-                name: '搬山客', 
-                icon: '⚙️', 
-                hp: 95, atk: 21, def: 6, speed: 95,
-                portrait: 'https://www.coze.cn/s/IfrAhL1vG6I/',
-                job: '机关师'
-            }
-        };
+        // 引用战斗系统模块
+        const Battle = window.BattleSystem;
         
-        // 敌人配置
-        const ENEMY_PORTRAITS = {
-            normal: ['https://www.coze.cn/s/GiEfwGxwWbs/'],
-            boss: ['https://www.coze.cn/s/G1CDLZ4vzMs/']
-        };
-
-        let battleHeroes = [];
-        let battleState = { 
-            heroes: [], 
-            enemies: [], 
-            actionQueue: [], 
-            currentIndex: 0, 
-            turn: 0, 
-            logs: [], 
-            isRunning: false, 
-            isBoss: false 
-        };
-
-        function initBattleHeroes() {
-            battleHeroes = [
-                { ...HERO_STATS.tieZhu, id: 'tieZhu', hp: HERO_STATS.tieZhu.hp, maxHp: HERO_STATS.tieZhu.hp, rage: 0 },
-                { ...HERO_STATS.xingJiSi, id: 'xingJiSi', hp: HERO_STATS.xingJiSi.hp, maxHp: HERO_STATS.xingJiSi.hp, rage: 0 },
-                { ...HERO_STATS.moJinShou, id: 'moJinShou', hp: HERO_STATS.moJinShou.hp, maxHp: HERO_STATS.moJinShou.hp, rage: 0 },
-                { ...HERO_STATS.banShanKe, id: 'banShanKe', hp: HERO_STATS.banShanKe.hp, maxHp: HERO_STATS.banShanKe.hp, rage: 0 }
-            ];
-            battleState.heroes = [...battleHeroes];
-        }
-
-        function startDemo() {
-            startBattle(false);
-        }
-
-        function doAutoBattle() {
-            closeBattle();
-            setTimeout(() => startBattle(false), 300);
-        }
-
-        function doBossBattle() {
-            closeBattle();
-            setTimeout(() => startBattle(true), 300);
-        }
-
-        function startBattle(isBoss = false) {
-            battleState.isBoss = isBoss;
-            battleState.turn = 0;
-            battleState.logs = [];
-            battleState.isRunning = false;
-
-            initBattleHeroes();
-
-            const enemyCount = isBoss ? 2 : 3;
-            battleState.enemies = [];
-            
-            const portraits = isBoss ? ENEMY_PORTRAITS.boss : ENEMY_PORTRAITS.normal;
-            
-            for (let i = 0; i < enemyCount; i++) {
-                battleState.enemies.push({
-                    id: `enemy_${i}`,
-                    name: isBoss ? '星棺守卫' : '墓穴守卫',
-                    icon: isBoss ? '💀' : '👹',
-                    portrait: portraits[i % portraits.length],
-                    hp: isBoss ? 150 : 55,
-                    maxHp: isBoss ? 150 : 55,
-                    atk: isBoss ? 22 : 14,
-                    def: isBoss ? 10 : 5,
-                    speed: isBoss ? 80 : 92,
-                    isBoss: isBoss
-                });
-            }
-
-            rebuildActionQueue();
-            battleState.turn = 1;
-
-            document.getElementById('battleTitle').textContent = isBoss ? '💀 Boss战 - 星棺守卫' : '⚔️ 遭遇战斗 - 墓穴守卫';
-            document.getElementById('battleModal').classList.add('active');
-
-            renderBattle();
-
-            setTimeout(() => {
-                battleState.isRunning = true;
-                executeNextAction();
-            }, 1000);
-        }
-
-        function closeBattle() {
-            document.getElementById('battleModal').classList.remove('active');
-        }
-
-        function rebuildActionQueue() {
-            battleState.actionQueue = [];
-            battleState.heroes.forEach(hero => {
-                if (hero.hp > 0) battleState.actionQueue.push({ type: 'hero', id: hero.id, acted: false });
-            });
-            battleState.enemies.forEach(enemy => {
-                if (enemy.hp > 0) battleState.actionQueue.push({ type: 'enemy', id: enemy.id, acted: false });
-            });
-            battleState.actionQueue.sort((a, b) => {
-                const aSpeed = a.type === 'hero' ? battleState.heroes.find(h => h.id === a.id).speed : battleState.enemies.find(e => e.id === a.id).speed;
-                const bSpeed = b.type === 'hero' ? battleState.heroes.find(h => h.id === b.id).speed : battleState.enemies.find(e => e.id === b.id).speed;
-                return bSpeed - aSpeed;
-            });
-        }
-
-        function renderBattle() {
-            // 渲染敌方
-            const enemyArea = document.getElementById('enemyArea');
-            enemyArea.innerHTML = battleState.enemies.map(e => `
-                <div class="card-unit enemy-unit ${e.hp <= 0 ? 'dead' : ''}" id="enemy-${e.id}">
-                    <div class="card-portrait">
-                        ${e.portrait ? `<img src="${e.portrait}" alt="${e.name}" onerror="this.parentElement.innerHTML='<div class=card-icon>${e.icon}</div>'">` : `<div class="card-icon">${e.icon}</div>`}
-                    </div>
-                    <div class="card-overlay">
-                        <div class="card-name-overlay">${e.name}</div>
-                        <div class="hp-bar-overlay">
-                            <div class="hp-bar"><div class="hp-fill ${e.hp/e.maxHp < 0.3 ? 'low' : ''} ${e.hp/e.maxHp < 0.15 ? 'critical' : ''}" style="width:${(e.hp/e.maxHp)*100}%"></div><span class="hp-value">${e.hp}/${e.maxHp}</span></div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            // 渲染我方
-            const heroArea = document.getElementById('heroArea');
-            heroArea.innerHTML = battleState.heroes.map(h => `
-                <div class="card-unit hero-unit ${h.hp <= 0 ? 'dead' : ''} ${h.rage >= 100 ? 'ready' : ''}" id="hero-${h.id}">
-                    <div class="card-portrait">
-                        <img src="${HERO_STATS[h.id].portrait}" alt="${h.name}" onerror="this.parentElement.innerHTML='<div class=card-icon>${HERO_STATS[h.id].icon}</div>'">
-                    </div>
-                    <div class="card-overlay">
-                        <div class="card-name-overlay">${h.name}</div>
-                        <div class="hp-bar-overlay">
-                            <div class="hp-bar"><div class="hp-fill ${h.hp/h.maxHp < 0.3 ? 'low' : ''} ${h.hp/h.maxHp < 0.15 ? 'critical' : ''}" style="width:${(h.hp/h.maxHp)*100}%"></div><span class="hp-value">${h.hp}/${h.maxHp}</span></div>
-                        </div>
-                        <div class="rage-bar-overlay">
-                            <div class="rage-bar"><div class="rage-fill ${h.rage >= 100 ? 'full' : ''}" style="width:${h.rage}%"></div><span class="rage-value">${h.rage}</span></div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-
-            // 渲染行动条
-            const actionBar = document.getElementById('actionBarArea');
-            actionBar.innerHTML = '<div class="action-bar">' + battleState.actionQueue.map(a => {
-                const isHero = a.type === 'hero';
-                const stats = isHero ? HERO_STATS[a.id] : battleState.enemies.find(e => e.id === a.id);
-                const portrait = isHero ? stats.portrait : (battleState.enemies.find(e => e.id === a.id)?.portrait);
-                const icon = stats.icon;
-                const actedClass = a.acted ? 'acted' : '';
-                const typeClass = isHero ? 'hero' : 'enemy';
-                
-                let content = '';
-                if (portrait && !a.acted) {
-                    content = `<img class="action-slot-img" src="${portrait}" alt="${stats.name}">`;
-                } else {
-                    content = `<span class="action-slot-icon">${icon}</span>`;
-                }
-                
-                return `<div class="action-slot ${typeClass} ${actedClass}" title="${stats.name}">${content}</div>`;
-            }).join('') + '</div>';
-
-            document.getElementById('battleTurn').textContent = `回合 ${battleState.turn}`;
-            document.getElementById('battleLog').innerHTML = battleState.logs.slice(-6).map(l => `<div class="battle-log-entry ${l.type}">${l.text}</div>`).join('');
-        }
-
-        function addBattleLog(text, type) {
-            battleState.logs.push({ text, type });
-        }
-
-        function calculateDamage(atk, def, isCrit = false) {
-            const base = Math.max(1, atk - def * 0.5);
-            const variance = base * 0.2;
-            let damage = Math.floor(base + (Math.random() * 2 - 1) * variance);
-            if (isCrit) damage = Math.floor(damage * 1.8);
-            return damage;
-        }
-
-        function executeNextAction() {
-            if (!battleState.isRunning) return;
-
-            const aliveHeroes = battleState.heroes.filter(h => h.hp > 0);
-            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
-
-            if (aliveEnemies.length === 0) {
-                endBattle(true);
-                return;
-            }
-            if (aliveHeroes.length === 0) {
-                endBattle(false);
-                return;
-            }
-
-            const current = battleState.actionQueue.find(a => !a.acted && (a.type === 'hero' ? battleState.heroes.find(h => h.id === a.id).hp > 0 : battleState.enemies.find(e => e.id === a.id).hp > 0));
-
-            if (!current) {
-                battleState.turn++;
-                battleState.actionQueue.forEach(a => a.acted = false);
-                rebuildActionQueue();
-                renderBattle();
-                setTimeout(() => executeNextAction(), 500);
-                return;
-            }
-
-            current.acted = true;
-            
-            // 高亮当前行动者
-            highlightCurrentActor(current);
-
-            if (current.type === 'hero') {
-                const hero = battleState.heroes.find(h => h.id === current.id);
-                if (hero.rage >= 100) {
-                    heroUseSkill(current.id);
-                } else {
-                    heroAttack(current.id);
-                }
-            } else {
-                enemyAttack(current.id);
-            }
-        }
+        // Demo启动函数
+        function startDemo() { Battle.startBattle(false); }
+        function doAutoBattle() { Battle.closeBattle(); setTimeout(() => Battle.startBattle(false), 300); }
+        function doBossBattle() { Battle.closeBattle(); setTimeout(() => Battle.startBattle(true), 300); }
+        function closeBattle() { Battle.closeBattle(); }
         
-        function highlightCurrentActor(current) {
-            const prefix = current.type === 'hero' ? 'hero' : 'enemy';
-            const el = document.getElementById(`${prefix}-${current.id}`);
-            if (el) {
-                el.classList.add('attack-flash');
-                setTimeout(() => el.classList.remove('attack-flash'), 300);
-            }
-        }
-
-        function heroAttack(heroId) {
-            const hero = battleState.heroes.find(h => h.id === heroId);
-            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
-            const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
-
-            const isCrit = Math.random() < 0.2;
-            const damage = calculateDamage(hero.atk, target.def, isCrit);
-            target.hp = Math.max(0, target.hp - damage);
-            hero.rage = Math.min(100, hero.rage + 15);
-
-            setTimeout(() => {
-                const el = document.getElementById(`enemy-${target.id}`);
-                if (el) {
-                    showDamageNumber(el, damage, isCrit ? 'crit' : 'damage');
-                    el.classList.add('shake');
-                    setTimeout(() => el.classList.remove('shake'), 300);
-                }
-            }, 100);
-
-            const critText = isCrit ? ' 💥暴击！' : '';
-            addBattleLog(`⚔️ ${hero.name} 攻击 ${target.name}，造成 ${damage} 伤害${critText}`, 'player-attack');
-
-            if (target.hp <= 0) {
-                addBattleLog(`☠️ ${target.name} 被击败！`, 'enemy-death');
-                setTimeout(() => {
-                    const el = document.getElementById(`enemy-${target.id}`);
-                    if (el) el.classList.add('enemy-death-anim');
-                }, 100);
-            }
-
-            renderBattle();
-            setTimeout(() => executeNextAction(), 700);
-        }
-
-        function heroUseSkill(heroId) {
-            const hero = battleState.heroes.find(h => h.id === heroId);
-            const aliveEnemies = battleState.enemies.filter(e => e.hp > 0);
-            const target = aliveEnemies.reduce((min, e) => e.hp < min.hp ? e : min, aliveEnemies[0]);
-
-            const damage = Math.floor(calculateDamage(hero.atk * 2, target.def, true));
-            target.hp = Math.max(0, target.hp - damage);
-            hero.rage = 0;
-
-            setTimeout(() => {
-                const el = document.getElementById(`enemy-${target.id}`);
-                if (el) {
-                    // 显示技能特效
-                    const effect = document.createElement('div');
-                    effect.className = 'skill-effect';
-                    el.appendChild(effect);
-                    setTimeout(() => effect.remove(), 500);
-                    
-                    showDamageNumber(el, damage, 'crit');
-                    el.classList.add('shake-heavy');
-                    setTimeout(() => el.classList.remove('shake-heavy'), 500);
-                }
-            }, 100);
-
-            addBattleLog(`🔥 ${hero.name} 释放终极技能！对 ${target.name} 造成 ${damage} 毁灭性暴击伤害！`, 'player-skill');
-            if (target.hp <= 0) {
-                addBattleLog(`☠️ ${target.name} 被击杀！`, 'enemy-death');
-                setTimeout(() => {
-                    const el = document.getElementById(`enemy-${target.id}`);
-                    if (el) el.classList.add('enemy-death-anim');
-                }, 100);
-            }
-
-            renderBattle();
-            setTimeout(() => executeNextAction(), 1000);
-        }
-
-        function enemyAttack(enemyId) {
-            const enemy = battleState.enemies.find(e => e.id === enemyId);
-            const aliveHeroes = battleState.heroes.filter(h => h.hp > 0);
-            if (aliveHeroes.length === 0) return;
-            
-            const target = aliveHeroes.reduce((max, h) => h.hp > max.hp ? h : max, aliveHeroes[0]);
-
-            const damage = calculateDamage(enemy.atk, target.def);
-            target.hp = Math.max(0, target.hp - damage);
-            target.rage = Math.min(100, target.rage + 8);
-
-            setTimeout(() => {
-                const el = document.getElementById(`hero-${target.id}`);
-                if (el) {
-                    showDamageNumber(el, damage, 'damage');
-                    el.classList.add('shake');
-                    setTimeout(() => el.classList.remove('shake'), 300);
-                }
-            }, 100);
-
-            addBattleLog(`💀 ${enemy.name} 攻击 ${target.name}，造成 ${damage} 伤害`, 'enemy-attack');
-
-            renderBattle();
-            setTimeout(() => executeNextAction(), 700);
-        }
-
-        function showDamageNumber(element, damage, type) {
-            const rect = element.getBoundingClientRect();
-            const num = document.createElement('div');
-            num.className = `damage-number ${type}`;
-            num.textContent = (type === 'crit' ? '-' : '-') + damage;
-            num.style.left = `${rect.left + rect.width/2 - 20}px`;
-            num.style.top = `${rect.top + 20}px`;
-            document.body.appendChild(num);
-            setTimeout(() => num.remove(), 1000);
-        }
-
-        function endBattle(isVictory) {
-            battleState.isRunning = false;
-            const modal = document.getElementById('battleModal');
-            if (isVictory) {
-                modal.classList.add('battle-victory-glow');
-                addBattleLog('🏆 战斗胜利！', 'enemy-death');
-            } else {
-                addBattleLog('💀 战斗失败...', 'enemy-attack');
-            }
-            renderBattle();
-            setTimeout(() => modal.classList.remove('battle-victory-glow'), 1500);
-        }
+        // 音量控制事件
+        document.getElementById('musicToggle').addEventListener('click', function() {
+            const audio = Battle.getAudioSystem();
+            audio.init();
+            const isOn = audio.toggleMusic();
+            this.textContent = isOn ? '🎵' : '🔇';
+            this.classList.toggle('muted', !isOn);
+        });
+        
+        document.getElementById('sfxToggle').addEventListener('click', function() {
+            const audio = Battle.getAudioSystem();
+            audio.init();
+            const isOn = audio.toggleSfx();
+            this.textContent = isOn ? '🔊' : '🔈';
+            this.classList.toggle('muted', !isOn);
+        });
+        
+        document.getElementById('volumeSlider').addEventListener('input', function() {
+            const audio = Battle.getAudioSystem();
+            audio.init();
+            audio.setVolume(this.value / 100);
+        });
     </script>
 </body>
 </html>

@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《苍穹劫》地宫探索Demo v4 - 三类机关系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f0f1a 100%);
+            min-height: 100vh;
+            color: #c0c0c0;
+        }
+        
+        .game-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+        
+        /* 顶部标题 */
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(20, 15, 30, 0.9);
+            border: 1px solid #3a2a5a;
+            border-radius: 8px;
+        }
+        
+        .header h1 {
+            font-size: 22px;
+            color: #d4af37;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* 状态栏 */
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            background: rgba(30, 20, 40, 0.9);
+            border: 1px solid #3a2a5a;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 8px 5px;
+            background: rgba(50, 40, 70, 0.5);
+            border-radius: 5px;
+        }
+        
+        .stat-label {
+            font-size: 10px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+        
+        .stat-value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .hp-value { color: #ff6b6b; }
+        .torch-value { color: #ffa500; }
+        .floor-value { color: #6bcfff; }
+        .gold-value { color: #ffd700; }
+        .exp-value { color: #6bff6b; }
+        
+        /* 主布局 */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 地图区域 */
+        .map-section {
+            background: rgba(20, 15, 30, 0.9);
+            border: 1px solid #3a2a5a;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .map-title {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #gameMap {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 2px;
+            background: #0a0a15;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .cell {
+            aspect-ratio: 1;
+            background: #1a1a25;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .cell.fog {
+            background: #0a0a10;
+            color: #333;
+        }
+        
+        .cell.fog:hover {
+            background: #151520;
+        }
+        
+        .cell.player {
+            background: #4a6fa5;
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(74, 111, 165, 0.5);
+            cursor: default;
+        }
+        
+        .cell.enemy { background: #8b3a3a; color: #ff6b6b; }
+        .cell.chest { background: #3a3a2a; color: #ffd700; }
+        .cell.mechanism-luck { background: #2a4a3a; color: #6bff6b; }
+        .cell.mechanism-knowledge { background: #3a4a5a; color: #6bcfff; }
+        .cell.mechanism-hero { background: #4a3a5a; color: #ff6bff; }
+        .cell.boss { background: #5a2a5a; color: #ff00ff; font-weight: bold; }
+        .cell.stairs { background: #2a4a3a; color: #6bff6b; }
+        
+        /* 右侧面板 */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .panel-section {
+            background: rgba(20, 15, 30, 0.9);
+            border: 1px solid #3a2a5a;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .panel-title {
+            font-size: 13px;
+            color: #d4af37;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3a2a5a;
+        }
+        
+        /* 队伍信息 */
+        .party-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .party-member {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(40, 30, 60, 0.5);
+            border-radius: 5px;
+            font-size: 11px;
+        }
+        
+        .member-avatar {
+            width: 36px;
+            height: 36px;
+            background: #3a3a5a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        
+        .member-info {
+            flex: 1;
+        }
+        
+        .member-name {
+            font-weight: bold;
+            color: #ddd;
+            margin-bottom: 2px;
+        }
+        
+        .member-trait {
+            font-size: 10px;
+            color: #ffa500;
+        }
+        
+        .member-hp {
+            font-size: 10px;
+            color: #888;
+            margin-top: 2px;
+        }
+        
+        .hp-bar {
+            width: 100%;
+            height: 4px;
+            background: #2a2040;
+            border-radius: 2px;
+            margin-top: 3px;
+            overflow: hidden;
+        }
+        
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ff8888);
+            transition: width 0.3s;
+        }
+        
+        /* 日志 */
+        .log-container {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            padding: 6px 0;
+            border-bottom: 1px solid #2a2a3a;
+            color: #aaa;
+        }
+        
+        .log-entry.success { color: #6bff6b; }
+        .log-entry.danger { color: #ff6b6b; }
+        .log-entry.info { color: #6bcfff; }
+        .log-entry.gold { color: #ffd700; }
+        
+        /* 机关弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #2a2a3e 100%);
+            border: 2px solid #d4af37;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .mechanism-image {
+            width: 100%;
+            height: 150px;
+            background: #0a0a15;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-size: 48px;
+        }
+        
+        .mechanism-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .mechanism-type.luck {
+            background: #2a4a3a;
+            color: #6bff6b;
+        }
+        
+        .mechanism-type.knowledge {
+            background: #3a4a5a;
+            color: #6bcfff;
+        }
+        
+        .mechanism-type.hero {
+            background: #4a3a5a;
+            color: #ff6bff;
+        }
+        
+        .mechanism-title {
+            font-size: 18px;
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+        
+        .mechanism-desc {
+            color: #aaa;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .mechanism-question {
+            background: rgba(50, 40, 70, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .hero-hint {
+            background: rgba(255, 165, 0, 0.1);
+            border: 1px solid #ffa500;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #ffa500;
+        }
+        
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .option-btn {
+            padding: 12px 15px;
+            background: rgba(60, 50, 80, 0.8);
+            border: 1px solid #4a4a6a;
+            border-radius: 8px;
+            color: #ddd;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        
+        .option-btn:hover {
+            background: rgba(80, 70, 100, 0.8);
+            border-color: #d4af37;
+        }
+        
+        .option-btn .option-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            margin-left: 8px;
+        }
+        
+        .option-btn .option-tag.matched {
+            background: #2a4a3a;
+            color: #6bff6b;
+        }
+        
+        .option-btn .option-tag.unmatched {
+            background: #4a3a3a;
+            color: #ff6b6b;
+        }
+        
+        .result-box {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .result-box.success {
+            background: rgba(107, 255, 107, 0.1);
+            border: 1px solid #6bff6b;
+            color: #6bff6b;
+        }
+        
+        .result-box.partial {
+            background: rgba(255, 200, 100, 0.1);
+            border: 1px solid #ffc864;
+            color: #ffc864;
+        }
+        
+        .result-box.fail {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid #ff6b6b;
+            color: #ff6b6b;
+        }
+        
+        .close-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #d4af37;
+            border: none;
+            border-radius: 5px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        
+        .close-btn:hover {
+            background: #e5c048;
+        }
+        
+        /* 战斗弹窗 */
+        .battle-info {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .battle-enemy {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .battle-enemy-name {
+            font-size: 18px;
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        
+        .battle-result {
+            font-size: 16px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- 顶部标题 -->
+        <div class="header">
+            <h1>《苍穹劫》地宫探索 Demo v4</h1>
+            <div class="subtitle">三类机关系统：运气型 | 知识型 | 英雄型</div>
+        </div>
+        
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="stat-item">
+                <div class="stat-label">队伍生命</div>
+                <div class="stat-value hp-value" id="hpValue">100%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">火把</div>
+                <div class="stat-value torch-value" id="torchValue">5</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">层数</div>
+                <div class="stat-value floor-value" id="floorValue">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">金币</div>
+                <div class="stat-value gold-value" id="goldValue">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">机关破解</div>
+                <div class="stat-value exp-value" id="mechanismCount">0/0</div>
+            </div>
+        </div>
+        
+        <!-- 主布局 -->
+        <div class="main-layout">
+            <!-- 地图区域 -->
+            <div class="map-section">
+                <div class="map-title">
+                    <span>🗺️ 地宫地图</span>
+                    <span style="margin-left:auto;font-size:11px;color:#666;">点击迷雾探索 | 🔴敌人 🟦宝箱 🟢运气机关 🔵知识机关 🟣英雄机关</span>
+                </div>
+                <div id="gameMap"></div>
+                <div style="text-align:center;font-size:12px;color:#666;padding-top:10px;">
+                    提示：不同机关需要不同策略破解
+                </div>
+            </div>
+            
+            <!-- 右侧面板 -->
+            <div class="right-panel">
+                <!-- 队伍信息 -->
+                <div class="panel-section">
+                    <div class="panel-title">⚔️ 探险队伍</div>
+                    <div class="party-list" id="partyList"></div>
+                </div>
+                
+                <!-- 机关统计 -->
+                <div class="panel-section">
+                    <div class="panel-title">📊 机关统计</div>
+                    <div style="font-size:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span>🟢 运气型破解:</span>
+                            <span id="luckCount">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span>🔵 知识型破解:</span>
+                            <span id="knowledgeCount">0</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>🟣 英雄型破解:</span>
+                            <span id="heroCount">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 日志 -->
+                <div class="panel-section">
+                    <div class="panel-title">📜 探索日志</div>
+                    <div class="log-container" id="logContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 机关弹窗 -->
+    <div class="modal-overlay" id="mechanismModal">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+    
+    <script>
+        // 游戏状态
+        const gameState = {
+            hp: 100,
+            torch: 5,
+            floor: 1,
+            gold: 0,
+            playerPos: { x: 1, y: 1 },
+            map: [],
+            mapSize: 10,
+            mechanismSolved: 0,
+            mechanismTotal: 0,
+            stats: {
+                luck: 0,
+                knowledge: 0,
+                hero: 0
+            }
+        };
+        
+        // 英雄队伍
+        const party = [
+            { 
+                name: '铁柱', 
+                icon: '🛡️', 
+                trait: '辰宿卸岭', 
+                traitType: 'strength',
+                hp: 100, 
+                maxHp: 100,
+                desc: '力量型传承，擅长力量型机关'
+            },
+            { 
+                name: '搬山客', 
+                icon: '🔮', 
+                trait: '璇玑搬山', 
+                traitType: 'mechanism',
+                hp: 85, 
+                maxHp: 85,
+                desc: '机关型传承，擅长阵法机关'
+            },
+            { 
+                name: '摸金手', 
+                icon: '⭐', 
+                trait: '星纹摸金', 
+                traitType: 'astro',
+                hp: 70, 
+                maxHp: 70,
+                desc: '星象型传承，擅长星盘机关'
+            },
+            { 
+                name: '星祭司', 
+                icon: '✨', 
+                trait: '天枢发丘', 
+                traitType: 'seal',
+                hp: 75, 
+                maxHp: 75,
+                desc: '封印型传承，擅长封印破解'
+            }
+        ];
+        
+        // 机关数据
+        const mechanisms = {
+            // 运气型机关
+            luck: [
+                {
+                    name: '三岔路口',
+                    icon: '🔀',
+                    desc: '三条墓道向前延伸，黑暗中看不到尽头...',
+                    question: '你来到一个三岔路口，每条路看起来都一样。选择哪条路？',
+                    options: [
+                        { text: '走左边', result: 'random' },
+                        { text: '走中间', result: 'random' },
+                        { text: '走右边', result: 'random' }
+                    ],
+                    successRate: 0.4
+                },
+                {
+                    name: '神秘宝箱',
+                    icon: '📦',
+                    desc: '一个布满灰尘的宝箱，不知道有没有陷阱...',
+                    question: '宝箱静静躺在那里，你要如何处理？',
+                    options: [
+                        { text: '直接打开', result: 'random' },
+                        { text: '小心检查后再开', result: 'safe' },
+                        { text: '放弃离开', result: 'skip' }
+                    ],
+                    successRate: 0.5
+                },
+                {
+                    name: '骰子石板',
+                    icon: '🎲',
+                    desc: '一块石板上刻着数字，似乎需要掷骰子决定命运...',
+                    question: '石板上刻着1-6的数字，掷出4-6就能获得奖励。要试试吗？',
+                    options: [
+                        { text: '掷骰子试试', result: 'dice' },
+                        { text: '绕道走', result: 'skip' }
+                    ],
+                    successRate: 0.5
+                }
+            ],
+            
+            // 知识型机关
+            knowledge: [
+                {
+                    name: '星盘计算',
+                    icon: '🌟',
+                    desc: '青铜星盘上刻着星辰位置，需要计算角度...',
+                    question: '北斗七星与北极星的夹角是30度，猎户座在北斗七星东侧60度。问：猎户座与北极星的夹角是多少？',
+                    hint: '摸金手提示：三角形内角之和为180度',
+                    hintTrait: 'astro',
+                    options: [
+                        { text: 'A. 30度', correct: false },
+                        { text: 'B. 60度', correct: false },
+                        { text: 'C. 90度', correct: true },
+                        { text: 'D. 120度', correct: false }
+                    ]
+                },
+                {
+                    name: '五行推演',
+                    icon: '☯️',
+                    desc: '石壁上的五行符文需要按正确顺序激活...',
+                    question: '铭文写着：\'顺相生而开，逆相克而闭\'。请选择正确的激活顺序：',
+                    hint: '搬山客提示：相生：木→火→土→金→水→木',
+                    hintTrait: 'mechanism',
+                    options: [
+                        { text: 'A. 木→火→土→金→水（相生顺序）', correct: true },
+                        { text: 'B. 水→火→金→木→土（相克顺序）', correct: false },
+                        { text: 'C. 木→土→水→火→金（混合顺序）', correct: false },
+                        { text: 'D. 金→木→水→火→土（另一顺序）', correct: false }
+                    ]
+                },
+                {
+                    name: '古文解读',
+                    icon: '📜',
+                    desc: '一块石碑上刻着古代文字...',
+                    question: '石碑上写着：\'甲子之后，又三旬，天星动\'。问：这是多少年后？',
+                    hint: '星祭司提示：甲子=60年，三旬=30年',
+                    hintTrait: 'seal',
+                    options: [
+                        { text: 'A. 30年', correct: false },
+                        { text: 'B. 60年', correct: false },
+                        { text: 'C. 90年', correct: true },
+                        { text: 'D. 120年', correct: false }
+                    ]
+                }
+            ],
+            
+            // 英雄型机关
+            hero: [
+                {
+                    name: '铁闸门',
+                    icon: '🚪',
+                    desc: '一道锈迹斑斑的铁门挡住去路...',
+                    question: '巨大的铁门挡住了去路，如何通过？',
+                    options: [
+                        { 
+                            text: 'A. 用力推开', 
+                            trait: 'strength',
+                            hasTraitResult: '铁柱发力推开铁门，成功！',
+                            noTraitResult: '你们合力推开门，但受了伤...',
+                            hasTraitEffect: { hp: 0, gold: 0 },
+                            noTraitEffect: { hp: -15, gold: 0 }
+                        },
+                        { 
+                            text: 'B. 寻找机关', 
+                            trait: 'mechanism',
+                            hasTraitResult: '搬山客找到隐藏机关，完美开启！还发现了暗格！',
+                            noTraitResult: '找不到机关，只能用其他方法...',
+                            hasTraitEffect: { hp: 0, gold: 50 },
+                            noTraitEffect: { hp: 0, gold: 0, fail: true }
+                        },
+                        { 
+                            text: 'C. 硬闯过去', 
+                            trait: null,
+                            hasTraitResult: '硬闯过去，受了点伤',
+                            noTraitResult: '硬闯过去，受了点伤',
+                            hasTraitEffect: { hp: -10, gold: 0 },
+                            noTraitEffect: { hp: -20, gold: 0 }
+                        }
+                    ]
+                },
+                {
+                    name: '悬魂梯',
+                    icon: '🌀',
+                    desc: '螺旋向下的石阶，似乎走不到尽头...',
+                    question: '楼梯似乎陷入了循环，如何脱出？',
+                    options: [
+                        { 
+                            text: 'A. 标记路线', 
+                            trait: 'mechanism',
+                            hasTraitResult: '搬山客用分甲术标记路线，发现规律，成功脱出！还获得了隐藏奖励！',
+                            noTraitResult: '标记了路线，但还是绕了很久...',
+                            hasTraitEffect: { hp: 0, gold: 30 },
+                            noTraitEffect: { hp: -5, gold: 0 }
+                        },
+                        { 
+                            text: 'B. 用罗盘指引', 
+                            trait: 'astro',
+                            hasTraitResult: '摸金手拿出罗盘，指向正确方向！',
+                            noTraitResult: '罗盘在这里失灵了...',
+                            hasTraitEffect: { hp: 0, gold: 20 },
+                            noTraitEffect: { hp: -5, gold: 0 }
+                        },
+                        { 
+                            text: 'C. 直接走下去', 
+                            trait: null,
+                            hasTraitResult: '走了很久，终于出来了...',
+                            noTraitResult: '走了很久，终于出来了...',
+                            hasTraitEffect: { hp: -10, gold: 0 },
+                            noTraitEffect: { hp: -15, gold: 0 }
+                        }
+                    ]
+                },
+                {
+                    name: '五行封印',
+                    icon: '🔮',
+                    desc: '五个元素符文需要按正确顺序激活...',
+                    question: '如何破解五行封印？',
+                    options: [
+                        { 
+                            text: 'A. 按五行相生顺序', 
+                            trait: 'mechanism',
+                            hasTraitResult: '搬山客念出相生口诀，完美破解！封印化为宝箱！',
+                            noTraitResult: '试着按相生顺序...好像不太对...',
+                            hasTraitEffect: { hp: 0, gold: 80 },
+                            noTraitEffect: { hp: -10, gold: 0 }
+                        },
+                        { 
+                            text: 'B. 用发丘印破解', 
+                            trait: 'seal',
+                            hasTraitResult: '星祭司使用发丘印，封印瞬间解除！获得额外奖励！',
+                            noTraitResult: '没有人会用发丘印...',
+                            hasTraitEffect: { hp: 0, gold: 100 },
+                            noTraitEffect: { hp: 0, gold: 0, fail: true }
+                        },
+                        { 
+                            text: 'C. 强行打破', 
+                            trait: 'strength',
+                            hasTraitResult: '铁柱一击粉碎封印，但触发了警报！',
+                            noTraitResult: '合力打破封印，受伤并触发战斗！',
+                            hasTraitEffect: { hp: -5, gold: 30, battle: true },
+                            noTraitEffect: { hp: -20, gold: 20, battle: true }
+                        }
+                    ]
+                }
+            ]
+        };
+        
+        // 初始化游戏
+        function initGame() {
+            generateMap();
+            renderParty();
+            renderMap();
+            updateStats();
+            addLog('你踏入了古老的地宫...', 'info');
+            addLog('提示：绿色🟢=运气机关 蓝色🔵=知识机关 紫色🟣=英雄机关', 'info');
+        }
+        
+        // 生成地图
+        function generateMap() {
+            const size = gameState.mapSize;
+            gameState.map = [];
+            gameState.mechanismTotal = 0;
+            
+            for (let y = 0; y < size; y++) {
+                gameState.map[y] = [];
+                for (let x = 0; x < size; x++) {
+                    const cell = {
+                        x: x,
+                        y: y,
+                        type: 'fog',
+                        revealed: false
+                    };
+                    
+                    // 边界墙壁
+                    if (x === 0 || x === size - 1 || y === 0 || y === size - 1) {
+                        cell.type = 'wall';
+                    }
+                    // 玩家起始位置
+                    else if (x === 1 && y === 1) {
+                        cell.type = 'player';
+                        cell.revealed = true;
+                    }
+                    // 随机生成内容
+                    else {
+                        const rand = Math.random();
+                        if (rand < 0.08) {
+                            cell.type = 'enemy';
+                        } else if (rand < 0.12) {
+                            cell.type = 'chest';
+                        } else if (rand < 0.17) {
+                            cell.type = 'mechanism-luck';
+                            gameState.mechanismTotal++;
+                        } else if (rand < 0.22) {
+                            cell.type = 'mechanism-knowledge';
+                            gameState.mechanismTotal++;
+                        } else if (rand < 0.27) {
+                            cell.type = 'mechanism-hero';
+                            gameState.mechanismTotal++;
+                        } else if (rand < 0.30) {
+                            cell.type = 'boss';
+                        } else if (rand < 0.32) {
+                            cell.type = 'stairs';
+                        } else {
+                            cell.type = 'floor';
+                        }
+                    }
+                    gameState.map[y][x] = cell;
+                }
+            }
+        }
+        
+        // 渲染队伍
+        function renderParty() {
+            const container = document.getElementById('partyList');
+            container.innerHTML = party.map(member => `
+                <div class="party-member">
+                    <div class="member-avatar">${member.icon}</div>
+                    <div class="member-info">
+                        <div class="member-name">${member.name}</div>
+                        <div class="member-trait">${member.trait}</div>
+                        <div class="member-hp">HP: ${member.hp}/${member.maxHp}</div>
+                        <div class="hp-bar">
+                            <div class="hp-fill" style="width: ${(member.hp / member.maxHp) * 100}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染地图
+        function renderMap() {
+            const container = document.getElementById('gameMap');
+            let html = '';
+            
+            const icons = {
+                'wall': '▪️',
+                'floor': '·',
+                'player': '👤',
+                'enemy': '👹',
+                'chest': '📦',
+                'mechanism-luck': '🍀',
+                'mechanism-knowledge': '📖',
+                'mechanism-hero': '⚡',
+                'boss': '💀',
+                'stairs': '🚪',
+                'fog': '?'
+            };
+            
+            for (let y = 0; y < gameState.mapSize; y++) {
+                for (let x = 0; x < gameState.mapSize; x++) {
+                    const cell = gameState.map[y][x];
+                    const isVisible = cell.revealed;
+                    const displayType = isVisible ? cell.type : 'fog';
+                    const icon = icons[displayType] || '?';
+                    
+                    html += `<div class="cell ${displayType}" data-x="${x}" data-y="${y}" onclick="handleCellClick(${x}, ${y})">${icon}</div>`;
+                }
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // 处理格子点击
+        function handleCellClick(x, y) {
+            const cell = gameState.map[y][x];
+            
+            if (cell.type === 'wall') return;
+            
+            // 揭示格子
+            if (!cell.revealed) {
+                cell.revealed = true;
+                gameState.torch--;
+                
+                // 更新玩家位置
+                const oldPos = gameState.playerPos;
+                gameState.map[oldPos.y][oldPos.x].type = 'floor';
+                gameState.playerPos = { x, y };
+                cell.type = 'player';
+                
+                renderMap();
+                updateStats();
+                
+                // 处理不同类型
+                handleCellType(cell, x, y);
+            }
+        }
+        
+        // 处理不同类型的格子
+        function handleCellType(cell, x, y) {
+            switch (cell.type) {
+                case 'enemy':
+                    showBattleModal();
+                    break;
+                case 'chest':
+                    const gold = Math.floor(Math.random() * 30) + 10;
+                    gameState.gold += gold;
+                    addLog(`发现宝箱！获得 ${gold} 金币`, 'gold');
+                    updateStats();
+                    break;
+                case 'mechanism-luck':
+                    showMechanismModal('luck');
+                    break;
+                case 'mechanism-knowledge':
+                    showMechanismModal('knowledge');
+                    break;
+                case 'mechanism-hero':
+                    showMechanismModal('hero');
+                    break;
+                case 'boss':
+                    showBattleModal(true);
+                    break;
+                case 'stairs':
+                    addLog('发现向下的楼梯！', 'success');
+                    break;
+            }
+        }
+        
+        // 显示机关弹窗
+        function showMechanismModal(type) {
+            const mechanismList = mechanisms[type];
+            const mechanism = mechanismList[Math.floor(Math.random() * mechanismList.length)];
+            
+            const modal = document.getElementById('mechanismModal');
+            const content = document.getElementById('modalContent');
+            
+            let optionsHtml = '';
+            
+            if (type === 'luck') {
+                // 运气型机关
+                optionsHtml = mechanism.options.map((opt, idx) => `
+                    <button class="option-btn" onclick="handleLuckChoice(${idx}, ${mechanism.successRate || 0.5})">
+                        ${opt.text}
+                    </button>
+                `).join('');
+            } else if (type === 'knowledge') {
+                // 知识型机关 - 检查是否有对应传承的英雄
+                const hasHint = party.some(p => p.traitType === mechanism.hintTrait);
+                const hintHtml = hasHint ? `<div class="hero-hint">💡 ${mechanism.hint}</div>` : '';
+                
+                optionsHtml = mechanism.options.map((opt, idx) => `
+                    <button class="option-btn" onclick="handleKnowledgeChoice(${idx}, ${opt.correct})">
+                        ${opt.text}
+                    </button>
+                `).join('');
+                
+                content.innerHTML = `
+                    <div class="mechanism-type ${type}">🔵 知识型机关</div>
+                    <div class="mechanism-image">${mechanism.icon}</div>
+                    <div class="mechanism-title">${mechanism.name}</div>
+                    <div class="mechanism-desc">${mechanism.desc}</div>
+                    <div class="mechanism-question">${mechanism.question}</div>
+                    ${hintHtml}
+                    <div class="options-list">${optionsHtml}</div>
+                `;
+                modal.classList.add('active');
+                return;
+            } else if (type === 'hero') {
+                // 英雄型机关 - 显示传承匹配
+                optionsHtml = mechanism.options.map((opt, idx) => {
+                    const hasTrait = opt.trait && party.some(p => p.traitType === opt.trait);
+                    const tagHtml = opt.trait ? 
+                        `<span class="option-tag ${hasTrait ? 'matched' : 'unmatched'}">
+                            ${hasTrait ? '✓ 有对应传承' : '✗ 无对应传承'}
+                        </span>` : '<span class="option-tag" style="background:#3a3a4a;color:#888;">无传承关联</span>';
+                    
+                    return `
+                        <button class="option-btn" onclick="handleHeroChoice(${idx})">
+                            ${opt.text}
+                            ${tagHtml}
+                        </button>
+                    `;
+                }).join('');
+            }
+            
+            const typeNames = {
+                luck: '运气型机关',
+                knowledge: '知识型机关', 
+                hero: '英雄型机关'
+            };
+            
+            const typeColors = {
+                luck: 'luck',
+                knowledge: 'knowledge',
+                hero: 'hero'
+            };
+            
+            content.innerHTML = `
+                <div class="mechanism-type ${typeColors[type]}">${type === 'luck' ? '🟢' : type === 'knowledge' ? '🔵' : '🟣'} ${typeNames[type]}</div>
+                <div class="mechanism-image">${mechanism.icon}</div>
+                <div class="mechanism-title">${mechanism.name}</div>
+                <div class="mechanism-desc">${mechanism.desc}</div>
+                <div class="mechanism-question">${mechanism.question}</div>
+                <div class="options-list" id="optionsContainer">${optionsHtml}</div>
+            `;
+            
+            // 保存当前机关信息
+            content.dataset.mechanismType = type;
+            content.dataset.mechanism = JSON.stringify(mechanism);
+            
+            modal.classList.add('active');
+        }
+        
+        // 处理运气型机关选择
+        function handleLuckChoice(optionIdx, successRate) {
+            const content = document.getElementById('modalContent');
+            const mechanism = JSON.parse(content.dataset.mechanism);
+            const option = mechanism.options[optionIdx];
+            
+            let resultHtml = '';
+            let hpChange = 0;
+            let goldChange = 0;
+            
+            if (option.result === 'skip') {
+                resultHtml = `
+                    <div class="result-box partial">
+                        你选择了放弃，安全但一无所获...
+                    </div>
+                `;
+            } else if (option.result === 'safe') {
+                goldChange = Math.floor(Math.random() * 20) + 10;
+                resultHtml = `
+                    <div class="result-box success">
+                        小心检查后打开宝箱，安全获得 ${goldChange} 金币！
+                    </div>
+                `;
+            } else if (option.result === 'dice') {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                if (roll >= 4) {
+                    goldChange = Math.floor(Math.random() * 50) + 30;
+                    resultHtml = `
+                        <div class="result-box success">
+                            🎲 掷出 ${roll} 点！成功！获得 ${goldChange} 金币！
+                        </div>
+                    `;
+                } else {
+                    hpChange = -10;
+                    resultHtml = `
+                        <div class="result-box fail">
+                            🎲 掷出 ${roll} 点...失败！触发陷阱，损失 ${Math.abs(hpChange)} 生命！
+                        </div>
+                    `;
+                }
+            } else {
+                // 随机结果
+                const success = Math.random() < successRate;
+                if (success) {
+                    goldChange = Math.floor(Math.random() * 30) + 20;
+                    resultHtml = `
+                        <div class="result-box success">
+                            走对了！发现隐藏宝物，获得 ${goldChange} 金币！
+                        </div>
+                    `;
+                } else {
+                    hpChange = -15;
+                    resultHtml = `
+                        <div class="result-box fail">
+                            触发陷阱！损失 ${Math.abs(hpChange)} 生命！
+                        </div>
+                    `;
+                }
+            }
+            
+            // 应用效果
+            gameState.hp = Math.max(0, gameState.hp + hpChange);
+            gameState.gold += goldChange;
+            gameState.mechanismSolved++;
+            gameState.stats.luck++;
+            
+            addLog(`[运气机关] ${mechanism.name} - ${hpChange < 0 ? '失败' : goldChange > 0 ? '成功' : '放弃'}`, hpChange < 0 ? 'danger' : 'success');
+            
+            updateStats();
+            
+            document.getElementById('optionsContainer').innerHTML = resultHtml + `
+                <button class="close-btn" onclick="closeModal()">继续探索</button>
+            `;
+        }
+        
+        // 处理知识型机关选择
+        function handleKnowledgeChoice(optionIdx, correct) {
+            const content = document.getElementById('modalContent');
+            const mechanism = JSON.parse(content.dataset.mechanism);
+            
+            let resultHtml = '';
+            let hpChange = 0;
+            let goldChange = 0;
+            
+            if (correct) {
+                goldChange = Math.floor(Math.random() * 50) + 30;
+                resultHtml = `
+                    <div class="result-box success">
+                        回答正确！机关解开，获得 ${goldChange} 金币！
+                    </div>
+                `;
+            } else {
+                hpChange = -10;
+                resultHtml = `
+                    <div class="result-box fail">
+                        回答错误！触发陷阱，损失 ${Math.abs(hpChange)} 生命！
+                    </div>
+                `;
+            }
+            
+            gameState.hp = Math.max(0, gameState.hp + hpChange);
+            gameState.gold += goldChange;
+            gameState.mechanismSolved++;
+            gameState.stats.knowledge++;
+            
+            addLog(`[知识机关] ${mechanism.name} - ${correct ? '回答正确' : '回答错误'}`, correct ? 'success' : 'danger');
+            
+            updateStats();
+            
+            document.getElementById('optionsContainer').innerHTML = resultHtml + `
+                <button class="close-btn" onclick="closeModal()">继续探索</button>
+            `;
+        }
+        
+        // 处理英雄型机关选择
+        function handleHeroChoice(optionIdx) {
+            const content = document.getElementById('modalContent');
+            const mechanism = JSON.parse(content.dataset.mechanism);
+            const option = mechanism.options[optionIdx];
+            
+            // 检查是否有对应传承
+            const hasTrait = option.trait && party.some(p => p.traitType === option.trait);
+            
+            let resultText, effect, resultClass;
+            
+            if (hasTrait) {
+                resultText = option.hasTraitResult;
+                effect = option.hasTraitEffect;
+                resultClass = effect.fail ? 'partial' : 'success';
+            } else {
+                resultText = option.noTraitResult;
+                effect = option.noTraitEffect;
+                resultClass = effect.fail || effect.hp < 0 ? 'fail' : 'partial';
+            }
+            
+            // 应用效果
+            if (effect) {
+                if (effect.hp) gameState.hp = Math.max(0, gameState.hp + effect.hp);
+                if (effect.gold) gameState.gold += effect.gold;
+            }
+            
+            gameState.mechanismSolved++;
+            gameState.stats.hero++;
+            
+            // 找到使用能力的英雄
+            let heroName = '';
+            if (option.trait) {
+                const hero = party.find(p => p.traitType === option.trait);
+                if (hero) heroName = hero.name;
+            }
+            
+            addLog(`[英雄机关] ${mechanism.name} - ${hasTrait ? heroName + '完美破解' : '勉强通过'}`, hasTrait ? 'success' : 'danger');
+            
+            updateStats();
+            
+            let resultHtml = `
+                <div class="result-box ${resultClass}">
+                    ${resultText}
+                    ${effect && effect.hp ? `<br>生命 ${effect.hp > 0 ? '+' : ''}${effect.hp}` : ''}
+                    ${effect && effect.gold ? `<br>金币 +${effect.gold}` : ''}
+                </div>
+            `;
+            
+            if (effect && effect.battle) {
+                resultHtml = `
+                    <div class="result-box fail">
+                        ${resultText}<br>
+                        触发战斗！
+                    </div>
+                `;
+            }
+            
+            document.getElementById('optionsContainer').innerHTML = resultHtml + `
+                <button class="close-btn" onclick="closeModal()">继续探索</button>
+            `;
+        }
+        
+        // 显示战斗弹窗
+        function showBattleModal(isBoss = false) {
+            const modal = document.getElementById('mechanismModal');
+            const content = document.getElementById('modalContent');
+            
+            const enemy = isBoss ? 
+                { name: '守墓尊者', icon: '💀', hp: 500 } :
+                { name: '墓室守卫', icon: '👹', hp: 100 };
+            
+            // 模拟战斗
+            const damage = Math.floor(Math.random() * 20) + 10;
+            const goldDrop = Math.floor(Math.random() * 30) + 20;
+            
+            gameState.hp = Math.max(0, gameState.hp - damage);
+            gameState.gold += goldDrop;
+            
+            updateStats();
+            
+            addLog(`${isBoss ? 'Boss战' : '战斗'}：击败${enemy.name}，获得 ${goldDrop} 金币，损失 ${damage} 生命`, isBoss ? 'gold' : 'info');
+            
+            content.innerHTML = `
+                <div class="battle-info">
+                    <div class="battle-enemy">${enemy.icon}</div>
+                    <div class="battle-enemy-name">${enemy.name}</div>
+                    <div class="result-box success">
+                        战斗胜利！<br>
+                        获得 ${goldDrop} 金币<br>
+                        损失 ${damage} 生命
+                    </div>
+                    <button class="close-btn" onclick="closeModal()">继续探索</button>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+        
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('mechanismModal').classList.remove('active');
+            renderMap();
+        }
+        
+        // 更新状态显示
+        function updateStats() {
+            document.getElementById('hpValue').textContent = gameState.hp + '%';
+            document.getElementById('torchValue').textContent = gameState.torch;
+            document.getElementById('floorValue').textContent = gameState.floor;
+            document.getElementById('goldValue').textContent = gameState.gold;
+            document.getElementById('mechanismCount').textContent = `${gameState.mechanismSolved}/${gameState.mechanismTotal}`;
+            document.getElementById('luckCount').textContent = gameState.stats.luck;
+            document.getElementById('knowledgeCount').textContent = gameState.stats.knowledge;
+            document.getElementById('heroCount').textContent = gameState.stats.hero;
+            
+            // 检查火把
+            if (gameState.torch <= 0) {
+                addLog('火把燃尽！视野消失...', 'danger');
+            }
+            
+            // 检查生命
+            if (gameState.hp <= 0) {
+                addLog('队伍全灭！探索结束...', 'danger');
+            }
+        }
+        
+        // 添加日志
+        function addLog(text, type = '') {
+            const container = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = text;
+            container.insertBefore(entry, container.firstChild);
+            
+            // 保持最多20条日志
+            while (container.children.length > 20) {
+                container.removeChild(container.lastChild);
+            }
+        }
+        
+        // 初始化
+        initGame();
+    </script>
+</body>
+</html>
