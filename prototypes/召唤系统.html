@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>召唤系统 - 苍穹劫</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B7355;
+            --accent: #B8860B;
+            --bg-dark: #1A1A1A;
+            --bg-card: #2A2A2A;
+            --bg-card-hover: #333333;
+            --text-main: #F5DEB3;
+            --text-sub: #A0A0A0;
+            --border-normal: #444444;
+            --rarity-N: #888888;
+            --rarity-R: #4CAF50;
+            --rarity-SR: #2196F3;
+            --rarity-SSR: #9B59B6;
+            --rarity-UR: #FFD700;
+            --star-glow: #FFD700;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #1a1528 0%, #0f0a15 100%);
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: linear-gradient(180deg, rgba(60, 40, 80, 0.8) 0%, rgba(40, 25, 60, 0.9) 100%);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-normal);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .header-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .summon-tabs {
+            display: flex;
+            padding: 12px 16px;
+            gap: 12px;
+            background: rgba(20, 15, 30, 0.9);
+        }
+
+        .summon-tab {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-card);
+            border: 2px solid var(--border-normal);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .summon-tab.active {
+            border-color: var(--accent);
+            background: linear-gradient(180deg, rgba(60, 45, 80, 0.9) 0%, rgba(40, 30, 60, 0.9) 100%);
+        }
+
+        .summon-tab-icon {
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .summon-tab-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .summon-tab-cost {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .summon-tab-cost span {
+            color: var(--accent);
+        }
+
+        .summon-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .summon-card-container {
+            width: 200px;
+            height: 280px;
+            perspective: 1000px;
+            margin-bottom: 20px;
+        }
+
+        .summon-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s;
+        }
+
+        .summon-card.flipping {
+            transform: rotateY(720deg);
+        }
+
+        .summon-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2a2040 0%, #1a1530 50%, #2a2040 100%);
+            border: 3px solid rgba(212, 175, 55, 0.5);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .summon-card-front {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-card);
+            border: 3px solid var(--rarity-SR);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transform: rotateY(180deg);
+            box-shadow: 0 0 30px rgba(155, 89, 182, 0.5);
+        }
+
+        .summon-card-front.rarity-N { border-color: var(--rarity-N); }
+        .summon-card-front.rarity-R { border-color: var(--rarity-R); }
+        .summon-card-front.rarity-SR { border-color: var(--rarity-SR); }
+        .summon-card-front.rarity-SSR { border-color: var(--rarity-SSR); box-shadow: 0 0 40px rgba(155, 89, 182, 0.6); }
+        .summon-card-front.rarity-UR { border-color: var(--rarity-UR); box-shadow: 0 0 50px rgba(255, 215, 0, 0.7); }
+
+        .summon-result-icon {
+            font-size: 72px;
+            margin-bottom: 12px;
+        }
+
+        .summon-result-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .summon-result-rarity {
+            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 12px;
+        }
+
+        .summon-result-rarity.rarity-N { background: var(--rarity-N); color: white; }
+        .summon-result-rarity.rarity-R { background: var(--rarity-R); color: white; }
+        .summon-result-rarity.rarity-SR { background: var(--rarity-SR); color: white; }
+        .summon-result-rarity.rarity-SSR { background: var(--rarity-SSR); color: white; }
+        .summon-result-rarity.rarity-UR { background: var(--rarity-UR); color: #1A1A1A; }
+
+        .summon-result-type {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-top: 8px;
+        }
+
+        .summon-buttons {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .summon-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .summon-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .summon-btn.single {
+            background: linear-gradient(135deg, #5a4a3a 0%, #4a3a2a 100%);
+            color: #ffcc88;
+            border: 2px solid #8a7a5a;
+        }
+
+        .summon-btn.ten {
+            background: linear-gradient(135deg, var(--accent) 0%, #DAA520 100%);
+            color: #1A1A1A;
+            border: 2px solid #DAA520;
+        }
+
+        .summon-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .summon-info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .summon-info-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .summon-rate {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .summon-rate-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--rarity-SSR);
+        }
+
+        .summon-rate-label {
+            font-size: 10px;
+            color: var(--text-sub);
+        }
+
+        .guarantee-info {
+            background: rgba(40, 30, 60, 0.8);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 16px;
+            font-size: 11px;
+            color: var(--text-sub);
+            max-width: 320px;
+            width: 100%;
+        }
+
+        .guarantee-title {
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .guarantee-bar {
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .guarantee-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--rarity-SR), var(--rarity-SSR));
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .ten-summon-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            max-width: 340px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .ten-summon-card {
+            aspect-ratio: 3/4;
+            background: var(--bg-card);
+            border: 2px solid var(--border-normal);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.3s;
+        }
+
+        .ten-summon-card.revealed {
+            border-color: var(--rarity-SR);
+        }
+
+        .ten-summon-card.rarity-N { border-color: var(--rarity-N); }
+        .ten-summon-card.rarity-R { border-color: var(--rarity-R); }
+        .ten-summon-card.rarity-SR { border-color: var(--rarity-SR); }
+        .ten-summon-card.rarity-SSR { border-color: var(--rarity-SSR); box-shadow: 0 0 10px rgba(155, 89, 182, 0.5); }
+        .ten-summon-card.rarity-UR { border-color: var(--rarity-UR); box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); }
+
+        .ten-summon-name {
+            font-size: 8px;
+            margin-top: 2px;
+            color: var(--text-sub);
+        }
+
+        .result-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .result-overlay.active {
+            display: flex;
+        }
+
+        .result-content {
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+
+        .result-list {
+            margin-bottom: 24px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            margin-bottom: 8px;
+            background: var(--bg-card);
+            border-radius: 8px;
+        }
+
+        .result-item-icon {
+            font-size: 36px;
+        }
+
+        .result-item-info {
+            text-align: left;
+        }
+
+        .result-item-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .result-item-type {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .result-btn {
+            padding: 14px 40px;
+            background: linear-gradient(135deg, var(--accent), #DAA520);
+            color: #1A1A1A;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 101;
+        }
+
+        .float-text {
+            position: fixed;
+            pointer-events: none;
+            font-size: 24px;
+            font-weight: bold;
+            animation: floatUp 1.5s ease-out forwards;
+            z-index: 200;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: var(--text-main);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 300;
+            border: 1px solid var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div id="summonScreen" class="screen active">
+        <div class="header">
+            <button class="header-btn" onclick="goBack()">←</button>
+            <span class="header-title">召唤</span>
+            <div class="header-btn" onclick="showHistory()">📜</div>
+        </div>
+
+        <div class="summon-tabs">
+            <div class="summon-tab active" data-type="normal" onclick="switchSummonType('normal')">
+                <div class="summon-tab-icon">⚔️</div>
+                <div class="summon-tab-name">普通召唤</div>
+                <div class="summon-tab-cost"><span>280</span> 召唤券/次</div>
+            </div>
+            <div class="summon-tab" data-type="advance" onclick="switchSummonType('advance')">
+                <div class="summon-tab-icon">💫</div>
+                <div class="summon-tab-name">高级召唤</div>
+                <div class="summon-tab-cost"><span>2800</span> 召唤券/次</div>
+            </div>
+        </div>
+
+        <div class="summon-content">
+            <div class="ten-summon-grid" id="tenSummonGrid"></div>
+
+            <div class="summon-card-container" id="summonCardContainer">
+                <div class="summon-card" id="summonCard">
+                    <div class="summon-card-back">🎰</div>
+                    <div class="summon-card-front" id="summonCardFront">
+                        <div class="summon-result-icon" id="resultIcon">🔮</div>
+                        <div class="summon-result-name" id="resultName">占位</div>
+                        <div class="summon-result-rarity" id="resultRarity">R</div>
+                        <div class="summon-result-type" id="resultType">英雄</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summon-buttons">
+                <button class="summon-btn single" id="singleSummonBtn" onclick="doSingleSummon()">
+                    单抽
+                </button>
+                <button class="summon-btn ten" id="tenSummonBtn" onclick="doTenSummon()">
+                    十连
+                </button>
+            </div>
+
+            <div class="summon-info">
+                <div>当前拥有: <span id="summonTicketCount" style="color: var(--accent);">1280</span> 召唤券</div>
+                <div class="summon-info-row">
+                    <div class="summon-rate">
+                        <span class="summon-rate-value">8%</span>
+                        <span class="summon-rate-label">SSR概率</span>
+                    </div>
+                    <div class="summon-rate">
+                        <span class="summon-rate-value">25%</span>
+                        <span class="summon-rate-label">SR概率</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="guarantee-info" id="guaranteeInfo">
+                <div class="guarantee-title">保底说明</div>
+                <div>高级召唤: 50次必出SSR | 普通召唤: 100次必出SR</div>
+                <div class="guarantee-bar">
+                    <div class="guarantee-fill" id="guaranteeFill" style="width: 0%"></div>
+                </div>
+                <div style="margin-top: 4px; font-size: 10px;">高级召唤保底进度: <span id="guaranteeCount">0</span>/50</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-overlay" id="resultOverlay">
+        <canvas class="particle-canvas" id="particleCanvas"></canvas>
+        <div class="result-content">
+            <div class="result-title" id="resultTitle">召唤成功!</div>
+            <div class="result-list" id="resultList"></div>
+            <button class="result-btn" onclick="closeResult()">确定</button>
+        </div>
+    </div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        const summonData = {
+            normal: {
+                name: '普通召唤',
+                cost: 280,
+                rates: { N: 0.50, R: 0.40, SR: 0.09, SSR: 0.01, UR: 0.00 },
+                pity: 100,
+                pool: 'normal'
+            },
+            advance: {
+                name: '高级召唤',
+                cost: 2800,
+                rates: { N: 0.20, R: 0.47, SR: 0.25, SSR: 0.08, UR: 0.00 },
+                pity: 50,
+                pool: 'advance'
+            }
+        };
+
+        const heroPool = {
+            N: [
+                { id: 'xiaoTu', name: '小卒', icon: '🧟', class: '杂兵' }
+            ],
+            R: [
+                { id: 'tieZhu', name: '铁柱', icon: '💪', class: '搬山道人' },
+                { id: 'banShanKe', name: '搬山客', icon: '🔧', class: '搬山道人' }
+            ],
+            SR: [
+                { id: 'xingJiSi', name: '星祭司', icon: '🔮', class: '秘法师' },
+                { id: 'moJinShou', name: '摸金手', icon: '🔭', class: '摸金校尉' }
+            ],
+            SSR: [
+                { id: 'yuLing', name: '玉玲珑', icon: '💎', class: '御灵师' },
+                { id: 'yeChen', name: '叶沉', icon: '🌙', class: '暗影刺客' }
+            ],
+            UR: [
+                { id: 'tianMo', name: '天魔', icon: '👹', class: '天魔转世' }
+            ]
+        };
+
+        const treasurePool = {
+            R: [
+                { id: 'luoPan', name: '罗盘', icon: '🧭', type: '法器' },
+                { id: 'gongBinSha', name: '工兵铲', icon: '⛏️', type: '兵器' }
+            ],
+            SR: [
+                { id: 'bronzeMirror', name: '青铜镜', icon: '🪞', type: '古董' }
+            ]
+        };
+
+        const playerSummonData = GameDataManager.data.summonData;
+
+        let currentSummonType = 'normal';
+        let isSummoning = false;
+
+        function switchSummonType(type) {
+            if (isSummoning) return;
+            currentSummonType = type;
+            document.querySelectorAll('.summon-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === type);
+            });
+            updateGuaranteeInfo();
+        }
+
+        function updateGuaranteeInfo() {
+            const config = summonData[currentSummonType];
+            const count = currentSummonType === 'normal' ? playerSummonData.normalCount : playerSummonData.advanceCount;
+            const progress = (count % config.pity) / config.pity * 100;
+            document.getElementById('guaranteeFill').style.width = progress + '%';
+            document.getElementById('guaranteeCount').textContent = count % config.pity;
+            document.getElementById('summonTicketCount').textContent = playerSummonData.summonTickets;
+        }
+
+        function rollSummon(type) {
+            const config = summonData[type];
+            let roll = Math.random();
+            let rarity = 'N';
+
+            roll = Math.random();
+            if (roll < config.rates.UR) {
+                rarity = 'UR';
+            } else if (roll < config.rates.UR + config.rates.SSR) {
+                rarity = 'SSR';
+            } else if (roll < config.rates.UR + config.rates.SSR + config.rates.SR) {
+                rarity = 'SR';
+            } else if (roll < config.rates.UR + config.rates.SSR + config.rates.SR + config.rates.R) {
+                rarity = 'R';
+            } else {
+                rarity = 'N';
+            }
+
+            if (rarity === 'SSR' && config.pity === 50) {
+                const currentCount = playerSummonData.advanceCount % config.pity;
+                if (currentCount === config.pity - 1) {
+                    rarity = 'SSR';
+                }
+            }
+
+            const hero = heroPool[rarity][Math.floor(Math.random() * heroPool[rarity].length)];
+            const isHero = Math.random() < 0.7;
+
+            if (isHero) {
+                return {
+                    type: 'hero',
+                    rarity: rarity,
+                    ...hero
+                };
+            } else {
+                const treasureRarity = rarity === 'N' ? 'R' : (rarity === 'R' ? 'SR' : rarity);
+                const treasures = treasurePool[treasureRarity] || treasurePool.R;
+                const treasure = treasures[Math.floor(Math.random() * treasures.length)];
+                return {
+                    type: 'treasure',
+                    rarity: treasureRarity,
+                    ...treasure
+                };
+            }
+        }
+
+        function doSingleSummon() {
+            if (isSummoning) return;
+            const config = summonData[currentSummonType];
+            if (playerSummonData.summonTickets < config.cost) {
+                showToast('召唤券不足!');
+                return;
+            }
+
+            isSummoning = true;
+            playerSummonData.summonTickets -= config.cost;
+
+            if (currentSummonType === 'normal') {
+                playerSummonData.normalCount++;
+            } else {
+                playerSummonData.advanceCount++;
+            }
+
+            const result = rollSummon(currentSummonType);
+            showSingleSummonResult(result);
+        }
+
+        function showSingleSummonResult(result) {
+            const card = document.getElementById('summonCard');
+            const cardFront = document.getElementById('summonCardFront');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultName = document.getElementById('resultName');
+            const resultRarity = document.getElementById('resultRarity');
+            const resultType = document.getElementById('resultType');
+
+            cardFront.className = 'summon-card-front rarity-' + result.rarity;
+            resultIcon.textContent = result.icon;
+            resultName.textContent = result.name;
+            resultRarity.textContent = result.rarity;
+            resultType.textContent = result.type === 'hero' ? result.class : result.type;
+
+            card.classList.add('flipping');
+
+            setTimeout(() => {
+                card.classList.remove('flipping');
+                isSummoning = false;
+                if (result.rarity === 'SSR' || result.rarity === 'UR') {
+                    showFloatText(result.rarity === 'UR' ? '🔥传说降临!' : '⭐SSR!');
+                }
+                playerSummonData.history.unshift({ ...result, time: Date.now() });
+                updateGuaranteeInfo();
+            }, 1000);
+        }
+
+        function doTenSummon() {
+            if (isSummoning) return;
+            const config = summonData[currentSummonType];
+            const cost = config.cost * 10;
+            if (playerSummonData.summonTickets < cost) {
+                showToast('召唤券不足 (需要' + cost + ')!');
+                return;
+            }
+
+            isSummoning = true;
+            playerSummonData.summonTickets -= cost;
+
+            for (let i = 0; i < 10; i++) {
+                if (currentSummonType === 'normal') {
+                    playerSummonData.normalCount++;
+                } else {
+                    playerSummonData.advanceCount++;
+                }
+            }
+
+            const results = [];
+            for (let i = 0; i < 10; i++) {
+                results.push(rollSummon(currentSummonType));
+            }
+
+            showTenSummonResult(results);
+        }
+
+        function showTenSummonResult(results) {
+            const grid = document.getElementById('tenSummonGrid');
+            grid.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const card = document.createElement('div');
+                card.className = 'ten-summon-card';
+                card.id = 'tenCard' + index;
+                card.innerHTML = `
+                    <span>?</span>
+                `;
+                grid.appendChild(card);
+            });
+
+            let revealed = 0;
+            const revealInterval = setInterval(() => {
+                if (revealed >= results.length) {
+                    clearInterval(revealInterval);
+                    setTimeout(() => {
+                        showResultOverlay(results);
+                        isSummoning = false;
+                        updateGuaranteeInfo();
+                    }, 500);
+                    return;
+                }
+
+                const result = results[revealed];
+                const card = document.getElementById('tenCard' + revealed);
+                card.className = 'ten-summon-card revealed rarity-' + result.rarity;
+                card.innerHTML = `
+                    <span>${result.icon}</span>
+                    <span class="ten-summon-name">${result.name}</span>
+                `;
+
+                if (result.rarity === 'SSR' || result.rarity === 'UR') {
+                    card.style.animation = 'pulse 0.5s ease';
+                }
+
+                revealed++;
+            }, 200);
+        }
+
+        function showResultOverlay(results) {
+            const overlay = document.getElementById('resultOverlay');
+            const resultList = document.getElementById('resultList');
+
+            const ssrCount = results.filter(r => r.rarity === 'SSR' || r.rarity === 'UR').length;
+            document.getElementById('resultTitle').textContent = ssrCount > 0 ? '⭐召唤成功!' : '召唤完成';
+
+            resultList.innerHTML = results.map(result => `
+                <div class="result-item">
+                    <div class="result-item-icon">${result.icon}</div>
+                    <div class="result-item-info">
+                        <div class="result-item-name" style="color: var(--rarity-${result.rarity})">${result.name}</div>
+                        <div class="result-item-type">${result.type === 'hero' ? result.class : result.type}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            overlay.classList.add('active');
+
+            if (ssrCount > 0) {
+                drawParticles();
+            }
+
+            results.forEach(r => {
+                playerSummonData.history.unshift({ ...r, time: Date.now() });
+            });
+        }
+
+        function closeResult() {
+            document.getElementById('resultOverlay').classList.remove('active');
+        }
+
+        function drawParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    life: 100,
+                    color: Math.random() < 0.5 ? '#FFD700' : '#9B59B6',
+                    size: Math.random() * 6 + 2
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                particles.forEach(p => {
+                    if (p.life > 0) {
+                        alive = true;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.2;
+                        p.life--;
+
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fillStyle = p.color;
+                        ctx.globalAlpha = p.life / 100;
+                        ctx.fill();
+                    }
+                });
+
+                if (alive) {
+                    requestAnimationFrame(animate);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            animate();
+        }
+
+        function showFloatText(text) {
+            const float = document.createElement('div');
+            float.className = 'float-text';
+            float.textContent = text;
+            float.style.left = '50%';
+            float.style.top = '40%';
+            float.style.transform = 'translate(-50%, -50%)';
+            float.style.color = text.includes('传说') ? '#FFD700' : '#9B59B6';
+            document.body.appendChild(float);
+            setTimeout(() => float.remove(), 1500);
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        function showHistory() {
+            const history = playerSummonData.history.slice(0, 20);
+            if (history.length === 0) {
+                showToast('暂无召唤记录');
+                return;
+            }
+            alert('最近召唤记录 (共' + playerSummonData.history.length + '次)\n' +
+                  history.slice(0, 10).map((h, i) => h.name + '(' + h.rarity + ')').join('\n'));
+        }
+
+        function goBack() {
+            GameDataManager.save();
+            window.location.href = 'main_interface_v3.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+            updateGuaranteeInfo();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>背包系统 - 苍穹劫</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B7355;
+            --accent: #B8860B;
+            --bg-dark: #1A1A1A;
+            --bg-card: #2A2A2A;
+            --bg-card-hover: #333333;
+            --text-main: #F5DEB3;
+            --text-sub: #A0A0A0;
+            --border-normal: #444444;
+            --rarity-N: #888888;
+            --rarity-R: #4CAF50;
+            --rarity-SR: #2196F3;
+            --rarity-SSR: #9B59B6;
+            --rarity-UR: #FFD700;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+            background: var(--bg-dark);
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: linear-gradient(180deg, #2A2A2A 0%, #1A1A1A 100%);
+            border-bottom: 1px solid var(--border-normal);
+        }
+
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-normal);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .header-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .backpack-info {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: rgba(40, 30, 50, 0.8);
+            border-bottom: 1px solid var(--border-normal);
+            font-size: 12px;
+        }
+
+        .backpack-capacity {
+            color: var(--text-sub);
+        }
+
+        .backpack-capacity span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .backpack-tabs {
+            display: flex;
+            padding: 8px;
+            gap: 4px;
+            background: #1A1A1A;
+            overflow-x: auto;
+        }
+
+        .backpack-tab {
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-normal);
+            border-radius: 20px;
+            color: var(--text-sub);
+            font-size: 12px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .backpack-tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #1A1A1A;
+        }
+
+        .backpack-tab .count {
+            display: inline-block;
+            background: rgba(0,0,0,0.3);
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            font-size: 10px;
+        }
+
+        .backpack-content {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        .backpack-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .backpack-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-normal);
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .backpack-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .backpack-item:active {
+            transform: scale(0.95);
+        }
+
+        .backpack-item-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 4px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .backpack-item-name {
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .backpack-item-count {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: var(--accent);
+            color: #1A1A1A;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 1px 5px;
+            border-radius: 8px;
+            min-width: 18px;
+        }
+
+        .backpack-item-count.rare {
+            background: var(--rarity-SR);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-sub);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-text {
+            font-size: 14px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 320px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            padding: 16px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(60, 45, 80, 0.9) 0%, rgba(40, 30, 60, 0.9) 100%);
+            border-bottom: 1px solid var(--border-normal);
+        }
+
+        .modal-icon {
+            font-size: 56px;
+            margin-bottom: 8px;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .modal-subtitle {
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .modal-content {
+            padding: 16px;
+        }
+
+        .item-desc {
+            font-size: 13px;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .item-attr {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .attr-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+
+        .attr-name {
+            color: var(--text-sub);
+        }
+
+        .attr-value {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-dark);
+            color: var(--text-main);
+        }
+
+        .modal-btn.use {
+            background: linear-gradient(135deg, var(--accent), #DAA520);
+            color: #1A1A1A;
+        }
+
+        .modal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: var(--text-main);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 300;
+            border: 1px solid var(--accent);
+        }
+
+        .use-effect {
+            background: linear-gradient(135deg, rgba(74, 175, 80, 0.2), rgba(74, 175, 80, 0.1));
+            border: 1px solid var(--rarity-R);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .use-effect-title {
+            font-size: 12px;
+            color: var(--rarity-R);
+            margin-bottom: 8px;
+        }
+
+        .use-effect-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--rarity-R);
+        }
+    </style>
+</head>
+<body>
+    <div id="backpackScreen" class="screen active">
+        <div class="header">
+            <button class="header-btn" onclick="goBack()">←</button>
+            <span class="header-title">背包</span>
+            <button class="header-btn" onclick="sortBackpack()">⇅</button>
+        </div>
+
+        <div class="backpack-info">
+            <div class="backpack-capacity">容量: <span id="itemCount">0</span>/<span id="maxCapacity">200</span></div>
+            <div>金币: <span id="goldAmount">125,000</span></div>
+        </div>
+
+        <div class="backpack-tabs">
+            <div class="backpack-tab active" data-type="all" onclick="switchBackpackTab('all')">
+                全部<span class="count" id="countAll">0</span>
+            </div>
+            <div class="backpack-tab" data-type="consume" onclick="switchBackpackTab('consume')">
+                消耗<span class="count" id="countConsume">0</span>
+            </div>
+            <div class="backpack-tab" data-type="material" onclick="switchBackpackTab('material')">
+                材料<span class="count" id="countMaterial">0</span>
+            </div>
+            <div class="backpack-tab" data-type="fragment" onclick="switchBackpackTab('fragment')">
+                碎片<span class="count" id="countFragment">0</span>
+            </div>
+        </div>
+
+        <div class="backpack-content">
+            <div class="backpack-grid" id="backpackGrid"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="itemDetailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon" id="detailIcon">💎</div>
+                <div class="modal-title" id="detailName">物品名称</div>
+                <div class="modal-subtitle" id="detailSubtitle">物品描述</div>
+            </div>
+            <div class="modal-content">
+                <div class="item-desc" id="detailDesc">物品详细描述</div>
+
+                <div class="use-effect" id="useEffect" style="display: none;">
+                    <div class="use-effect-title">使用效果</div>
+                    <div class="use-effect-value" id="useEffectValue">+1000 经验</div>
+                </div>
+
+                <div class="item-attr" id="itemAttr">
+                    <div class="attr-row">
+                        <span class="attr-name">类型</span>
+                        <span class="attr-value" id="attrType">消耗品</span>
+                    </div>
+                    <div class="attr-row">
+                        <span class="attr-name">数量</span>
+                        <span class="attr-value" id="attrCount">x1</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeItemDetail()">关闭</button>
+                <button class="modal-btn use" id="useBtn" onclick="useItem()">使用</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        const playerData = GameDataManager.data.player;
+        const backpackItems = GameDataManager.data.backpack;
+
+        let currentBackpackTab = 'all';
+        let currentDetailItem = null;
+
+        function switchBackpackTab(tab) {
+            currentBackpackTab = tab;
+            document.querySelectorAll('.backpack-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.type === tab);
+            });
+            renderBackpack();
+        }
+
+        function getFilteredItems() {
+            if (currentBackpackTab === 'all') {
+                return Object.values(backpackItems);
+            }
+            return Object.values(backpackItems).filter(item => item.type === currentBackpackTab);
+        }
+
+        function renderBackpack() {
+            const grid = document.getElementById('backpackGrid');
+            const items = getFilteredItems();
+
+            const totalCount = Object.values(backpackItems).reduce((sum, item) => sum + item.count, 0);
+            document.getElementById('itemCount').textContent = totalCount;
+
+            if (items.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: span 4;">
+                        <div class="empty-icon">📦</div>
+                        <div class="empty-text">暂无物品</div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = items.map(item => `
+                <div class="backpack-item" onclick="openItemDetail('${item.id}')">
+                    ${item.count > 1 ? `<span class="backpack-item-count ${item.type === 'material' ? 'rare' : ''}">${item.count}</span>` : ''}
+                    <div class="backpack-item-icon">${item.icon}</div>
+                    <div class="backpack-item-name">${item.name}</div>
+                </div>
+            `).join('');
+
+            updateTabCounts();
+        }
+
+        function updateTabCounts() {
+            const counts = {
+                all: 0,
+                consume: 0,
+                material: 0,
+                fragment: 0
+            };
+
+            Object.values(backpackItems).forEach(item => {
+                counts.all += item.count;
+                if (item.type === 'consume') counts.consume += item.count;
+                if (item.type === 'material') counts.material += item.count;
+                if (item.type === 'fragment') counts.fragment += item.count;
+            });
+
+            document.getElementById('countAll').textContent = counts.all;
+            document.getElementById('countConsume').textContent = counts.consume;
+            document.getElementById('countMaterial').textContent = counts.material;
+            document.getElementById('countFragment').textContent = counts.fragment;
+        }
+
+        function openItemDetail(itemId) {
+            const item = backpackItems[itemId];
+            if (!item) return;
+
+            currentDetailItem = item;
+
+            document.getElementById('detailIcon').textContent = item.icon;
+            document.getElementById('detailName').textContent = item.name;
+            document.getElementById('detailSubtitle').textContent = getTypeName(item.type);
+            document.getElementById('detailDesc').textContent = item.desc;
+            document.getElementById('attrType').textContent = getTypeName(item.type);
+            document.getElementById('attrCount').textContent = `x${item.count}`;
+
+            const useEffectDiv = document.getElementById('useEffect');
+            const useBtn = document.getElementById('useBtn');
+
+            if (item.canUse && item.useEffect) {
+                useEffectDiv.style.display = 'block';
+                if (item.useEffect.target === 'gold') {
+                    document.getElementById('useEffectValue').textContent = `+${item.useEffect.value.toLocaleString()} 金币`;
+                } else if (item.useEffect.target === 'selected_hero') {
+                    document.getElementById('useEffectValue').textContent = `+${item.useEffect.value} 经验`;
+                } else if (item.useEffect.target === 'heal_lowest') {
+                    document.getElementById('useEffectValue').textContent = `恢复30%生命`;
+                }
+                useBtn.style.display = 'block';
+                useBtn.disabled = false;
+            } else {
+                useEffectDiv.style.display = 'none';
+                useBtn.style.display = item.type === 'fragment' ? 'block' : 'none';
+                if (item.type === 'fragment') {
+                    useBtn.textContent = '合成';
+                    useBtn.disabled = item.count < 80;
+                }
+            }
+
+            document.getElementById('itemDetailModal').classList.add('active');
+        }
+
+        function getTypeName(type) {
+            const names = {
+                consume: '消耗品',
+                material: '养成材料',
+                fragment: '英雄碎片'
+            };
+            return names[type] || type;
+        }
+
+        function closeItemDetail() {
+            document.getElementById('itemDetailModal').classList.remove('active');
+            currentDetailItem = null;
+        }
+
+        function useItem() {
+            if (!currentDetailItem) return;
+
+            const item = currentDetailItem;
+
+            if (item.type === 'fragment') {
+                if (item.count >= 80) {
+                    showToast('碎片不足，无法合成 (需要80个)');
+                } else {
+                    showToast('合成功能开发中');
+                }
+                return;
+            }
+
+            if (!item.canUse) return;
+
+            if (item.useEffect.target === 'gold') {
+                playerData.gold += item.useEffect.value;
+                document.getElementById('goldAmount').textContent = playerData.gold.toLocaleString();
+                showToast(`获得${item.useEffect.value.toLocaleString()}金币!`);
+            } else if (item.useEffect.target === 'selected_hero') {
+                showToast(`获得${item.useEffect.value}点经验!`);
+            } else if (item.useEffect.target === 'heal_lowest') {
+                showToast('已为生命值最低的英雄恢复30%生命!');
+            }
+
+            item.count--;
+            if (item.count <= 0) {
+                delete backpackItems[item.id];
+            }
+
+            closeItemDetail();
+            renderBackpack();
+        }
+
+        function sortBackpack() {
+            showToast('背包已整理');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        function goBack() {
+            GameDataManager.save();
+            window.location.href = 'main_interface_v3.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+            renderBackpack();
+            document.getElementById('goldAmount').textContent = playerData.gold.toLocaleString();
+        });
+    </script>
+</body>
+</html>

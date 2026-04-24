@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>新手引导 - 苍穹劫</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #d4af37;
+            --accent-dark: #8b7355;
+            --text-primary: #e8e8e8;
+            --text-secondary: #888;
+            --success: #4caf50;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+
+        .tutorial-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .tutorial-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .tutorial-title {
+            font-size: 24px;
+            color: var(--accent);
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px rgba(212,175,55,0.3);
+        }
+
+        .tutorial-desc {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+            max-width: 300px;
+        }
+
+        .tutorial-highlight {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .tutorial-progress {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 30px 0;
+        }
+
+        .progress-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(212,175,55,0.3);
+            transition: all 0.3s;
+        }
+
+        .progress-dot.active {
+            background: var(--accent);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .tutorial-actions {
+            padding: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .tutorial-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tutorial-btn.skip {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-secondary);
+        }
+
+        .tutorial-btn.next {
+            background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border: none;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+
+        .tutorial-btn:active { transform: scale(0.95); }
+
+        .hand-indicator {
+            position: fixed;
+            font-size: 40px;
+            z-index: 600;
+            animation: click 1.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes click {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.8); opacity: 0.7; }
+        }
+
+        .tutorial-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px;
+            border: 1px solid rgba(212,175,55,0.2);
+            max-width: 350px;
+        }
+
+        .card-icon { font-size: 48px; margin-bottom: 15px; }
+
+        .card-title {
+            font-size: 18px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .feature-list {
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .feature-icon { font-size: 18px; }
+
+        .reward-preview {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .reward-item {
+            text-align: center;
+        }
+
+        .reward-icon { font-size: 32px; margin-bottom: 5px; }
+
+        .reward-amount {
+            font-size: 14px;
+            color: var(--accent);
+        }
+
+        .reward-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-content" id="tutorialContent"></div>
+        <div class="tutorial-progress" id="tutorialProgress"></div>
+        <div class="tutorial-actions">
+            <button class="tutorial-btn skip" onclick="skipTutorial()">跳过引导</button>
+            <button class="tutorial-btn next" id="nextBtn" onclick="nextStep()">下一步</button>
+        </div>
+    </div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        const tutorialSteps = [
+            {
+                icon: '🏛️',
+                title: '欢迎来到苍穹大陆',
+                desc: '你将扮演一名<span class="tutorial-highlight">搬山道人</span>，深入千年古墓，探索上古秘密。',
+                showReward: false
+            },
+            {
+                icon: '⚔️',
+                title: '战斗系统',
+                desc: '在战斗中，点击英雄头像释放<span class="tutorial-highlight">怒气技能</span>。合理利用技能打断和站位，是取胜的关键！',
+                showReward: false
+            },
+            {
+                icon: '👥',
+                title: '英雄养成',
+                desc: '通过升级、突破、升星提升英雄战力。<br>每个英雄都有独特的<span class="tutorial-highlight">职业定位</span>和<span class="tutorial-highlight">技能特点</span>。',
+                showReward: false
+            },
+            {
+                icon: '🎁',
+                title: '召唤系统',
+                desc: '使用召唤券招募新英雄。<br><span class="tutorial-highlight">高级召唤</span>有保底机制，召唤到心仪的英雄吧！',
+                showReward: false
+            },
+            {
+                icon: '💰',
+                title: '资源获取',
+                desc: '探索<span class="tutorial-highlight">地宫副本</span>获取金币和材料。<br>挑战<span class="tutorial-highlight">竞技场</span>提升排名获得丰厚奖励！',
+                showReward: false
+            },
+            {
+                icon: '🎯',
+                title: '每日目标',
+                desc: '完成<span class="tutorial-highlight">每日任务</span>获取活跃度奖励。<br>记得<span class="tutorial-highlight">每日签到</span>领取连续登录好礼！',
+                showReward: true
+            }
+        ];
+
+        let currentStep = 0;
+
+        function renderTutorial() {
+            const step = tutorialSteps[currentStep];
+            const content = document.getElementById('tutorialContent');
+            const progress = document.getElementById('tutorialProgress');
+            const nextBtn = document.getElementById('nextBtn');
+
+            let rewardHtml = '';
+            if (step.showReward) {
+                rewardHtml = `
+                    <div class="reward-preview">
+                        <div class="reward-item">
+                            <span class="reward-icon">💰</span>
+                            <div class="reward-amount">×1000</div>
+                            <div class="reward-name">金币</div>
+                        </div>
+                        <div class="reward-item">
+                            <span class="reward-icon">📦</span>
+                            <div class="reward-amount">×1</div>
+                            <div class="reward-name">新手礼包</div>
+                        </div>
+                        <div class="reward-item">
+                            <span class="reward-icon">🎫</span>
+                            <div class="reward-amount">×1</div>
+                            <div class="reward-name">召唤券</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="tutorial-icon">${step.icon}</div>
+                <div class="tutorial-title">${step.title}</div>
+                <div class="tutorial-desc">${step.desc}</div>
+                ${rewardHtml}
+            `;
+
+            progress.innerHTML = tutorialSteps.map((_, i) =>
+                `<div class="progress-dot ${i === currentStep ? 'active' : ''}"></div>`
+            ).join('');
+
+            nextBtn.textContent = currentStep === tutorialSteps.length - 1 ? '开始冒险' : '下一步';
+        }
+
+        function nextStep() {
+            if (currentStep < tutorialSteps.length - 1) {
+                currentStep++;
+                renderTutorial();
+            } else {
+                completeTutorial();
+            }
+        }
+
+        function skipTutorial() {
+            completeTutorial();
+        }
+
+        function completeTutorial() {
+            const tutorial = GameDataManager.data.tutorial;
+            tutorial.step = tutorialSteps.length;
+            tutorial.completedPhases.push(1);
+            tutorial.skiped = true;
+
+            GameDataManager.addGold(1000);
+            GameDataManager.addToBackpack('newbie_pack', 1);
+            GameDataManager.addSummonTickets(1);
+
+            const mail = {
+                id: 'tutorial_reward',
+                type: 'system',
+                title: '新手引导奖励',
+                content: '感谢完成新手引导！您已获得：\n• 金币 ×1000\n• 新手礼包 ×1\n• 召唤券 ×1\n\n祝您在苍穹大陆冒险愉快！',
+                hasAttachment: true,
+                attachmentClaimed: false,
+                items: [
+                    { type: 'gold', amount: 1000 },
+                    { type: 'item', id: 'newbie_pack', amount: 1 },
+                    { type: 'item', id: 'summon_ticket_1', amount: 1 }
+                ],
+                time: Date.now(),
+                expireTime: Date.now() + 604800000,
+                isRead: false
+            };
+            GameDataManager.addMail(mail);
+
+            GameDataManager.save();
+
+            document.getElementById('tutorialOverlay').style.display = 'none';
+            window.location.href = 'main_interface_v3.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+
+            const tutorial = GameDataManager.data.tutorial;
+            if (tutorial.step >= tutorialSteps.length) {
+                document.getElementById('tutorialOverlay').style.display = 'none';
+                window.location.href = 'main_interface_v3.html';
+                return;
+            }
+
+            currentStep = tutorial.step;
+            renderTutorial();
+        });
+    </script>
+</body>
+</html>

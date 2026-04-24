@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>编队系统 - 苍穹劫</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #d4af37;
+            --accent-dark: #8b7355;
+            --text-primary: #e8e8e8;
+            --text-secondary: #888;
+            --success: #4caf50;
+            --danger: #f44336;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: linear-gradient(180deg, rgba(30,20,40,0.95) 0%, rgba(20,15,30,0.9) 100%);
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+        }
+
+        .header-btn {
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            color: var(--accent);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .header-title { font-size: 18px; color: var(--accent); }
+
+        .team-tabs {
+            display: flex;
+            padding: 10px 15px;
+            gap: 8px;
+            background: var(--bg-secondary);
+            overflow-x: auto;
+        }
+
+        .team-tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 10px;
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .team-tab.active {
+            background: linear-gradient(180deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.1) 100%);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .team-tab.has-default::after {
+            content: '★';
+            font-size: 10px;
+            margin-left: 4px;
+            color: var(--accent);
+        }
+
+        .formation-selector {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            gap: 10px;
+        }
+
+        .formation-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .formation-btns {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .formation-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .formation-btn.active {
+            background: rgba(212,175,55,0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .team-name-input {
+            display: flex;
+            align-items: center;
+            padding: 0 15px 15px;
+            gap: 10px;
+        }
+
+        .team-name-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .team-name-field {
+            flex: 1;
+            padding: 10px 15px;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .battle-field {
+            margin: 0 15px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid rgba(212,175,55,0.2);
+            position: relative;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-rows: repeat(2, 1fr);
+            gap: 30px;
+            min-height: 200px;
+        }
+
+        .front-row, .back-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .hero-slot {
+            width: 70px;
+            height: 90px;
+            background: rgba(255,255,255,0.03);
+            border: 2px dashed rgba(255,255,255,0.1);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .hero-slot.filled {
+            background: linear-gradient(180deg, rgba(30,30,50,0.9) 0%, rgba(20,20,35,0.9) 100%);
+            border: 2px solid rgba(212,175,55,0.3);
+        }
+
+        .hero-slot.front { border-color: rgba(244,67,54,0.3); }
+        .hero-slot.back { border-color: rgba(33,150,243,0.3); }
+
+        .hero-slot:hover { transform: scale(1.05); }
+
+        .hero-icon {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .hero-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .hero-level {
+            font-size: 10px;
+            color: var(--accent);
+        }
+
+        .slot-add { color: var(--text-secondary); font-size: 24px; }
+        .slot-empty-text { font-size: 10px; color: var(--text-secondary); }
+
+        .row-label {
+            position: absolute;
+            font-size: 11px;
+            color: var(--text-secondary);
+            writing-mode: vertical-rl;
+        }
+
+        .row-label.front { left: 5px; top: 50%; transform: translateY(-50%); color: rgba(244,67,54,0.6); }
+        .row-label.back { right: 5px; top: 50%; transform: translateY(-50%); color: rgba(33,150,243,0.6); }
+
+        .hero-pool {
+            padding: 15px;
+        }
+
+        .pool-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .hero-list {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .hero-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+
+        .hero-card:hover { transform: scale(1.05); }
+
+        .hero-card.selected {
+            border-color: var(--accent);
+            background: rgba(212,175,55,0.1);
+        }
+
+        .hero-card.in-team {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .hero-card-icon { font-size: 28px; margin-bottom: 5px; }
+
+        .hero-card-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+            max-width: 60px;
+            margin: 0 auto;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .bonds-section {
+            margin: 15px;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .bonds-title {
+            font-size: 14px;
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .bond-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .bond-item:last-child { border-bottom: none; }
+
+        .bond-icons { font-size: 16px; }
+
+        .bond-effect {
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .bond-active {
+            color: var(--success);
+            font-size: 11px;
+        }
+
+        .bond-inactive {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        .set-default-btn {
+            width: calc(100% - 30px);
+            margin: 15px;
+            padding: 15px;
+            background: linear-gradient(180deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.1) 100%);
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            color: var(--accent);
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .set-default-btn.is-default {
+            background: rgba(76,175,80,0.2);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .select-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+
+        .select-modal.active { display: flex; }
+
+        .select-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+        }
+
+        .select-title {
+            font-size: 16px;
+            color: var(--accent);
+        }
+
+        .select-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .select-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .select-hero-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .select-hero-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.3s;
+        }
+
+        .select-hero-card:active { transform: scale(0.95); }
+
+        .select-hero-card.selected {
+            border-color: var(--accent);
+            background: rgba(212,175,55,0.1);
+        }
+
+        .select-hero-icon { font-size: 40px; margin-bottom: 8px; }
+
+        .select-hero-name {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .select-hero-info {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: var(--accent);
+            padding: 15px 30px;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+            z-index: 300;
+        }
+
+        .empty-slot {
+            width: 70px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="header-btn" onclick="goBack()">← 返回</button>
+        <span class="header-title">编队系统</span>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="team-tabs" id="teamTabs"></div>
+
+    <div class="formation-selector">
+        <span class="formation-label">阵法：</span>
+        <div class="formation-btns" id="formationBtns">
+            <button class="formation-btn active" data-formation="standard">标准</button>
+            <button class="formation-btn" data-formation="attack">攻击</button>
+            <button class="formation-btn" data-formation="defense">防御</button>
+            <button class="formation-btn" data-formation="balance">平衡</button>
+        </div>
+    </div>
+
+    <div class="team-name-input">
+        <span class="team-name-label">队伍名称：</span>
+        <input type="text" class="team-name-field" id="teamNameInput" placeholder="输入队伍名称" maxlength="8">
+    </div>
+
+    <div class="battle-field">
+        <span class="row-label front">前排</span>
+        <span class="row-label back">后排</span>
+        <div class="field-grid">
+            <div class="front-row" id="frontRow"></div>
+            <div class="back-row" id="backRow"></div>
+        </div>
+    </div>
+
+    <div class="bonds-section">
+        <div class="bonds-title">🔗 羁绊效果</div>
+        <div id="bondsList"></div>
+    </div>
+
+    <button class="set-default-btn" id="setDefaultBtn" onclick="setAsDefault()">设为默认队伍</button>
+
+    <div class="hero-pool">
+        <div class="pool-title">可编入英雄</div>
+        <div class="hero-list" id="heroList"></div>
+    </div>
+
+    <div class="select-modal" id="selectModal">
+        <div class="select-header">
+            <span class="select-title">选择英雄</span>
+            <button class="select-close" onclick="closeSelectModal()">✕</button>
+        </div>
+        <div class="select-content">
+            <div class="select-hero-grid" id="selectHeroGrid"></div>
+        </div>
+    </div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        const formations = {
+            standard: { name: '标准', front: 2, back: 3 },
+            attack: { name: '攻击', front: 3, back: 2 },
+            defense: { name: '防御', front: 1, back: 4 },
+            balance: { name: '平衡', front: 2, back: 3 }
+        };
+
+        const bonds = [
+            { id: 'bond_1', name: '摸金三人组', heroes: ['tieZhu', 'moJinShou', 'banShanKe'], effect: '全体攻击+15%', icon: '👥' },
+            { id: 'bond_2', name: '秘法传承', heroes: ['xingJiSi', 'moJinShou'], effect: '速度+20%', icon: '🔮' },
+            { id: 'bond_3', name: '搬山一脉', heroes: ['tieZhu', 'banShanKe'], effect: '防御+25%', icon: '⛏️' }
+        ];
+
+        let currentTeamIndex = 0;
+        let selectedSlotIndex = null;
+        let selectedSlotRow = null;
+
+        function renderTeamTabs() {
+            const teams = GameDataManager.data.teams;
+            const tabs = document.getElementById('teamTabs');
+
+            tabs.innerHTML = teams.map((team, i) => {
+                const isActive = i === currentTeamIndex;
+                const hasDefault = team.isDefault;
+                return `
+                    <div class="team-tab ${isActive ? 'active' : ''} ${hasDefault ? 'has-default' : ''}" onclick="selectTeam(${i})">
+                        ${team.name}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectTeam(index) {
+            currentTeamIndex = index;
+            renderTeamTabs();
+            renderBattleField();
+            renderHeroPool();
+            updateTeamNameInput();
+            updateFormationButtons();
+            updateBonds();
+            updateDefaultButton();
+        }
+
+        function renderBattleField() {
+            const teams = GameDataManager.data.teams;
+            const team = teams[currentTeamIndex];
+            const formation = formations[team.formation] || formations.standard;
+
+            const frontRow = document.getElementById('frontRow');
+            const backRow = document.getElementById('backRow');
+
+            let frontHtml = '';
+            let backHtml = '';
+
+            for (let i = 0; i < formation.front; i++) {
+                const heroId = team.heroes[i];
+                const hero = heroId ? GameDataManager.data.heroes[heroId] : null;
+                if (hero) {
+                    frontHtml += `
+                        <div class="hero-slot filled front" onclick="openSelectModal('front', ${i})">
+                            <span class="hero-icon">${hero.icon}</span>
+                            <span class="hero-name">${hero.name}</span>
+                            <span class="hero-level">Lv.${hero.level}</span>
+                        </div>
+                    `;
+                } else {
+                    frontHtml += `
+                        <div class="hero-slot front" onclick="openSelectModal('front', ${i})">
+                            <div class="empty-slot">
+                                <span class="slot-add">+</span>
+                                <span class="slot-empty-text">选择英雄</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            for (let i = formation.front; i < formation.front + formation.back; i++) {
+                const heroId = team.heroes[i];
+                const hero = heroId ? GameDataManager.data.heroes[heroId] : null;
+                if (hero) {
+                    backHtml += `
+                        <div class="hero-slot filled back" onclick="openSelectModal('back', ${i})">
+                            <span class="hero-icon">${hero.icon}</span>
+                            <span class="hero-name">${hero.name}</span>
+                            <span class="hero-level">Lv.${hero.level}</span>
+                        </div>
+                    `;
+                } else {
+                    backHtml += `
+                        <div class="hero-slot back" onclick="openSelectModal('back', ${i})">
+                            <div class="empty-slot">
+                                <span class="slot-add">+</span>
+                                <span class="slot-empty-text">选择英雄</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            frontRow.innerHTML = frontHtml;
+            backRow.innerHTML = backHtml;
+        }
+
+        function renderHeroPool() {
+            const teams = GameDataManager.data.teams;
+            const team = teams[currentTeamIndex];
+            const heroesInTeam = team.heroes.filter(h => h !== null);
+
+            const heroes = Object.values(GameDataManager.data.heroes);
+            const pool = document.getElementById('heroList');
+
+            pool.innerHTML = heroes.map(hero => {
+                const isInTeam = heroesInTeam.includes(hero.id);
+                return `
+                    <div class="hero-card ${isInTeam ? 'in-team' : ''}" onclick="quickAddHero('${hero.id}')">
+                        <div class="hero-card-icon">${hero.icon}</div>
+                        <div class="hero-card-name">${hero.name}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function quickAddHero(heroId) {
+            const teams = GameDataManager.data.teams;
+            const team = teams[currentTeamIndex];
+            const heroesInTeam = team.heroes.filter(h => h !== null);
+
+            if (heroesInTeam.includes(heroId)) {
+                return;
+            }
+
+            const emptySlot = team.heroes.findIndex(h => h === null);
+            if (emptySlot !== -1) {
+                team.heroes[emptySlot] = heroId;
+                GameDataManager.save();
+                renderBattleField();
+                renderHeroPool();
+                updateBonds();
+            } else {
+                showToast('队伍已满');
+            }
+        }
+
+        function openSelectModal(row, slotIndex) {
+            selectedSlotRow = row;
+            selectedSlotIndex = slotIndex;
+
+            const teams = GameDataManager.data.teams;
+            const team = teams[currentTeamIndex];
+            const heroesInTeam = team.heroes.filter(h => h !== null);
+
+            const heroes = Object.values(GameDataManager.data.heroes);
+            const grid = document.getElementById('selectHeroGrid');
+
+            grid.innerHTML = heroes.map(hero => {
+                const isInTeam = heroesInTeam.includes(hero.id);
+                const isSelected = team.heroes[slotIndex] === hero.id;
+
+                return `
+                    <div class="select-hero-card ${isSelected ? 'selected' : ''} ${isInTeam && !isSelected ? 'in-team' : ''}"
+                         onclick="selectHero('${hero.id}')">
+                        <div class="select-hero-icon">${hero.icon}</div>
+                        <div class="select-hero-name">${hero.name}</div>
+                        <div class="select-hero-info">Lv.${hero.level} · ${hero.class}</div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('selectModal').classList.add('active');
+        }
+
+        function closeSelectModal() {
+            document.getElementById('selectModal').classList.remove('active');
+            selectedSlotIndex = null;
+            selectedSlotRow = null;
+        }
+
+        function selectHero(heroId) {
+            if (selectedSlotIndex === null) return;
+
+            const teams = GameDataManager.data.teams;
+            const team = teams[currentTeamIndex];
+
+            team.heroes[selectedSlotIndex] = heroId;
+            GameDataManager.save();
+
+            closeSelectModal();
+            renderBattleField();
+            renderHeroPool();
+            updateBonds();
+        }
+
+        function updateTeamNameInput() {
+            const teams = GameDataManager.data.teams;
+            document.getElementById('teamNameInput').value = teams[currentTeamIndex].name;
+        }
+
+        function updateFormationButtons() {
+            const teams = GameDataManager.data.teams;
+            const formation = teams[currentTeamIndex].formation;
+
+            document.querySelectorAll('.formation-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.formation === formation);
+            });
+        }
+
+        function updateBonds() {
+            const teams = GameDataManager.data.teams;
+            const team = teams[currentTeamIndex];
+            const heroesInTeam = team.heroes.filter(h => h !== null);
+
+            const list = document.getElementById('bondsList');
+
+            list.innerHTML = bonds.map(bond => {
+                const activeCount = bond.heroes.filter(h => heroesInTeam.includes(h)).length;
+                const isActive = activeCount >= 2;
+
+                return `
+                    <div class="bond-item">
+                        <span class="bond-icons">${bond.icon}</span>
+                        <span class="bond-effect">${bond.name} (${activeCount}/${bond.heroes.length})</span>
+                        <span class="${isActive ? 'bond-active' : 'bond-inactive'}">
+                            ${isActive ? '已激活' : bond.effect}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateDefaultButton() {
+            const teams = GameDataManager.data.teams;
+            const btn = document.getElementById('setDefaultBtn');
+
+            if (teams[currentTeamIndex].isDefault) {
+                btn.textContent = '当前默认队伍';
+                btn.classList.add('is-default');
+            } else {
+                btn.textContent = '设为默认队伍';
+                btn.classList.remove('is-default');
+            }
+        }
+
+        function setAsDefault() {
+            GameDataManager.setDefaultTeam(currentTeamIndex);
+            renderTeamTabs();
+            updateDefaultButton();
+            showToast('已设为默认队伍');
+        }
+
+        document.querySelectorAll('.formation-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const formation = this.dataset.formation;
+                const teams = GameDataManager.data.teams;
+                teams[currentTeamIndex].formation = formation;
+                GameDataManager.save();
+
+                document.querySelectorAll('.formation-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                renderBattleField();
+            });
+        });
+
+        document.getElementById('teamNameInput').addEventListener('change', function() {
+            const teams = GameDataManager.data.teams;
+            teams[currentTeamIndex].name = this.value || '队伍' + (currentTeamIndex + 1);
+            GameDataManager.save();
+            renderTeamTabs();
+        });
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 1500);
+        }
+
+        function goBack() {
+            GameDataManager.save();
+            window.location.href = 'main_interface_v3.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+            renderTeamTabs();
+            renderBattleField();
+            renderHeroPool();
+            updateTeamNameInput();
+            updateFormationButtons();
+            updateBonds();
+            updateDefaultButton();
+        });
+    </script>
+</body>
+</html>

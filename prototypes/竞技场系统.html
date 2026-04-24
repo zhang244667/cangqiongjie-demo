@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>竞技场 - 苍穹劫</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #d4af37;
+            --accent-dark: #8b7355;
+            --text-primary: #e8e8e8;
+            --text-secondary: #888;
+            --success: #4caf50;
+            --danger: #f44336;
+            --tier-bronze: #cd7f32;
+            --tier-silver: #c0c0c0;
+            --tier-gold: #ffd700;
+            --tier-platinum: #e5e4e2;
+            --tier-diamond: #b9f2ff;
+            --tier-master: #9c27b0;
+            --tier-king: #ff5722;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: linear-gradient(180deg, rgba(30,20,40,0.95) 0%, rgba(20,15,30,0.9) 100%);
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+        }
+
+        .header-btn {
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            color: var(--accent);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .header-title { font-size: 18px; color: var(--accent); }
+
+        .season-banner {
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(156,39,176,0.2) 0%, transparent 100%);
+            border-bottom: 1px solid rgba(156,39,176,0.3);
+        }
+
+        .season-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .season-name {
+            font-size: 24px;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(212,175,55,0.5);
+        }
+
+        .user-rank {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .rank-info {
+            text-align: center;
+        }
+
+        .rank-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+
+        .rank-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .tier-badge {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            border: 3px solid;
+        }
+
+        .tier-bronze { background: rgba(205,127,50,0.2); border-color: var(--tier-bronze); }
+        .tier-silver { background: rgba(192,192,192,0.2); border-color: var(--tier-silver); }
+        .tier-gold { background: rgba(255,215,0,0.2); border-color: var(--tier-gold); }
+        .tier-platinum { background: rgba(229,228,226,0.2); border-color: var(--tier-platinum); }
+        .tier-diamond { background: rgba(185,242,255,0.2); border-color: var(--tier-diamond); }
+        .tier-master { background: rgba(156,39,176,0.2); border-color: var(--tier-master); }
+        .tier-king { background: rgba(255,87,34,0.2); border-color: var(--tier-king); }
+
+        .rank-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            color: var(--accent);
+            margin-bottom: 3px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .challenges {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--bg-card);
+            margin: 0 15px;
+            border-radius: 10px;
+        }
+
+        .challenges-info { display: flex; align-items: center; gap: 10px; }
+
+        .challenges-icon { font-size: 24px; }
+
+        .challenges-text { font-size: 14px; }
+
+        .challenges-count {
+            font-size: 20px;
+            color: var(--accent);
+        }
+
+        .refresh-btn {
+            padding: 8px 15px;
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            border-radius: 6px;
+            color: var(--accent);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            padding: 15px 15px 10px;
+        }
+
+        .opponent-list {
+            padding: 0 15px;
+        }
+
+        .opponent-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .opponent-rank {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        .opponent-rank.top3 {
+            background: linear-gradient(180deg, rgba(255,215,0,0.3) 0%, rgba(255,215,0,0.1) 100%);
+            color: var(--tier-gold);
+        }
+
+        .opponent-info { flex: 1; }
+
+        .opponent-name {
+            font-size: 15px;
+            color: var(--text-primary);
+            margin-bottom: 3px;
+        }
+
+        .opponent-level {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .opponent-power {
+            font-size: 14px;
+            color: var(--accent);
+            margin-right: 10px;
+        }
+
+        .challenge-btn {
+            padding: 8px 20px;
+            background: linear-gradient(180deg, var(--danger) 0%, #c62828 100%);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .challenge-btn:disabled {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .battle-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+
+        .battle-overlay.active { display: flex; }
+
+        .battle-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .battle-close {
+            position: absolute;
+            left: 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-secondary);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .battle-title {
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .battle-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .battle-vs {
+            font-size: 48px;
+            color: var(--danger);
+            margin: 20px 0;
+            text-shadow: 0 0 30px rgba(244,67,54,0.5);
+        }
+
+        .battle-sides {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            width: 100%;
+        }
+
+        .battle-side {
+            flex: 1;
+            text-align: center;
+        }
+
+        .side-name {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .side-power {
+            font-size: 24px;
+            color: var(--accent);
+        }
+
+        .battle-result {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .result-text {
+            font-size: 36px;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .result-text.win { color: var(--success); }
+        .result-text.lose { color: var(--danger); }
+
+        .result-rewards {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .result-rewards strong { color: var(--accent); }
+
+        .confirm-btn {
+            width: 90%;
+            padding: 15px;
+            margin: 20px;
+            background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border: none;
+            border-radius: 10px;
+            color: #1a1a1a;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-secondary);
+        }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: var(--accent);
+            padding: 15px 30px;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+            z-index: 300;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="header-btn" onclick="goBack()">← 返回</button>
+        <span class="header-title">竞技场</span>
+        <button class="header-btn" onclick="showRankings()">排行榜</button>
+    </div>
+
+    <div class="season-banner">
+        <div class="season-title">当前赛季</div>
+        <div class="season-name" id="seasonName">S1 · 苍穹初战</div>
+        <div class="user-rank">
+            <div class="rank-info">
+                <div class="rank-label">段位</div>
+                <div class="rank-value" id="tierName" style="color: var(--tier-bronze);">青铜</div>
+            </div>
+            <div class="tier-badge tier-bronze" id="tierBadge">🏆</div>
+            <div class="rank-info">
+                <div class="rank-label">排名</div>
+                <div class="rank-value" id="rankNumber">#888</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rank-stats">
+        <div class="stat-card">
+            <div class="stat-value" id="winCount">0</div>
+            <div class="stat-label">胜场</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="loseCount">0</div>
+            <div class="stat-label">负场</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="winRate">0%</div>
+            <div class="stat-label">胜率</div>
+        </div>
+    </div>
+
+    <div class="challenges">
+        <div class="challenges-info">
+            <span class="challenges-icon">⚔️</span>
+            <div>
+                <div class="challenges-text">今日挑战次数</div>
+                <div class="challenges-count"><span id="remainingChallenges">3</span>/3</div>
+            </div>
+        </div>
+        <button class="refresh-btn" onclick="refreshOpponents()">刷新对手</button>
+    </div>
+
+    <div class="section-title">挑战对手</div>
+
+    <div class="opponent-list" id="opponentList"></div>
+
+    <div class="battle-overlay" id="battleOverlay">
+        <div class="battle-header">
+            <button class="battle-close" onclick="closeBattle()">✕</button>
+            <span class="battle-title">竞技场挑战</span>
+        </div>
+        <div class="battle-content" id="battleContent"></div>
+    </div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        const tierData = {
+            bronze: { name: '青铜', color: '#cd7f32', stars: 5, icon: '🥉' },
+            silver: { name: '白银', color: '#c0c0c0', stars: 5, icon: '🥈' },
+            gold: { name: '黄金', color: '#ffd700', stars: 5, icon: '🥇' },
+            platinum: { name: '铂金', color: '#e5e4e2', stars: 5, icon: '💎' },
+            diamond: { name: '钻石', color: '#b9f2ff', stars: 5, icon: '💠' },
+            master: { name: '大师', color: '#9c27b0', stars: 5, icon: '🏆' },
+            king: { name: '王者', color: '#ff5722', stars: 5, icon: '👑' }
+        };
+
+        const aiOpponents = [
+            { name: '摸金校尉', power: 8500, level: 45 },
+            { name: '搬山道人', power: 9200, level: 48 },
+            { name: '卸岭力士', power: 7800, level: 40 },
+            { name: '发丘中郎将', power: 11500, level: 55 },
+            { name: '千机术士', power: 10200, level: 52 },
+            { name: '镇墓古尸', power: 8800, level: 46 },
+            { name: '墓府守卫', power: 9500, level: 50 },
+            { name: '机关傀儡', power: 10800, level: 54 },
+            { name: '幽冥使者', power: 12000, level: 58 },
+            { name: '苍穹之主', power: 15000, level: 60 }
+        ];
+
+        let opponents = [];
+
+        function generateOpponents() {
+            const arena = GameDataManager.data.arena;
+            const myPower = calculatePlayerPower();
+
+            opponents = [];
+            const usedIndices = new Set();
+
+            for (let i = 0; i < 3; i++) {
+                let index;
+                do {
+                    index = Math.floor(Math.random() * aiOpponents.length);
+                } while (usedIndices.has(index));
+                usedIndices.add(index);
+
+                const opponent = aiOpponents[index];
+                const powerVariation = 0.8 + Math.random() * 0.4;
+                opponents.push({
+                    id: 'ai_' + i,
+                    name: opponent.name,
+                    power: Math.floor(opponent.power * powerVariation),
+                    level: opponent.level,
+                    rank: arena.rankings.powerRank + i + 1,
+                    tier: getTierForPower(opponent.power)
+                });
+            }
+
+            opponents.sort((a, b) => a.rank - b.rank);
+            opponents.forEach((opp, i) => opp.displayRank = i + 1);
+        }
+
+        function getTierForPower(power) {
+            if (power >= 14000) return 'king';
+            if (power >= 11000) return 'master';
+            if (power >= 9000) return 'diamond';
+            if (power >= 7000) return 'platinum';
+            if (power >= 5000) return 'gold';
+            if (power >= 3000) return 'silver';
+            return 'bronze';
+        }
+
+        function calculatePlayerPower() {
+            const heroes = GameDataManager.data.heroes;
+            let total = 0;
+            Object.values(heroes).forEach(hero => {
+                total += (hero.stats?.hp || 100) * 0.1 +
+                         (hero.stats?.atk || 10) * 2 +
+                         (hero.stats?.def || 5) * 3;
+            });
+            return Math.floor(total);
+        }
+
+        function renderUI() {
+            const arena = GameDataManager.data.arena;
+            const tier = tierData[arena.tier] || tierData.bronze;
+
+            document.getElementById('seasonName').textContent = `S1 · ${arena.seasonId}`;
+            document.getElementById('tierName').textContent = tier.name;
+            document.getElementById('tierName').style.color = tier.color;
+
+            const badge = document.getElementById('tierBadge');
+            badge.textContent = tier.icon;
+            badge.className = 'tier-badge tier-' + arena.tier;
+
+            document.getElementById('rankNumber').textContent = '#' + (arena.rankings.powerRank || 888);
+            document.getElementById('winCount').textContent = arena.winCount;
+            document.getElementById('loseCount').textContent = arena.loseCount;
+
+            const total = arena.winCount + arena.loseCount;
+            document.getElementById('winRate').textContent = total > 0 ? Math.floor(arena.winCount / total * 100) + '%' : '0%';
+
+            const remaining = 3 - arena.dailyFreeUsed;
+            document.getElementById('remainingChallenges').textContent = remaining > 0 ? remaining : 0;
+
+            renderOpponents();
+        }
+
+        function renderOpponents() {
+            const list = document.getElementById('opponentList');
+            const arena = GameDataManager.data.arena;
+            const remaining = 3 - arena.dailyFreeUsed;
+
+            list.innerHTML = opponents.map(opp => {
+                const tier = tierData[opp.tier];
+                const isTop3 = opp.displayRank <= 3;
+
+                return `
+                    <div class="opponent-item">
+                        <div class="opponent-rank ${isTop3 ? 'top3' : ''}">${isTop3 ? '🏅' : '#' + opp.rank}</div>
+                        <div class="opponent-info">
+                            <div class="opponent-name">${opp.name} <span style="font-size:12px;color:${tier.color}">${tier.icon}</span></div>
+                            <div class="opponent-level">等级 ${opp.level} · 战力 ${opp.power.toLocaleString()}</div>
+                        </div>
+                        <div class="opponent-power">${opp.power.toLocaleString()}</div>
+                        <button class="challenge-btn" onclick="challengeOpponent('${opp.id}')" ${remaining <= 0 ? 'disabled' : ''}>
+                            挑战
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function challengeOpponent(oppId) {
+            const arena = GameDataManager.data.arena;
+            if (arena.dailyFreeUsed >= 3) {
+                showToast('今日挑战次数已用完');
+                return;
+            }
+
+            const opponent = opponents.find(o => o.id === oppId);
+            if (!opponent) return;
+
+            arena.dailyFreeUsed++;
+            GameDataManager.save();
+
+            const myPower = calculatePlayerPower();
+            const winChance = myPower / (myPower + opponent.power);
+            const isWin = Math.random() < winChance;
+
+            showBattleResult(opponent, isWin);
+        }
+
+        function showBattleResult(opponent, isWin) {
+            const arena = GameDataManager.data.arena;
+
+            arena.totalBattles++;
+            if (isWin) {
+                arena.winCount++;
+                arena.points += 25;
+                arena.currentStreak++;
+                arena.maxStreak = Math.max(arena.maxStreak, arena.currentStreak);
+            } else {
+                arena.loseCount++;
+                arena.points = Math.max(0, arena.points - 10);
+                arena.currentStreak = 0;
+            }
+
+            if (arena.points >= 100 && arena.tier === 'bronze') {
+                arena.tier = 'silver';
+                arena.points = 0;
+                showToast('段位提升！晋升白银！');
+            }
+
+            GameDataManager.save();
+
+            const content = document.getElementById('battleContent');
+            content.innerHTML = `
+                <div class="battle-sides">
+                    <div class="battle-side">
+                        <div class="side-name">我方</div>
+                        <div class="side-power">${calculatePlayerPower().toLocaleString()}</div>
+                    </div>
+                    <div class="battle-vs">VS</div>
+                    <div class="battle-side">
+                        <div class="side-name">${opponent.name}</div>
+                        <div class="side-power">${opponent.power.toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="battle-result">
+                    <div class="result-text ${isWin ? 'win' : 'lose'}">${isWin ? '胜 利' : '失 败'}</div>
+                    <div class="result-rewards">
+                        ${isWin ? '获得 <strong>+25</strong> 积分' : '损失 <strong>-10</strong> 积分'}
+                    </div>
+                </div>
+                <button class="confirm-btn" onclick="closeBattle()">确定</button>
+            `;
+
+            document.getElementById('battleOverlay').classList.add('active');
+            renderUI();
+        }
+
+        function closeBattle() {
+            document.getElementById('battleOverlay').classList.remove('active');
+        }
+
+        function refreshOpponents() {
+            generateOpponents();
+            renderOpponents();
+            showToast('已刷新对手');
+        }
+
+        function showRankings() {
+            showToast('排行榜功能开发中');
+        }
+
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 1500);
+        }
+
+        function goBack() {
+            GameDataManager.save();
+            window.location.href = 'main_interface_v3.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+            generateOpponents();
+            renderUI();
+        });
+    </script>
+</body>
+</html>

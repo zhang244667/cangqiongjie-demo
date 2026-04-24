@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>每日签到 - 苍穹劫</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #d4af37;
+            --accent-dark: #8b7355;
+            --text-primary: #e8e8e8;
+            --text-secondary: #888;
+            --success: #4caf50;
+            --danger: #f44336;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: linear-gradient(180deg, rgba(30,20,40,0.95) 0%, rgba(20,15,30,0.9) 100%);
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+        }
+
+        .header-btn {
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            color: var(--accent);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .header-title {
+            font-size: 18px;
+            color: var(--accent);
+        }
+
+        .month-header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(212,175,55,0.1) 0%, transparent 100%);
+        }
+
+        .month-title {
+            font-size: 20px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .month-stats {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .calendar {
+            padding: 15px;
+        }
+
+        .weekday-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .weekday {
+            font-size: 12px;
+            color: var(--text-secondary);
+            padding: 8px 0;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .day-cell.signed {
+            background: linear-gradient(180deg, rgba(212,175,55,0.3) 0%, rgba(212,175,55,0.2) 100%);
+            border: 1px solid var(--accent);
+        }
+
+        .day-cell.signed::after {
+            content: '✓';
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 10px;
+            color: var(--accent);
+        }
+
+        .day-cell.today {
+            border: 2px solid var(--accent);
+        }
+
+        .day-cell.today.can-sign {
+            animation: pulse 1.5s infinite;
+        }
+
+        .day-cell.future {
+            opacity: 0.5;
+        }
+
+        .day-cell.consecutive-bonus {
+            background: linear-gradient(180deg, rgba(156,39,176,0.3) 0%, rgba(156,39,176,0.2) 100%);
+            border: 1px solid #9c27b0;
+        }
+
+        .day-cell.consecutive-bonus::before {
+            content: '★';
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 8px;
+            color: #9c27b0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212,175,55,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(212,175,55,0); }
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 15px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        .current-reward {
+            margin: 15px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid rgba(212,175,55,0.3);
+        }
+
+        .reward-title {
+            font-size: 16px;
+            color: var(--accent);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .reward-preview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .reward-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+
+        .reward-icon { font-size: 28px; margin-bottom: 5px; }
+
+        .reward-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        .reward-amount {
+            font-size: 14px;
+            color: var(--accent);
+            margin-top: 3px;
+        }
+
+        .consecutive-info {
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+
+        .consecutive-info strong { color: var(--accent); }
+
+        .sign-btn {
+            width: 100%;
+            padding: 15px;
+            margin: 20px 15px;
+            background: linear-gradient(180deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border: none;
+            border-radius: 12px;
+            color: #1a1a1a;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sign-btn:disabled {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .sign-btn.signed {
+            background: linear-gradient(180deg, rgba(76,175,80,0.5) 0%, rgba(76,175,80,0.3) 100%);
+            color: white;
+        }
+
+        .tips {
+            margin: 15px;
+            padding: 15px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .tips-title {
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .makeup-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 12px;
+        }
+
+        .makeup-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .makeup-icon { font-size: 28px; }
+
+        .makeup-text {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .makeup-count {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .makeup-btn {
+            padding: 8px 15px;
+            background: rgba(212,175,55,0.2);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .makeup-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: var(--accent);
+            padding: 20px 40px;
+            border-radius: 12px;
+            border: 2px solid var(--accent);
+            z-index: 300;
+            text-align: center;
+        }
+
+        .toast-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .toast-rewards {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="header-btn" onclick="goBack()">← 返回</button>
+        <span class="header-title">每日签到</span>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="month-header">
+        <div class="month-title" id="monthTitle">2026年4月</div>
+        <div class="month-stats">已签到 <strong id="signedCount">0</strong> 天 | 连续签到 <strong id="consecutiveCount">0</strong> 天</div>
+    </div>
+
+    <div class="calendar">
+        <div class="weekday-header">
+            <div class="weekday">日</div>
+            <div class="weekday">一</div>
+            <div class="weekday">二</div>
+            <div class="weekday">三</div>
+            <div class="weekday">四</div>
+            <div class="weekday">五</div>
+            <div class="weekday">六</div>
+        </div>
+        <div class="days-grid" id="daysGrid"></div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-dot" style="background: var(--accent);"></div>
+            <span>已签到</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: #9c27b0;"></div>
+            <span>连续奖励日</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot" style="background: rgba(255,255,255,0.2);"></div>
+            <span>未签到</span>
+        </div>
+    </div>
+
+    <div class="current-reward">
+        <div class="reward-title" id="rewardTitle">第1天签到奖励</div>
+        <div class="reward-preview" id="rewardPreview">
+            <div class="reward-item">
+                <span class="reward-icon">💰</span>
+                <span class="reward-name">金币</span>
+                <span class="reward-amount">×500</span>
+            </div>
+            <div class="reward-item">
+                <span class="reward-icon">📦</span>
+                <span class="reward-name">强化石</span>
+                <span class="reward-amount">×5</span>
+            </div>
+        </div>
+        <div class="consecutive-info">
+            连续签到 <strong id="consecutiveForBonus">3</strong> 天 → 再签到 <strong id="needForBonus">1</strong> 天获得额外奖励！
+        </div>
+    </div>
+
+    <div class="makeup-card">
+        <div class="makeup-info">
+            <span class="makeup-icon">🎫</span>
+            <div>
+                <div class="makeup-text">补签卡</div>
+                <div class="makeup-count">剩余 <strong id="makeupCount">0</strong> 张</div>
+            </div>
+        </div>
+        <button class="makeup-btn" id="makeupBtn" onclick="showMakeup()" disabled>补签</button>
+    </div>
+
+    <button class="sign-btn" id="signBtn" onclick="doSignIn()">今日签到</button>
+
+    <div class="tips">
+        <div class="tips-title">💡 签到提示</div>
+        • 签到满7天/14天/21天/28天可领取额外奖励<br>
+        • 补签卡可补签前一天的漏签<br>
+        • 每月1日重置签到状态
+    </div>
+
+    <div id="toast" style="display:none;"></div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        const dayRewards = [
+            { gold: 500, items: [{ id: 'enhance_stone', name: '强化石', count: 5 }] },
+            { gold: 600, items: [{ id: 'summon_ticket_1', name: '普通召唤券', count: 1 }] },
+            { gold: 700, items: [{ id: 'summon_ticket_2', name: '精致召唤券', count: 1 }] },
+            { gold: 1000, items: [{ id: 'summon_ticket_3', name: '史诗召唤券', count: 1 }], bonus: true },
+            { gold: 800, items: [{ id: 'solvent', name: '强化溶剂', count: 3 }] },
+            { gold: 900, items: [{ id: 'summon_ticket_2', name: '精致召唤券', count: 1 }] },
+            { gold: 2000, items: [{ id: 'rare_box', name: '稀有礼包', count: 1 }], bonus: true },
+            { gold: 1000, items: [{ id: 'summon_ticket_1', name: '普通召唤券', count: 2 }] },
+            { gold: 1100, items: [{ id: 'refine_stone', name: '精炼石', count: 5 }] },
+            { gold: 1500, items: [{ id: 'summon_ticket_3', name: '稀有召唤券', count: 1 }], bonus: true },
+            { gold: 1200, items: [{ id: 'material_pack', name: '材料包', count: 1 }] },
+            { gold: 1300, items: [{ id: 'summon_ticket_1', name: '普通召唤券', count: 2 }] },
+            { gold: 1400, items: [{ id: 'summon_ticket_2', name: '精致召唤券', count: 1 }] },
+            { gold: 3000, items: [{ id: 'epic_box', name: '史诗礼包', count: 1 }], bonus: true },
+            { gold: 1500, items: [{ id: 'advance_stone', name: '进阶石', count: 3 }] },
+            { gold: 2000, items: [{ id: 'summon_ticket_3', name: '史诗召唤券', count: 1 }], bonus: true },
+            { gold: 1600, items: [{ id: 'summon_ticket_1', name: '普通召唤券', count: 3 }] },
+            { gold: 1700, items: [{ id: 'refine_stone', name: '精炼石', count: 8 }] },
+            { gold: 1800, items: [{ id: 'summon_ticket_2', name: '精致召唤券', count: 2 }] },
+            { gold: 2500, items: [{ id: 'summon_ticket_4', name: '稀有召唤券', count: 1 }], bonus: true },
+            { gold: 3000, items: [{ id: 'rare_box', name: '稀有礼包', count: 1 }], bonus: true },
+            { gold: 2000, items: [{ id: 'material_pack', name: '材料包', count: 2 }] },
+            { gold: 2100, items: [{ id: 'summon_ticket_1', name: '普通召唤券', count: 3 }] },
+            { gold: 3000, items: [{ id: 'summon_ticket_3', name: '史诗召唤券', count: 1 }], bonus: true },
+            { gold: 2200, items: [{ id: 'advance_stone', name: '进阶石', count: 5 }] },
+            { gold: 2300, items: [{ id: 'summon_ticket_2', name: '精致召唤券', count: 2 }] },
+            { gold: 2400, items: [{ id: 'summon_ticket_1', name: '普通召唤券', count: 4 }] },
+            { gold: 5000, items: [{ id: 'orange_weapon_box', name: '橙色武器箱', count: 1 }], bonus: true },
+            { gold: 3000, items: [{ id: 'summon_ticket_4', name: '稀有召唤券', count: 2 }] },
+            { gold: 10000, items: [{ id: 'title', name: '限定称号', count: 1 }], bonus: true, special: true }
+        ];
+
+        const consecutiveBonusDays = [4, 7, 10, 14, 17, 20, 24, 28];
+
+        function renderCalendar() {
+            const signIn = GameDataManager.data.signIn;
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const today = now.getDate();
+
+            document.getElementById('monthTitle').textContent = `${year}年${month + 1}月`;
+            document.getElementById('signedCount').textContent = signIn.signedDays.length;
+            document.getElementById('consecutiveCount').textContent = signIn.consecutiveDays;
+            document.getElementById('makeupCount').textContent = signIn.makeupCards;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const grid = document.getElementById('daysGrid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += '<div class="day-cell future"></div>';
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const isSigned = signIn.signedDays.includes(day);
+                const isToday = day === today;
+                const isFuture = day > today;
+                const isConsecutiveBonus = consecutiveBonusDays.includes(day);
+
+                let classes = 'day-cell';
+                if (isSigned) classes += ' signed';
+                if (isToday) classes += ' today';
+                if (isFuture) classes += ' future';
+                if (isConsecutiveBonus && !isSigned) classes += ' consecutive-bonus';
+
+                grid.innerHTML += `<div class="${classes}">${day}</div>`;
+            }
+
+            const nextDay = signIn.signedDays.length + 1;
+            if (nextDay <= 30) {
+                const reward = dayRewards[nextDay - 1];
+                document.getElementById('rewardTitle').textContent = `第${nextDay}天签到奖励`;
+                let previewHtml = `
+                    <div class="reward-item">
+                        <span class="reward-icon">💰</span>
+                        <span class="reward-name">金币</span>
+                        <span class="reward-amount">×${reward.gold}</span>
+                    </div>
+                `;
+                if (reward.items && reward.items.length > 0) {
+                    reward.items.forEach(item => {
+                        previewHtml += `
+                            <div class="reward-item">
+                                <span class="reward-icon">📦</span>
+                                <span class="reward-name">${item.name}</span>
+                                <span class="reward-amount">×${item.count}</span>
+                            </div>
+                        `;
+                    });
+                }
+                document.getElementById('rewardPreview').innerHTML = previewHtml;
+            }
+
+            const consecutiveForBonus = consecutiveBonusDays.find(d => d > signIn.signedDays.length);
+            if (consecutiveForBonus) {
+                document.getElementById('consecutiveForBonus').textContent = signIn.consecutiveDays;
+                document.getElementById('needForBonus').textContent = consecutiveForBonus - signIn.signedDays.length;
+            } else {
+                document.getElementById('consecutiveForBonus').textContent = signIn.consecutiveDays;
+                document.getElementById('needForBonus').textContent = '0';
+            }
+
+            const btn = document.getElementById('signBtn');
+            const makeupBtn = document.getElementById('makeupBtn');
+
+            if (signIn.signedDays.includes(today)) {
+                btn.textContent = '今日已签到 ✓';
+                btn.classList.add('signed');
+                btn.disabled = true;
+            } else {
+                btn.textContent = '今日签到';
+                btn.disabled = false;
+            }
+
+            makeupBtn.disabled = signIn.makeupCards <= 0 || signIn.signedDays.includes(today);
+        }
+
+        function doSignIn() {
+            const result = GameDataManager.doSignIn();
+            if (result) {
+                const signIn = GameDataManager.data.signIn;
+                const day = signIn.signedDays.length;
+                const reward = dayRewards[day - 1];
+
+                let rewardsText = `💰 金币 ×${reward.gold}`;
+                if (reward.items) {
+                    reward.items.forEach(item => {
+                        rewardsText += `\n📦 ${item.name} ×${item.count}`;
+                        GameDataManager.addToBackpack(item.id, item.count);
+                    });
+                }
+                GameDataManager.addGold(reward.gold);
+
+                showToast('签到成功！', rewardsText);
+                renderCalendar();
+            }
+        }
+
+        function showMakeup() {
+            showToast('补签功能', '使用补签卡补签前一天');
+        }
+
+        function showToast(title, rewards) {
+            const toast = document.getElementById('toast');
+            toast.innerHTML = `
+                <div class="toast-title">✨ ${title}</div>
+                <div class="toast-rewards">${rewards.replace(/\n/g, '<br>')}</div>
+            `;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function goBack() {
+            GameDataManager.save();
+            window.location.href = 'main_interface_v3.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+            renderCalendar();
+        });
+    </script>
+</body>
+</html>

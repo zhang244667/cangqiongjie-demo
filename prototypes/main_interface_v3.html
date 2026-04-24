@@ -268,6 +268,58 @@
             color: #b4b4a0;
         }
 
+        /* 邮箱入口 */
+        .entry-mail {
+            bottom: 28%;
+            left: 5%;
+            width: 70px;
+            height: 60px;
+        }
+
+        .entry-mail .entry-icon {
+            font-size: 26px;
+        }
+
+        .entry-mail .entry-label {
+            font-size: 10px;
+            color: #7ec8e3;
+        }
+
+        /* 签到入口 */
+        .entry-signin {
+            bottom: 28%;
+            right: 5%;
+            width: 70px;
+            height: 60px;
+        }
+
+        .entry-signin .entry-icon {
+            font-size: 26px;
+        }
+
+        .entry-signin .entry-label {
+            font-size: 10px;
+            color: #7ee3a0;
+        }
+
+        /* 竞技场入口 */
+        .entry-arena {
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 75px;
+            height: 65px;
+        }
+
+        .entry-arena .entry-icon {
+            font-size: 28px;
+        }
+
+        .entry-arena .entry-label {
+            font-size: 10px;
+            color: #e3a07e;
+        }
+
         /* ========== 底部快捷栏 ========== */
         .bottom-bar {
             position: absolute;
@@ -541,44 +593,59 @@
                 <span class="entry-label">探 险</span>
             </div>
 
-            <div class="entry-point entry-camp" onclick="showDevModal('角色系统')">
+            <div class="entry-point entry-camp" onclick="window.location.href='英雄养成系统.html'">
                 <span class="entry-icon">⛺</span>
                 <span class="entry-label">角 色</span>
             </div>
 
-            <div class="entry-point entry-summon" onclick="showDevModal('召唤系统')">
+            <div class="entry-point entry-summon" onclick="window.location.href='召唤系统.html'">
                 <span class="entry-icon">🔮</span>
                 <span class="entry-label">召 唤</span>
             </div>
 
-            <div class="entry-point entry-shop" onclick="showDevModal('商城系统')">
+            <div class="entry-point entry-shop" onclick="window.location.href='商城系统.html'">
                 <span class="entry-icon">🏺</span>
                 <span class="entry-label">商 城</span>
             </div>
 
-            <div class="entry-point entry-quest" onclick="showDevModal('任务系统')">
+            <div class="entry-point entry-quest" onclick="window.location.href='任务系统.html'">
                 <span class="entry-icon">📜</span>
                 <span class="entry-label">任 务</span>
+            </div>
+
+            <div class="entry-point entry-mail" onclick="window.location.href='邮件系统.html'">
+                <span class="entry-icon">📬</span>
+                <span class="entry-label">邮 件</span>
+            </div>
+
+            <div class="entry-point entry-signin" onclick="window.location.href='签到系统.html'">
+                <span class="entry-icon">📅</span>
+                <span class="entry-label">签 到</span>
+            </div>
+
+            <div class="entry-point entry-arena" onclick="window.location.href='竞技场系统.html'">
+                <span class="entry-icon">🏆</span>
+                <span class="entry-label">竞技场</span>
             </div>
         </div>
 
         <!-- 底部快捷栏 -->
         <div class="bottom-bar">
-            <div class="quick-btn" onclick="showDevModal('角色')">
+            <div class="quick-btn" onclick="window.location.href='英雄养成系统.html'">
                 <span class="quick-btn-icon">👤</span>
                 <span class="quick-btn-text">角色</span>
             </div>
-            <div class="quick-btn" onclick="showDevModal('编队')">
+            <div class="quick-btn" onclick="window.location.href='编队系统.html'">
                 <span class="quick-btn-icon">⚔️</span>
                 <span class="quick-btn-text">编队</span>
             </div>
-            <div class="quick-btn" onclick="showDevModal('背包')">
+            <div class="quick-btn" onclick="window.location.href='背包系统.html'">
                 <span class="quick-btn-icon">🎒</span>
                 <span class="quick-btn-text">背包</span>
             </div>
-            <div class="quick-btn" onclick="showDevModal('设置')">
-                <span class="quick-btn-icon">⚙️</span>
-                <span class="quick-btn-text">设置</span>
+            <div class="quick-btn" onclick="window.location.href='排行榜系统.html'">
+                <span class="quick-btn-icon">🏅</span>
+                <span class="quick-btn-text">排行</span>
             </div>
         </div>
     </div>

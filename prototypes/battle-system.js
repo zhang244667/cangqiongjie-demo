@@ -1244,14 +1244,83 @@
     // ============================================
     // 战斗核心函数
     // ============================================
-    
+
+    const starBonus = { 1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5, 6: 1.8 };
+
+    function calcBattleStats(heroData, treasureData) {
+        const starMult = starBonus[heroData.starLevel] || 1.0;
+        const breakMult = 1 + (heroData.breakLevel * 0.05);
+        const rarityMult = { 'N': 0.7, 'R': 0.85, 'SR': 1.0, 'SSR': 1.3, 'UR': 1.5 }[heroData.rarity] || 1.0;
+        const g = heroData.growth;
+        const l = heroData.level;
+
+        let baseHp = (heroData.stats.hp + g.hp * (l - 1)) * starMult * breakMult * rarityMult;
+        let baseAtk = (heroData.stats.atk + g.atk * (l - 1)) * starMult * breakMult * rarityMult;
+        let baseDef = (heroData.stats.def + g.def * (l - 1)) * starMult * breakMult * rarityMult;
+        let baseSpd = (heroData.stats.speed + g.speed * (l - 1)) * starMult * breakMult * rarityMult;
+
+        if (heroData.equippedTreasure && treasureData) {
+            const treasure = treasureData[heroData.equippedTreasure];
+            if (treasure) {
+                const qualityMult = { 'N': 0.7, 'R': 0.85, 'SR': 1.0, 'SSR': 1.2, 'UR': 1.5 }[treasure.quality] || 1.0;
+                const treasureBonus = treasure.mainAttr.value * qualityMult * (1 + treasure.breakLevel * 0.1);
+                if (treasure.mainAttr.type === 'hp') baseHp *= (1 + treasureBonus / 100);
+                if (treasure.mainAttr.type === 'atk') baseAtk *= (1 + treasureBonus / 100);
+                if (treasure.mainAttr.type === 'def') baseDef *= (1 + treasureBonus / 100);
+            }
+        }
+
+        return {
+            hp: Math.floor(baseHp),
+            maxHp: Math.floor(baseHp),
+            atk: Math.floor(baseAtk),
+            def: Math.floor(baseDef),
+            speed: Math.floor(baseSpd),
+            critRate: heroData.stats.critRate || 5,
+            critDamage: heroData.stats.critDamage || 150
+        };
+    }
+
     function initBattleHeroes() {
-        battleHeroes = [
-            { ...HERO_STATS.tieZhu, id: 'tieZhu', hp: HERO_STATS.tieZhu.hp, maxHp: HERO_STATS.tieZhu.hp, rage: RAGE_CONFIG.initial },
-            { ...HERO_STATS.xingJiSi, id: 'xingJiSi', hp: HERO_STATS.xingJiSi.hp, maxHp: HERO_STATS.xingJiSi.hp, rage: RAGE_CONFIG.initial },
-            { ...HERO_STATS.moJinShou, id: 'moJinShou', hp: HERO_STATS.moJinShou.hp, maxHp: HERO_STATS.moJinShou.hp, rage: RAGE_CONFIG.initial },
-            { ...HERO_STATS.banShanKe, id: 'banShanKe', hp: HERO_STATS.banShanKe.hp, maxHp: HERO_STATS.banShanKe.hp, rage: RAGE_CONFIG.initial }
-        ];
+        const useGameData = typeof GameDataManager !== 'undefined' && GameDataManager.data;
+        const treasures = useGameData ? GameDataManager.data.treasures : null;
+
+        if (useGameData) {
+            const heroesData = GameDataManager.data.heroes;
+            battleHeroes = Object.values(heroesData).map(hero => {
+                const stats = calcBattleStats(hero, treasures);
+                const portraitMap = {
+                    'tieZhu': 'https://www.coze.cn/s/GShA-7yOypU/',
+                    'xingJiSi': 'https://www.coze.cn/s/EmbK-qYRUvw/',
+                    'moJinShou': 'https://www.coze.cn/s/G4cwsF_5a1A/',
+                    'banShanKe': 'https://www.coze.cn/s/IfrAhL1vG6I/'
+                };
+                return {
+                    id: hero.id,
+                    name: hero.name,
+                    icon: hero.icon,
+                    hp: stats.hp,
+                    maxHp: stats.maxHp,
+                    atk: stats.atk,
+                    def: stats.def,
+                    speed: stats.speed,
+                    critRate: stats.critRate,
+                    critDamage: stats.critDamage,
+                    portrait: portraitMap[hero.id] || '',
+                    job: hero.class,
+                    rage: RAGE_CONFIG.initial,
+                    level: hero.level,
+                    starLevel: hero.starLevel
+                };
+            });
+        } else {
+            battleHeroes = [
+                { ...HERO_STATS.tieZhu, id: 'tieZhu', hp: HERO_STATS.tieZhu.hp, maxHp: HERO_STATS.tieZhu.hp, rage: RAGE_CONFIG.initial },
+                { ...HERO_STATS.xingJiSi, id: 'xingJiSi', hp: HERO_STATS.xingJiSi.hp, maxHp: HERO_STATS.xingJiSi.hp, rage: RAGE_CONFIG.initial },
+                { ...HERO_STATS.moJinShou, id: 'moJinShou', hp: HERO_STATS.moJinShou.hp, maxHp: HERO_STATS.moJinShou.hp, rage: RAGE_CONFIG.initial },
+                { ...HERO_STATS.banShanKe, id: 'banShanKe', hp: HERO_STATS.banShanKe.hp, maxHp: HERO_STATS.banShanKe.hp, rage: RAGE_CONFIG.initial }
+            ];
+        }
         battleState.heroes = [...battleHeroes];
     }
 
@@ -1338,7 +1407,7 @@
 
         const heroArea = document.getElementById('heroArea');
         heroArea.innerHTML = battleState.heroes.map(h => `
-            <div class="card-unit hero-unit ${h.hp <= 0 ? 'dead' : ''} ${h.rage >= RAGE_CONFIG.max ? 'ready' : ''}" id="hero-${h.id}">
+            <div class="card-unit hero-unit ${h.hp <= 0 ? 'dead' : ''} ${h.rage >= RAGE_CONFIG.max ? 'ready' : ''}" id="hero-${h.id}" onclick="onHeroCardClick('${h.id}')" style="cursor: ${h.rage >= RAGE_CONFIG.max && h.hp > 0 ? 'pointer' : 'default'}">
                 <div class="card-portrait">
                     <img src="${HERO_STATS[h.id].portrait}" alt="${h.name}" onerror="this.parentElement.innerHTML='<div class=card-icon>${HERO_STATS[h.id].icon}</div>'">
                 </div>
@@ -1350,6 +1419,7 @@
                     <div class="rage-bar-overlay">
                         <div class="rage-bar"><div class="rage-fill ${h.rage >= RAGE_CONFIG.max ? 'full' : ''}" style="width:${h.rage}%"></div><span class="rage-value">${h.rage}</span></div>
                     </div>
+                    ${h.rage >= RAGE_CONFIG.max ? '<div style="text-align:center;font-size:9px;color:#ffcc00;margin-top:2px;">⚡可释放技能</div>' : ''}
                 </div>
             </div>
         `).join('');
@@ -1374,6 +1444,16 @@
 
     function addBattleLog(text, type) { 
         battleState.logs.push({ text, type }); 
+    }
+
+    function onHeroCardClick(heroId) {
+        const hero = battleState.heroes.find(h => h.id === heroId);
+        if (!hero || hero.hp <= 0) return;
+
+        if (hero.rage >= RAGE_CONFIG.max) {
+            addBattleLog(`${hero.name}释放怒气技能！`, 'player-skill');
+            useHeroSkill(hero, true);
+        }
     }
 
     function calculateDamage(atk, def, isCrit = false) {
@@ -1635,7 +1715,7 @@
         const target = selectRandomTarget(aliveEnemies);
         if (!target) { setTimeout(() => executeNextAction(), 300); return; }
 
-        const isCrit = Math.random() < 0.2;
+        const isCrit = Math.random() < (hero.critRate / 100);
         const damage = calculateDamage(hero.atk, target.def, isCrit);
         target.hp = Math.max(0, target.hp - damage);
         hero.rage = Math.min(RAGE_CONFIG.max, hero.rage + RAGE_CONFIG.perAttack);

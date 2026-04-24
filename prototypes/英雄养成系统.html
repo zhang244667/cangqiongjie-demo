@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>英雄养成 - 苍穹劫</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8B7355;
+            --accent: #B8860B;
+            --bg-dark: #1A1A1A;
+            --bg-card: #2A2A2A;
+            --bg-card-hover: #333333;
+            --text-main: #F5DEB3;
+            --text-sub: #A0A0A0;
+            --border-normal: #444444;
+            --rarity-N: #888888;
+            --rarity-R: #4CAF50;
+            --rarity-SR: #2196F3;
+            --rarity-SSR: #9B59B6;
+            --rarity-UR: #FFD700;
+            --break-glow: #9B59B6;
+            --star-glow: #FFD700;
+            --hp-bar: #E74C3C;
+            --atk-bar: #F39C12;
+            --def-bar: #3498DB;
+            --spd-bar: #2ECC71;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+            background: var(--bg-dark);
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: linear-gradient(180deg, #2A2A2A 0%, #1A1A1A 100%);
+            border-bottom: 1px solid var(--border-normal);
+        }
+
+        .header-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-normal);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .header-btn:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--accent);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .header-spacer {
+            width: 40px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            overflow-x: auto;
+            background: #222;
+            border-bottom: 1px solid var(--border-normal);
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-tag {
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-normal);
+            border-radius: 16px;
+            color: var(--text-sub);
+            font-size: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tag.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #1A1A1A;
+        }
+
+        .filter-tag:hover:not(.active) {
+            border-color: var(--accent);
+        }
+
+        .sort-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #1A1A1A;
+            border-bottom: 1px solid var(--border-normal);
+            overflow-x: auto;
+        }
+
+        .sort-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sort-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-normal);
+            border-radius: 6px;
+            color: var(--text-sub);
+            font-size: 12px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .sort-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .hero-list {
+            flex: 1;
+            padding: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            overflow-y: auto;
+            align-content: start;
+        }
+
+        .hero-card {
+            position: relative;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .hero-card:active {
+            transform: scale(0.98);
+        }
+
+        .hero-card.can-levelup::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .hero-card.can-break::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 10px;
+            height: 10px;
+            background: var(--break-glow);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 8px var(--break-glow);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .hero-card-bg {
+            height: 120px;
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            position: relative;
+        }
+
+        .hero-card-portrait {
+            width: 80px;
+            height: 100px;
+            background: var(--bg-card-hover);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            margin-bottom: -20px;
+            position: relative;
+            z-index: 1;
+            border: 2px solid var(--rarity-SR);
+        }
+
+        .hero-card-portrait.rarity-N { border-color: var(--rarity-N); }
+        .hero-card-portrait.rarity-R { border-color: var(--rarity-R); }
+        .hero-card-portrait.rarity-SR { border-color: var(--rarity-SR); }
+        .hero-card-portrait.rarity-SSR { border-color: var(--rarity-SSR); box-shadow: 0 0 10px var(--rarity-SSR); }
+        .hero-card-portrait.rarity-UR { border-color: var(--rarity-UR); box-shadow: 0 0 15px var(--rarity-UR); }
+
+        .hero-card-break {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 24px;
+            height: 24px;
+            background: var(--break-glow);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            z-index: 2;
+        }
+
+        .hero-card-treasure {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            width: 28px;
+            height: 28px;
+            background: var(--bg-dark);
+            border: 2px solid var(--accent);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            z-index: 2;
+        }
+
+        .hero-card-info {
+            padding: 28px 10px 10px;
+            background: var(--bg-card);
+        }
+
+        .hero-card-name {
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .hero-card-class {
+            font-size: 11px;
+            color: var(--text-sub);
+            text-align: center;
+            margin-bottom: 6px;
+        }
+
+        .hero-card-level {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .hero-card-stars {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            font-size: 12px;
+        }
+
+        .star-filled { color: var(--star-glow); }
+        .star-empty { color: var(--border-normal); }
+
+        .team-level-bar {
+            padding: 12px 16px;
+            background: linear-gradient(180deg, #1A1A1A 0%, #222 100%);
+            border-top: 1px solid var(--border-normal);
+        }
+
+        .team-level-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .team-level-label span:first-child {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .team-level-label span:last-child {
+            color: var(--text-sub);
+        }
+
+        .team-level-track {
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .team-level-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--star-glow));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-normal);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 16px;
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+        }
+
+        .nav-item-icon {
+            font-size: 22px;
+        }
+
+        .detail-screen .header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .hero-portrait-section {
+            position: relative;
+            height: 200px;
+            background: linear-gradient(180deg, #2A2A2A 0%, #1A1A1A 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-portrait-large {
+            width: 140px;
+            height: 170px;
+            background: var(--bg-card-hover);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 72px;
+            border: 3px solid var(--rarity-SR);
+        }
+
+        .hero-portrait-large.rarity-N { border-color: var(--rarity-N); }
+        .hero-portrait-large.rarity-R { border-color: var(--rarity-R); }
+        .hero-portrait-large.rarity-SR { border-color: var(--rarity-SR); }
+        .hero-portrait-large.rarity-SSR { border-color: var(--rarity-SSR); box-shadow: 0 0 20px var(--rarity-SSR); }
+        .hero-portrait-large.rarity-UR { border-color: var(--rarity-UR); box-shadow: 0 0 25px var(--rarity-UR); }
+
+        .star-selector {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            background: var(--bg-card);
+        }
+
+        .star-selector-item {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-dark);
+            border: 2px solid var(--border-normal);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .star-selector-item.active {
+            border-color: var(--star-glow);
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .star-selector-item.current {
+            border-color: var(--star-glow);
+            box-shadow: 0 0 8px var(--star-glow);
+        }
+
+        .hero-basic-info {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-normal);
+        }
+
+        .hero-name-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .hero-name {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .hero-rarity-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .hero-rarity-badge.rarity-N { background: var(--rarity-N); color: white; }
+        .hero-rarity-badge.rarity-R { background: var(--rarity-R); color: white; }
+        .hero-rarity-badge.rarity-SR { background: var(--rarity-SR); color: white; }
+        .hero-rarity-badge.rarity-SSR { background: var(--rarity-SSR); color: white; }
+        .hero-rarity-badge.rarity-UR { background: var(--rarity-UR); color: #1A1A1A; }
+
+        .hero-class {
+            color: var(--text-sub);
+            font-size: 13px;
+        }
+
+        .hero-status-line {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-item.level { color: var(--accent); }
+        .status-item.break { color: var(--break-glow); }
+        .status-item.treasure { color: var(--text-sub); }
+
+        .detail-tabs {
+            display: flex;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-normal);
+        }
+
+        .detail-tab {
+            flex: 1;
+            padding: 12px 8px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-sub);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .detail-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .detail-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-section {
+            margin-bottom: 16px;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .stats-header span:first-child {
+            font-weight: 600;
+        }
+
+        .stats-header span:last-child {
+            color: var(--text-sub);
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .stat-icon {
+            width: 24px;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+
+        .stat-name {
+            width: 40px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        .stat-bar-container {
+            flex: 1;
+            height: 10px;
+            background: var(--bg-card);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-right: 8px;
+        }
+
+        .stat-bar {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .stat-bar.hp { background: linear-gradient(90deg, #C0392B, var(--hp-bar)); }
+        .stat-bar.atk { background: linear-gradient(90deg, #D68910, var(--atk-bar)); }
+        .stat-bar.def { background: linear-gradient(90deg, #2980B9, var(--def-bar)); }
+        .stat-bar.spd { background: linear-gradient(90deg, #27AE60, var(--spd-bar)); }
+        .stat-bar.crit { background: linear-gradient(90deg, #8E44AD, #9B59B6); }
+        .stat-bar.critdmg { background: linear-gradient(90deg, #C0392B, #E74C3C); }
+
+        .stat-value {
+            width: 60px;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .stats-bonus {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 10px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        .bonus-tag {
+            padding: 4px 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            color: var(--accent);
+        }
+
+        .skill-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--text-sub);
+        }
+
+        .skill-card.normal { border-left-color: var(--text-main); }
+        .skill-card.rage { border-left-color: var(--star-glow); }
+        .skill-card.passive { border-left-color: var(--break-glow); }
+
+        .skill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .skill-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .skill-icon {
+            font-size: 16px;
+        }
+
+        .skill-level {
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .skill-desc {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .skill-break-bonus {
+            font-size: 11px;
+            color: var(--break-glow);
+            padding: 4px 8px;
+            background: rgba(155, 89, 182, 0.2);
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .treasure-equipped {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--accent);
+        }
+
+        .treasure-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .treasure-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 2px solid var(--rarity-SR);
+        }
+
+        .treasure-icon.rarity-N { border-color: var(--rarity-N); }
+        .treasure-icon.rarity-R { border-color: var(--rarity-R); }
+        .treasure-icon.rarity-SR { border-color: var(--rarity-SR); }
+        .treasure-icon.rarity-SSR { border-color: var(--rarity-SSR); }
+        .treasure-icon.rarity-UR { border-color: var(--rarity-UR); box-shadow: 0 0 10px var(--rarity-UR); }
+
+        .treasure-name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .treasure-quality {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .treasure-level-bar {
+            margin: 10px 0;
+        }
+
+        .treasure-level-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .treasure-level-track {
+            height: 6px;
+            background: var(--bg-dark);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .treasure-level-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--star-glow));
+            border-radius: 3px;
+        }
+
+        .treasure-attrs {
+            font-size: 12px;
+        }
+
+        .treasure-attr {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--bg-dark);
+        }
+
+        .treasure-attr:last-child {
+            border-bottom: none;
+        }
+
+        .treasure-attr.main { color: var(--accent); }
+        .treasure-attr.sub { color: var(--text-sub); }
+        .treasure-attr.effect { color: var(--break-glow); }
+
+        .treasure-empty {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 24px;
+            text-align: center;
+            border: 1px dashed var(--border-normal);
+        }
+
+        .treasure-empty-icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+
+        .treasure-empty-text {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        .cultivation-item {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .cultivation-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .cultivation-item-icon {
+            font-size: 18px;
+        }
+
+        .cultivation-item-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .cultivation-progress {
+            margin-bottom: 10px;
+        }
+
+        .cultivation-progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .cultivation-progress-track {
+            height: 8px;
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .cultivation-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--star-glow));
+            border-radius: 4px;
+        }
+
+        .cultivation-materials {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .cultivation-material {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+        }
+
+        .material-name {
+            color: var(--text-sub);
+        }
+
+        .material-count.sufficient { color: var(--rarity-R); }
+        .material-count.insufficient { color: #E74C3C; }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-normal);
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--accent), #DAA520);
+            color: #1A1A1A;
+        }
+
+        .action-btn.secondary {
+            background: var(--bg-dark);
+            color: var(--text-main);
+            border: 1px solid var(--border-normal);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 360px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 16px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-normal);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .modal-content {
+            padding: 20px 16px;
+        }
+
+        .upgrade-preview {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .upgrade-arrow {
+            font-size: 24px;
+            color: var(--accent);
+            margin: 10px 0;
+        }
+
+        .upgrade-stats {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+
+        .upgrade-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 13px;
+        }
+
+        .upgrade-stat.add { color: #4CAF50; }
+
+        .upgrade-cost {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .upgrade-cost-title {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+
+        .upgrade-cost-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+
+        .upgrade-cost-item.sufficient { color: var(--text-main); }
+        .upgrade-cost-item.insufficient { color: #E74C3C; }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .modal-btn.cancel {
+            background: var(--bg-dark);
+            color: var(--text-main);
+        }
+
+        .modal-btn.confirm {
+            background: linear-gradient(135deg, var(--accent), #DAA520);
+            color: #1A1A1A;
+        }
+
+        .modal-btn.confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upgrade-mode-selector {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .upgrade-mode-btn {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-normal);
+            border-radius: 8px;
+            color: var(--text-sub);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .upgrade-mode-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(184, 134, 11, 0.1);
+        }
+
+        .float-text {
+            position: fixed;
+            pointer-events: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #4CAF50;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 200;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        .treasure-screen .hero-list {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .treasure-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .treasure-card:active {
+            transform: scale(0.95);
+        }
+
+        .treasure-card.equipped {
+            border-color: var(--accent);
+        }
+
+        .treasure-card-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 6px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 1px solid var(--rarity-SR);
+        }
+
+        .treasure-card-icon.rarity-N { border-color: var(--rarity-N); }
+        .treasure-card-icon.rarity-R { border-color: var(--rarity-R); }
+        .treasure-card-icon.rarity-SR { border-color: var(--rarity-SR); }
+        .treasure-card-icon.rarity-SSR { border-color: var(--rarity-SSR); }
+        .treasure-card-icon.rarity-UR { border-color: var(--rarity-UR); }
+
+        .treasure-card-name {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .treasure-card-level {
+            font-size: 10px;
+            color: var(--text-sub);
+        }
+
+        .treasure-card-status {
+            font-size: 9px;
+            color: var(--accent);
+            margin-top: 2px;
+        }
+
+        .treasure-detail-modal .modal {
+            max-width: 340px;
+        }
+
+        .treasure-detail-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 3px solid var(--rarity-SR);
+        }
+
+        .treasure-detail-icon.rarity-N { border-color: var(--rarity-N); }
+        .treasure-detail-icon.rarity-R { border-color: var(--rarity-R); }
+        .treasure-detail-icon.rarity-SR { border-color: var(--rarity-SR); }
+        .treasure-detail-icon.rarity-SSR { border-color: var(--rarity-SSR); box-shadow: 0 0 15px var(--rarity-SSR); }
+        .treasure-detail-icon.rarity-UR { border-color: var(--rarity-UR); box-shadow: 0 0 20px var(--rarity-UR); }
+
+        .treasure-detail-name {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .treasure-detail-type {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 16px;
+        }
+
+        .treasure-detail-attrs {
+            background: var(--bg-dark);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .treasure-attr-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .treasure-attr-row.main { color: var(--accent); }
+        .treasure-attr-row.sub { color: var(--text-sub); }
+        .treasure-attr-row.locked { color: var(--border-normal); font-style: italic; }
+
+        .treasure-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .treasure-action-btn {
+            padding: 10px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-normal);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .treasure-action-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .treasure-action-btn.primary {
+            grid-column: span 2;
+            background: linear-gradient(135deg, var(--accent), #DAA520);
+            color: #1A1A1A;
+            border: none;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease;
+        }
+
+        .break-effect-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 150;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .break-effect-overlay.active {
+            display: flex;
+        }
+
+        .break-effect-content {
+            text-align: center;
+            animation: breakPulse 0.5s ease;
+        }
+
+        @keyframes breakPulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .break-effect-text {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--break-glow);
+            text-shadow: 0 0 30px var(--break-glow);
+        }
+
+        .break-effect-sub {
+            font-size: 18px;
+            color: var(--text-main);
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="heroCultivationScreen" class="screen active">
+        <div class="header">
+            <button class="header-btn" onclick="goBack()">←</button>
+            <span class="header-title">英雄养成</span>
+            <button class="header-btn" onclick="toggleSortMenu()">↕</button>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-tag active" data-rarity="all" onclick="filterByRarity('all')">全部</div>
+            <div class="filter-tag" data-rarity="R" onclick="filterByRarity('R')">R</div>
+            <div class="filter-tag" data-rarity="SR" onclick="filterByRarity('SR')">SR</div>
+            <div class="filter-tag" data-rarity="SSR" onclick="filterByRarity('SSR')">SSR</div>
+            <div class="filter-tag" data-rarity="UR" onclick="filterByRarity('UR')">UR</div>
+        </div>
+
+        <div class="sort-bar">
+            <span style="font-size: 12px; color: var(--text-sub);">排序:</span>
+            <button class="sort-btn active" data-sort="level" onclick="sortHeroes('level')">等级 ↑</button>
+            <button class="sort-btn" data-sort="star" onclick="sortHeroes('star')">星级</button>
+            <button class="sort-btn" data-sort="rarity" onclick="sortHeroes('rarity')">品质</button>
+            <button class="sort-btn" data-sort="break" onclick="sortHeroes('break')">突破</button>
+        </div>
+
+        <div class="hero-list" id="heroList"></div>
+
+        <div class="team-level-bar">
+            <div class="team-level-label">
+                <span>小队等级: Lv.<span id="teamLevelNum">0</span></span>
+                <span id="teamLevelPercent">0%</span>
+            </div>
+            <div class="team-level-track">
+                <div class="team-level-fill" id="teamLevelFill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="showScreen('heroCultivationScreen')">
+                <span class="nav-item-icon">⚔️</span>
+                <span>英雄</span>
+            </button>
+            <button class="nav-item" onclick="showScreen('treasureScreen')">
+                <span class="nav-item-icon">💎</span>
+                <span>宝物</span>
+            </button>
+            <button class="nav-item">
+                <span class="nav-item-icon">📖</span>
+                <span>图鉴</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="heroDetailScreen" class="screen detail-screen">
+        <div class="header">
+            <button class="header-btn" onclick="showScreen('heroCultivationScreen')">←</button>
+            <span class="header-title" id="detailHeroName">英雄详情</span>
+            <div class="header-spacer"></div>
+        </div>
+
+        <div class="hero-portrait-section">
+            <div class="hero-portrait-large" id="detailHeroPortrait">铁柱</div>
+        </div>
+
+        <div class="star-selector" id="starSelector"></div>
+
+        <div class="hero-basic-info">
+            <div class="hero-name-line">
+                <span class="hero-name" id="detailHeroName2">铁柱</span>
+                <span class="hero-rarity-badge" id="detailHeroRarity">R</span>
+            </div>
+            <div class="hero-class" id="detailHeroClass">搬山道人</div>
+            <div class="hero-status-line">
+                <span class="status-item level">Lv.<span id="detailHeroLevel">150</span></span>
+                <span class="status-item break">⓸突破</span>
+                <span class="status-item treasure" id="detailHeroTreasure">装备: 发丘印</span>
+            </div>
+        </div>
+
+        <div class="detail-tabs">
+            <button class="detail-tab active" data-tab="stats" onclick="switchTab('stats')">属性</button>
+            <button class="detail-tab" data-tab="skills" onclick="switchTab('skills')">技能</button>
+            <button class="detail-tab" data-tab="treasure" onclick="switchTab('treasure')">宝物</button>
+            <button class="detail-tab" data-tab="cultivation" onclick="switchTab('cultivation')">养成</button>
+        </div>
+
+        <div class="detail-content">
+            <div class="tab-content active" id="tab-stats">
+                <div class="stats-section">
+                    <div class="stats-header">
+                        <span>基础属性</span>
+                        <span>当前 / 满级300</span>
+                    </div>
+                    <div id="statsContainer"></div>
+                    <div class="stats-bonus">
+                        <span class="bonus-tag">星级加成: <span id="starBonusText">+60%</span></span>
+                        <span class="bonus-tag">突破加成: <span id="breakBonusText">+15%</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="tab-skills">
+                <div id="skillsContainer"></div>
+            </div>
+
+            <div class="tab-content" id="tab-treasure">
+                <div id="treasureContainer"></div>
+            </div>
+
+            <div class="tab-content" id="tab-cultivation">
+                <div id="cultivationContainer"></div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="action-btn secondary" onclick="showUpgradeModal()">升级</button>
+            <button class="action-btn secondary" onclick="showBreakModal()">突破</button>
+            <button class="action-btn primary" onclick="showStarUpModal()">升星</button>
+        </div>
+    </div>
+
+    <div id="treasureScreen" class="screen treasure-screen">
+        <div class="header">
+            <button class="header-btn" onclick="showScreen('heroCultivationScreen')">←</button>
+            <span class="header-title">宝物背包</span>
+            <button class="header-btn">筛</button>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-tag active" data-type="all" onclick="filterByType('all')">全部</div>
+            <div class="filter-tag" data-type="法器" onclick="filterByType('法器')">法器</div>
+            <div class="filter-tag" data-type="防护" onclick="filterByType('防护')">防护</div>
+            <div class="filter-tag" data-type="兵器" onclick="filterByType('兵器')">兵器</div>
+            <div class="filter-tag" data-type="古董" onclick="filterByType('古董')">古董</div>
+        </div>
+
+        <div style="padding: 8px 16px; background: #1A1A1A; font-size: 12px; color: var(--text-sub);">
+            金币: <span style="color: var(--accent);" id="goldAmount">125,000</span> │ 宝物: <span id="treasureCount">12</span>个
+        </div>
+
+        <div class="hero-list" id="treasureList"></div>
+
+        <div class="bottom-nav">
+            <button class="nav-item" onclick="showScreen('heroCultivationScreen')">
+                <span class="nav-item-icon">⚔️</span>
+                <span>英雄</span>
+            </button>
+            <button class="nav-item active">
+                <span class="nav-item-icon">💎</span>
+                <span>宝物</span>
+            </button>
+            <button class="nav-item">
+                <span class="nav-item-icon">📖</span>
+                <span>图鉴</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="upgradeModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">升级确认</span>
+            </div>
+            <div class="modal-content">
+                <div class="upgrade-preview">
+                    <div>Lv.<span id="upgradeFromLevel">150</span></div>
+                    <div class="upgrade-arrow">↓</div>
+                    <div>Lv.<span id="upgradeToLevel">151</span></div>
+                </div>
+
+                <div class="upgrade-mode-selector">
+                    <button class="upgrade-mode-btn" data-mode="auto" onclick="setUpgradeMode('auto')">自动</button>
+                    <button class="upgrade-mode-btn active" data-mode="x1" onclick="setUpgradeMode('x1')">+1</button>
+                    <button class="upgrade-mode-btn" data-mode="x5" onclick="setUpgradeMode('x5')">+5</button>
+                </div>
+
+                <div class="upgrade-stats" id="upgradeStatsPreview">
+                    <div class="upgrade-stat">
+                        <span>生命</span>
+                        <span class="add">+50</span>
+                    </div>
+                    <div class="upgrade-stat">
+                        <span>攻击</span>
+                        <span class="add">+8</span>
+                    </div>
+                    <div class="upgrade-stat">
+                        <span>防御</span>
+                        <span class="add">+3</span>
+                    </div>
+                </div>
+
+                <div class="upgrade-cost">
+                    <div class="upgrade-cost-title">消耗材料</div>
+                    <div class="upgrade-cost-item sufficient" id="upgradeCostItem">
+                        <span>经验药水(中)</span>
+                        <span>x3 (已有 x15)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('upgradeModal')">取消</button>
+                <button class="modal-btn confirm" id="upgradeConfirmBtn" onclick="confirmUpgrade()">确认升级</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="breakModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">突破确认</span>
+            </div>
+            <div class="modal-content">
+                <div class="upgrade-preview" style="font-size: 24px; margin-bottom: 20px;">
+                    <span style="color: var(--break-glow);">⓷ 阶</span>
+                    <div class="upgrade-arrow">→</div>
+                    <span style="color: var(--break-glow);">⓸ 阶</span>
+                </div>
+
+                <div style="background: var(--bg-dark); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;">突破消耗</div>
+                    <div class="upgrade-cost-item sufficient" style="margin-bottom: 6px;">
+                        <span>突破石</span>
+                        <span>x200 ✓已拥有</span>
+                    </div>
+                    <div class="upgrade-cost-item sufficient" style="margin-bottom: 6px;">
+                        <span>传承材料</span>
+                        <span>x10 ✓已拥有</span>
+                    </div>
+                    <div class="upgrade-cost-item sufficient">
+                        <span>金币</span>
+                        <span>50,000 ✓</span>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-dark); border-radius: 8px; padding: 12px;">
+                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;">突破效果</div>
+                    <div style="font-size: 13px; color: var(--rarity-R); margin-bottom: 4px;">✓ 解锁180-250级</div>
+                    <div style="font-size: 13px; color: var(--rarity-R); margin-bottom: 4px;">✓ 全技能等级+3</div>
+                    <div style="font-size: 13px; color: var(--rarity-R);">✓ 被动效果+50%</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('breakModal')">取消</button>
+                <button class="modal-btn confirm" id="breakConfirmBtn" onclick="confirmBreak()">确认突破</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="starUpModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">升星确认</span>
+            </div>
+            <div class="modal-content">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeModal('starUpModal')">取消</button>
+                <button class="modal-btn confirm" id="starUpConfirmBtn" onclick="confirmStarUp()">确认升星</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="treasureDetailModal" style="align-items: flex-end; justify-content: center;">
+        <div class="modal treasure-detail-modal">
+            <div class="modal-header">
+                <span class="modal-title" id="treasureDetailName">发丘印</span>
+            </div>
+            <div class="modal-content">
+                <div class="treasure-detail-icon" id="treasureDetailIcon">💎</div>
+                <div class="treasure-detail-name" id="treasureDetailName2">发丘印</div>
+                <div class="treasure-detail-type" id="treasureDetailType">SSR · 法器</div>
+
+                <div class="treasure-level-bar">
+                    <div class="treasure-level-text">
+                        <span>等级: <span id="treasureDetailLevel">35</span> / <span id="treasureDetailMaxLevel">50</span></span>
+                        <span id="treasureDetailBreak">突破: ⓷阶</span>
+                    </div>
+                    <div class="treasure-level-track">
+                        <div class="treasure-level-fill" id="treasureLevelFill" style="width: 70%"></div>
+                    </div>
+                </div>
+
+                <div class="treasure-detail-attrs" id="treasureDetailAttrs">
+                    <div class="treasure-attr-row main">
+                        <span>主属性</span>
+                        <span>攻击 +18%</span>
+                    </div>
+                    <div class="treasure-attr-row sub">
+                        <span>副属性</span>
+                        <span>怒攻伤害 +25%</span>
+                    </div>
+                    <div class="treasure-attr-row locked" id="treasureEffectRow">
+                        <span>特效</span>
+                        <span>满突破解锁</span>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-dark); border-radius: 8px; padding: 12px; margin-top: 12px;">
+                    <div style="font-size: 12px; color: var(--text-sub); margin-bottom: 8px;">强化消耗</div>
+                    <div style="font-size: 13px;">经验石 x500 或 同类宝物 x1</div>
+                    <div style="font-size: 12px; color: var(--accent); margin-top: 4px;">强化效果: 攻击 +18% → +19%</div>
+                </div>
+
+                <div class="treasure-actions">
+                    <button class="treasure-action-btn" onclick="strengthenTreasure()">强化+1</button>
+                    <button class="treasure-action-btn" onclick="breakTreasure()">突破</button>
+                    <button class="treasure-action-btn" onclick="unequipTreasure()">卸下</button>
+                    <button class="treasure-action-btn" onclick="showTreasureEquipModal()">装备</button>
+                </div>
+            </div>
+            <div class="modal-actions" style="padding: 0 16px 16px;">
+                <button class="modal-btn cancel" style="flex: 1;" onclick="closeModal('treasureDetailModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="break-effect-overlay" id="breakEffectOverlay">
+        <div class="break-effect-content">
+            <div class="break-effect-text">⚡ 突 ⚡</div>
+            <div class="break-effect-sub">突破成功！</div>
+            <div style="margin-top: 20px; font-size: 14px; color: var(--text-sub);">
+                全技能等级 +3<br>
+                被动效果 +50%
+            </div>
+            <button class="modal-btn confirm" style="margin-top: 24px; width: 120px;" onclick="closeBreakEffect()">完成</button>
+        </div>
+    </div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        const rarityOrder = { 'N': 0, 'R': 1, 'SR': 2, 'SSR': 3, 'UR': 4 };
+        const starBonus = { 1: 1.0, 2: 1.2, 3: 1.4, 4: 1.6, 5: 1.8, 6: 2.2 };
+        const breakNodes = [30, 70, 120, 180, 250, 300];
+
+        const expTable = {};
+        for (let i = 1; i <= 300; i++) {
+            expTable[i] = Math.floor(100 * Math.pow(1.15, i - 1));
+        }
+
+        const breakCosts = {
+            1: { stones: 50, heritage: 5, gold: 10000 },
+            2: { stones: 100, heritage: 8, gold: 20000 },
+            3: { stones: 150, heritage: 10, gold: 35000 },
+            4: { stones: 200, heritage: 15, gold: 50000 },
+            5: { stones: 300, heritage: 25, gold: 80000 },
+            6: { stones: 500, heritage: 50, gold: 150000 }
+        };
+
+        const starCosts = {
+            2: 20, 3: 50, 4: 100, 5: 150, 6: 250
+        };
+
+        const treasureExpTable = {};
+        for (let i = 1; i <= 100; i++) {
+            treasureExpTable[i] = Math.floor(50 * Math.pow(1.12, i - 1));
+        }
+
+        const treasureBreakCosts = {
+            2: { sameType: 3, gold: 5000 },
+            3: { sameType: 5, gold: 10000 },
+            4: { sameType: 8, gold: 20000 },
+            5: { sameType: 10, gold: 50000 }
+        };
+
+        const playerData = GameDataManager.data.player;
+        const heroData = GameDataManager.data.heroes;
+        const treasureData = GameDataManager.data.treasures;
+
+        const materials = GameDataManager.data.materials;
+        const heroFragments = GameDataManager.data.heroFragments;
+
+        function saveGameData() {
+            GameDataManager.save();
+        }
+
+        function getExpForLevel(level) {
+            return expTable[level] || 0;
+        }
+
+        function getTotalExpForLevel(level) {
+            let total = 0;
+            for (let i = 1; i <= level; i++) {
+                total += getExpForLevel(i);
+            }
+            return total;
+        }
+
+        function getTreasureExpForLevel(level) {
+            return treasureExpTable[level] || 0;
+        }
+
+        function getMaxLevelForBreak(breakLevel) {
+            return breakNodes[breakLevel] || 300;
+        }
+
+        function calcFinalStats(hero) {
+            const starMult = starBonus[hero.starLevel];
+            const breakMult = 1 + (hero.breakLevel * 0.05);
+            const rarityMult = { 'N': 0.7, 'R': 0.85, 'SR': 1.0, 'SSR': 1.3, 'UR': 1.5 }[hero.rarity];
+            const g = hero.growth;
+            const l = hero.level;
+
+            let baseHp = (hero.stats.hp + g.hp * (l - 1)) * starMult * breakMult * rarityMult;
+            let baseAtk = (hero.stats.atk + g.atk * (l - 1)) * starMult * breakMult * rarityMult;
+            let baseDef = (hero.stats.def + g.def * (l - 1)) * starMult * breakMult * rarityMult;
+            let baseSpd = (hero.stats.speed + g.speed * (l - 1)) * starMult * breakMult * rarityMult;
+
+            if (hero.equippedTreasure) {
+                const treasure = treasureData[hero.equippedTreasure];
+                if (treasure) {
+                    const qualityMult = { 'N': 0.7, 'R': 0.85, 'SR': 1.0, 'SSR': 1.2, 'UR': 1.5 }[treasure.quality];
+                    const treasureBonus = treasure.mainAttr.value * qualityMult * (1 + treasure.breakLevel * 0.1);
+                    if (treasure.mainAttr.type === 'hp') baseHp *= (1 + treasureBonus / 100);
+                    if (treasure.mainAttr.type === 'atk') baseAtk *= (1 + treasureBonus / 100);
+                    if (treasure.mainAttr.type === 'def') baseDef *= (1 + treasureBonus / 100);
+                }
+            }
+
+            return {
+                hp: Math.floor(baseHp),
+                atk: Math.floor(baseAtk),
+                def: Math.floor(baseDef),
+                speed: Math.floor(baseSpd),
+                critRate: hero.stats.critRate,
+                critDamage: hero.stats.critDamage
+            };
+        }
+
+        function calcPowerScore(hero) {
+            const stats = calcFinalStats(hero);
+            return Math.floor(
+                stats.hp * 0.1 +
+                stats.atk * 2.5 +
+                stats.def * 1.5 +
+                stats.speed * 3 +
+                stats.critRate * 5 +
+                (stats.critDamage - 150) * 2
+            );
+        }
+
+        function getSkillLevel(hero, skillType) {
+            const breakLevel = hero.breakLevel;
+            if (skillType === 'normal') {
+                return Math.min(10, 1 + breakLevel);
+            } else if (skillType === 'rage') {
+                return Math.min(10, 1 + Math.floor(breakLevel / 2) * 2);
+            } else {
+                return Math.min(10, 1 + Math.floor(breakLevel / 2));
+            }
+        }
+
+        function canUpgrade(hero) {
+            if (hero.level >= 300) return false;
+            const maxLevel = getMaxLevelForBreak(hero.breakLevel);
+            if (hero.level >= maxLevel) return false;
+            return true;
+        }
+
+        function canBreak(hero) {
+            if (hero.breakLevel >= 6) return false;
+            const requiredLevel = breakNodes[hero.breakLevel];
+            if (hero.level < requiredLevel) return false;
+            const cost = breakCosts[hero.breakLevel + 1];
+            if (!cost) return false;
+            return playerData.materials.breakStone >= cost.stones &&
+                   playerData.materials.heritageMaterial >= cost.heritage &&
+                   playerData.gold >= cost.gold;
+        }
+
+        function canStarUp(hero) {
+            if (hero.starLevel >= 6) return false;
+            const cost = starCosts[hero.starLevel + 1];
+            if (!cost) return false;
+            return playerData.heroFragments[hero.id] >= cost;
+        }
+
+        function getUpgradeExpCost(level) {
+            const potions = {
+                small: { exp: 100, cost: 1 },
+                medium: { exp: 500, cost: 1 },
+                large: { exp: 2000, cost: 1 }
+            };
+            return potions;
+        }
+
+        let currentHeroId = null;
+        let currentFilter = 'all';
+        let currentSort = 'level';
+        let upgradeMode = 'x1';
+        let treasureFilter = 'all';
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if (screenId === 'heroCultivationScreen') {
+                renderHeroList();
+            } else if (screenId === 'treasureScreen') {
+                renderTreasureList();
+            }
+        }
+
+        function goBack() {
+            GameDataManager.save();
+            window.location.href='main_interface_v3.html';
+        }
+
+        function toggleSortMenu() {
+            console.log('Sort menu toggled');
+        }
+
+        function filterByRarity(rarity) {
+            currentFilter = rarity;
+            document.querySelectorAll('.filter-tag').forEach(t => {
+                t.classList.toggle('active', t.dataset.rarity === rarity);
+            });
+            renderHeroList();
+        }
+
+        function sortHeroes(sortType) {
+            currentSort = sortType;
+            document.querySelectorAll('.sort-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.sort === sortType);
+            });
+            renderHeroList();
+        }
+
+        function getSortedHeroes() {
+            let heroes = Object.values(heroData);
+            if (currentFilter !== 'all') {
+                heroes = heroes.filter(h => h.rarity === currentFilter);
+            }
+            heroes.sort((a, b) => {
+                if (currentSort === 'level') return b.level - a.level;
+                if (currentSort === 'star') return b.starLevel - a.starLevel;
+                if (currentSort === 'rarity') return rarityOrder[b.rarity] - rarityOrder[a.rarity];
+                if (currentSort === 'break') return b.breakLevel - a.breakLevel;
+                return 0;
+            });
+            return heroes;
+        }
+
+        function renderHeroList() {
+            const container = document.getElementById('heroList');
+            const heroes = getSortedHeroes();
+            let html = '';
+            heroes.forEach(hero => {
+                const canBreak = hero.level >= breakNodes[hero.breakLevel] && hero.breakLevel < 6;
+                const stars = Array(6).fill(0).map((_, i) =>
+                    `<span class="${i < hero.starLevel ? 'star-filled' : 'star-empty'}">★</span>`
+                ).join('');
+                const treasure = hero.equippedTreasure ? treasureData[hero.equippedTreasure] : null;
+                html += `
+                    <div class="hero-card ${canBreak ? 'can-break' : ''}" onclick="openHeroDetail('${hero.id}')">
+                        <div class="hero-card-break">${hero.breakLevel}</div>
+                        ${treasure ? `<div class="hero-card-treasure">${treasure.icon}</div>` : ''}
+                        <div class="hero-card-bg">
+                            <div class="hero-card-portrait rarity-${hero.rarity}">${hero.icon}</div>
+                        </div>
+                        <div class="hero-card-info">
+                            <div class="hero-card-name">${hero.name}</div>
+                            <div class="hero-card-class">${hero.class}</div>
+                            <div class="hero-card-level">Lv.${hero.level}</div>
+                            <div class="hero-card-stars">${stars}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            updateTeamLevel();
+        }
+
+        function updateTeamLevel() {
+            const heroes = Object.values(heroData);
+            const totalLevel = heroes.reduce((sum, h) => sum + h.level, 0);
+            const teamLevel = Math.floor(totalLevel / heroes.length);
+            const teamLevelPercent = Math.min(100, (teamLevel / 60) * 100);
+            document.getElementById('teamLevelNum').textContent = teamLevel;
+            document.getElementById('teamLevelPercent').textContent = `${Math.round(teamLevelPercent)}%`;
+            document.getElementById('teamLevelFill').style.width = `${teamLevelPercent}%`;
+        }
+
+        function openHeroDetail(heroId) {
+            currentHeroId = heroId;
+            const hero = heroData[heroId];
+            document.getElementById('detailHeroName').textContent = hero.name + '详情';
+            document.getElementById('detailHeroPortrait').textContent = hero.icon;
+            document.getElementById('detailHeroPortrait').className = `hero-portrait-large rarity-${hero.rarity}`;
+            document.getElementById('detailHeroName2').textContent = hero.name;
+            document.getElementById('detailHeroRarity').textContent = hero.rarity;
+            document.getElementById('detailHeroRarity').className = `hero-rarity-badge rarity-${hero.rarity}`;
+            document.getElementById('detailHeroClass').textContent = hero.class;
+            document.getElementById('detailHeroLevel').textContent = hero.level;
+            document.querySelector('.status-item.break').textContent = `⓸${hero.breakLevel}突破`;
+            const treasure = hero.equippedTreasure ? treasureData[hero.equippedTreasure] : null;
+            document.getElementById('detailHeroTreasure').textContent = treasure ? `装备: ${treasure.name}` : '无装备';
+            renderStarSelector(hero);
+            renderStatsTab(hero);
+            renderSkillsTab(hero);
+            renderTreasureTab(hero);
+            renderCultivationTab(hero);
+            showScreen('heroDetailScreen');
+        }
+
+        function renderStarSelector(hero) {
+            const container = document.getElementById('starSelector');
+            let html = '';
+            for (let i = 1; i <= 6; i++) {
+                const isCurrent = i === hero.starLevel;
+                const isActive = i <= hero.starLevel;
+                html += `<div class="star-selector-item ${isCurrent ? 'current' : ''} ${isActive ? 'active' : ''}" onclick="previewStar('${hero.id}', ${i})">${i}★</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function previewStar(heroId, starLevel) {
+            console.log('Preview star:', heroId, starLevel);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.detail-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tab === tabName);
+            });
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.toggle('active', c.id === `tab-${tabName}`);
+            });
+        }
+
+        function calcFinalStats(hero) {
+            const starMult = starBonus[hero.starLevel];
+            const breakMult = 1 + (hero.breakLevel * 0.05);
+            const rarityMult = { 'N': 0.7, 'R': 0.85, 'SR': 1.0, 'SSR': 1.3, 'UR': 1.5 }[hero.rarity];
+            const g = hero.growth;
+            const l = hero.level;
+            return {
+                hp: Math.floor((hero.stats.hp + g.hp * (l - 1)) * starMult * breakMult * rarityMult),
+                atk: Math.floor((hero.stats.atk + g.atk * (l - 1)) * starMult * breakMult * rarityMult),
+                def: Math.floor((hero.stats.def + g.def * (l - 1)) * starMult * breakMult * rarityMult),
+                speed: Math.floor((hero.stats.speed + g.speed * (l - 1)) * starMult * breakMult * rarityMult),
+                critRate: hero.stats.critRate,
+                critDamage: hero.stats.critDamage
+            };
+        }
+
+        function renderStatsTab(hero) {
+            const stats = calcFinalStats(hero);
+            const power = calcPowerScore(hero);
+            const maxHP = 15000, maxAtk = 3000, maxDef = 1500, maxSpeed = 200;
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = `
+                <div style="background: linear-gradient(135deg, var(--accent), #DAA520); border-radius: 8px; padding: 12px; margin-bottom: 16px; text-align: center;">
+                    <div style="font-size: 12px; color: #1A1A1A;">战力评估</div>
+                    <div style="font-size: 28px; font-weight: bold; color: #1A1A1A;">${power.toLocaleString()}</div>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">❤️</span>
+                    <span class="stat-name">生命</span>
+                    <div class="stat-bar-container"><div class="stat-bar hp" style="width: ${Math.min(100, (stats.hp / maxHP) * 100)}%"></div></div>
+                    <span class="stat-value">${stats.hp.toLocaleString()}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">⚔️</span>
+                    <span class="stat-name">攻击</span>
+                    <div class="stat-bar-container"><div class="stat-bar atk" style="width: ${Math.min(100, (stats.atk / maxAtk) * 100)}%"></div></div>
+                    <span class="stat-value">${stats.atk.toLocaleString()}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">🛡️</span>
+                    <span class="stat-name">防御</span>
+                    <div class="stat-bar-container"><div class="stat-bar def" style="width: ${Math.min(100, (stats.def / maxDef) * 100)}%"></div></div>
+                    <span class="stat-value">${stats.def.toLocaleString()}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">💨</span>
+                    <span class="stat-name">速度</span>
+                    <div class="stat-bar-container"><div class="stat-bar spd" style="width: ${Math.min(100, (stats.speed / maxSpeed) * 100)}%"></div></div>
+                    <span class="stat-value">${stats.speed}</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">💥</span>
+                    <span class="stat-name">暴击</span>
+                    <div class="stat-bar-container"><div class="stat-bar crit" style="width: ${Math.min(100, stats.critRate)}%"></div></div>
+                    <span class="stat-value">${stats.critRate}%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">💫</span>
+                    <span class="stat-name">爆伤</span>
+                    <div class="stat-bar-container"><div class="stat-bar critdmg" style="width: ${Math.min(100, (stats.critDamage - 100) / 100)}%"></div></div>
+                    <span class="stat-value">${stats.critDamage}%</span>
+                </div>
+            `;
+            document.getElementById('starBonusText').textContent = `+${Math.round((starBonus[hero.starLevel] - 1) * 100)}%`;
+            document.getElementById('breakBonusText').textContent = `+${hero.breakLevel * 5}%`;
+        }
+
+        function renderSkillsTab(hero) {
+            const container = document.getElementById('skillsContainer');
+            const skillBoost = {
+                normal: 1 + Math.floor(hero.breakLevel / 1),
+                rage: 1 + Math.floor(hero.breakLevel / 2) * 2,
+                passive: 1 + Math.floor(hero.breakLevel / 2)
+            };
+            const breakBonusDesc = {
+                1: ['普攻等级+1'],
+                2: ['被动效果+20%'],
+                3: ['怒攻效果+30%'],
+                4: ['全技能等级+3'],
+                5: ['解锁技能特效变化']
+            };
+            const s = hero.skills;
+            const skillCards = [
+                { type: 'normal', icon: '⚔️', skill: s.normal, boost: skillBoost.normal, bonus: breakBonusDesc[hero.breakLevel]?.[0] || '' },
+                { type: 'rage', icon: '❗', skill: s.rage, boost: skillBoost.rage, bonus: breakBonusDesc[hero.breakLevel]?.[1] || '' },
+                { type: 'passive', icon: '🔮', skill: s.passive, boost: skillBoost.passive, bonus: breakBonusDesc[hero.breakLevel]?.[2] || '' }
+            ];
+            container.innerHTML = skillCards.map(sk => `
+                <div class="skill-card ${sk.type}">
+                    <div class="skill-header">
+                        <span class="skill-name"><span class="skill-icon">${sk.icon}</span> ${sk.skill.name}</span>
+                        <span class="skill-level">等级 Lv.${sk.boost}</span>
+                    </div>
+                    <div class="skill-desc">${sk.skill.desc}</div>
+                    ${sk.bonus ? `<span class="skill-break-bonus">[突破+${hero.breakLevel}] ${sk.bonus}</span>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderTreasureTab(hero) {
+            const container = document.getElementById('treasureContainer');
+            const treasure = hero.equippedTreasure ? treasureData[hero.equippedTreasure] : null;
+            if (treasure) {
+                container.innerHTML = `
+                    <div class="treasure-equipped" onclick="showTreasureDetail('${treasure.id}')">
+                        <div class="treasure-header">
+                            <div class="treasure-icon rarity-${treasure.quality}">${treasure.icon}</div>
+                            <div>
+                                <div class="treasure-name">${treasure.name}</div>
+                                <div class="treasure-quality">${treasure.quality} · ${treasure.type}</div>
+                            </div>
+                        </div>
+                        <div class="treasure-level-bar">
+                            <div class="treasure-level-text">
+                                <span>等级 ${treasure.level} / 50</span>
+                                <span>突破 ⓷${treasure.breakLevel}阶</span>
+                            </div>
+                            <div class="treasure-level-track">
+                                <div class="treasure-level-fill" style="width: ${(treasure.level / 50) * 100}%"></div>
+                            </div>
+                        </div>
+                        <div class="treasure-attrs">
+                            <div class="treasure-attr main">
+                                <span>主属性</span>
+                                <span>${treasure.mainAttr.type === 'atk' ? '攻击' : treasure.mainAttr.type === 'hp' ? '生命' : '防御'} +${treasure.mainAttr.value}%</span>
+                            </div>
+                            ${treasure.subAttr ? `
+                            <div class="treasure-attr sub">
+                                <span>副属性</span>
+                                <span>怒攻伤害 +${treasure.subAttr.value}%</span>
+                            </div>
+                            ` : ''}
+                            ${treasure.specialEffect ? `
+                            <div class="treasure-attr effect">
+                                <span>特效</span>
+                                <span>${treasure.specialEffect}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-sub); text-align: center; padding: 8px;">
+                        点击查看详情或替换宝物
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="treasure-empty">
+                        <div class="treasure-empty-icon">💎</div>
+                        <div class="treasure-empty-text">暂无装备宝物</div>
+                    </div>
+                    <button class="action-btn primary" style="margin-top: 12px;" onclick="showTreasureEquipModal()">装备宝物</button>
+                `;
+            }
+        }
+
+        function renderCultivationTab(hero) {
+            const container = document.getElementById('cultivationContainer');
+            const nextBreakLevel = hero.breakLevel + 1;
+            const nextBreakNode = breakNodes[hero.breakLevel] || 300;
+            const nextNode = breakNodes[nextBreakLevel] || 300;
+            const breakCost = breakCosts[nextBreakLevel] || breakCosts[6];
+            const starCost = starCosts[hero.starLevel + 1] || 0;
+            const currentFragments = playerData.heroFragments[hero.id] || 0;
+
+            const canBreakHero = canBreak(hero);
+            const canStarUpHero = canStarUp(hero);
+
+            container.innerHTML = `
+                <div class="cultivation-item">
+                    <div class="cultivation-item-header">
+                        <span class="cultivation-item-icon">⓸</span>
+                        <span class="cultivation-item-title">突破进度</span>
+                        ${canBreakHero ? '<span style="color: var(--break-glow); font-size: 12px;">可突破!</span>' : ''}
+                    </div>
+                    <div class="cultivation-progress">
+                        <div class="cultivation-progress-label">
+                            <span>⓷${hero.breakLevel}阶 → ⓷${nextBreakLevel}阶</span>
+                            <span>${Math.round((hero.level / nextNode) * 100)}%</span>
+                        </div>
+                        <div class="cultivation-progress-track">
+                            <div class="cultivation-progress-fill" style="width: ${Math.min(100, (hero.level / nextNode) * 100)}%"></div>
+                        </div>
+                    </div>
+                    <div class="cultivation-materials">
+                        <div class="cultivation-material">
+                            <span class="material-name">等级达到${nextNode}级</span>
+                            <span class="material-count ${hero.level >= nextNode ? 'sufficient' : 'insufficient'}">${hero.level} / ${nextNode}</span>
+                        </div>
+                        <div class="cultivation-material">
+                            <span class="material-name">突破石</span>
+                            <span class="material-count ${playerData.materials.breakStone >= breakCost.stones ? 'sufficient' : 'insufficient'}">${playerData.materials.breakStone} / ${breakCost.stones}</span>
+                        </div>
+                        <div class="cultivation-material">
+                            <span class="material-name">传承材料</span>
+                            <span class="material-count ${playerData.materials.heritageMaterial >= breakCost.heritage ? 'sufficient' : 'insufficient'}">${playerData.materials.heritageMaterial} / ${breakCost.heritage}</span>
+                        </div>
+                        <div class="cultivation-material">
+                            <span class="material-name">金币</span>
+                            <span class="material-count ${playerData.gold >= breakCost.gold ? 'sufficient' : 'insufficient'}">${playerData.gold.toLocaleString()} / ${breakCost.gold.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    ${!canBreakHero && hero.breakLevel < 6 ? `
+                    <div style="font-size: 11px; color: #E74C3C; margin-top: 8px; text-align: center;">
+                        ${hero.level < nextBreakNode ? `还需升到${nextBreakNode}级` : '材料不足'}
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="cultivation-item">
+                    <div class="cultivation-item-header">
+                        <span class="cultivation-item-icon">★</span>
+                        <span class="cultivation-item-title">升星进度</span>
+                        ${canStarUpHero ? '<span style="color: var(--star-glow); font-size: 12px;">可升星!</span>' : ''}
+                    </div>
+                    <div class="cultivation-progress">
+                        <div class="cultivation-progress-label">
+                            <span>★${hero.starLevel} → ★${hero.starLevel + 1}</span>
+                            <span>${currentFragments} / ${starCost}碎片</span>
+                        </div>
+                        <div class="cultivation-progress-track">
+                            <div class="cultivation-progress-fill" style="width: ${Math.min(100, (currentFragments / starCost) * 100)}%"></div>
+                        </div>
+                    </div>
+                    <div class="cultivation-materials">
+                        <div class="cultivation-material">
+                            <span class="material-name">${hero.name}碎片</span>
+                            <span class="material-count ${currentFragments >= starCost ? 'sufficient' : 'insufficient'}">${currentFragments} / ${starCost}</span>
+                        </div>
+                    </div>
+                    ${hero.starLevel >= 6 ? '<div style="font-size: 11px; color: var(--star-glow); margin-top: 8px; text-align: center;">已达到最大星级</div>' : ''}
+                </div>
+                <div class="cultivation-item">
+                    <div class="cultivation-item-header">
+                        <span class="cultivation-item-icon">📈</span>
+                        <span class="cultivation-item-title">升级经验</span>
+                    </div>
+                    <div class="cultivation-progress">
+                        <div class="cultivation-progress-label">
+                            <span>Lv.${hero.level} → Lv.${hero.level + 1}</span>
+                            <span>${getExpForLevel(hero.level + 1)} 经验</span>
+                        </div>
+                        <div class="cultivation-progress-track">
+                            <div class="cultivation-progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="cultivation-materials">
+                        <div class="cultivation-material">
+                            <span class="material-name">经验药水(大)</span>
+                            <span class="material-count">${playerData.materials.expPotionLarge}个</span>
+                        </div>
+                        <div class="cultivation-material">
+                            <span class="material-name">经验药水(中)</span>
+                            <span class="material-count">${playerData.materials.expPotionMedium}个</span>
+                        </div>
+                        <div class="cultivation-material">
+                            <span class="material-name">经验药水(小)</span>
+                            <span class="material-count">${playerData.materials.expPotionSmall}个</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showUpgradeModal() {
+            const hero = heroData[currentHeroId];
+            if (!canUpgrade(hero)) {
+                showToast(hero.level >= 300 ? '已达到满级' : '需要先突破才能继续升级');
+                return;
+            }
+            updateUpgradeModalContent();
+            document.getElementById('upgradeModal').classList.add('active');
+        }
+
+        function updateUpgradeModalContent() {
+            const hero = heroData[currentHeroId];
+            const currentLevel = hero.level;
+            const nextLevel = currentLevel + 1;
+            const expNeeded = getExpForLevel(nextLevel);
+
+            document.getElementById('upgradeFromLevel').textContent = currentLevel;
+            document.getElementById('upgradeToLevel').textContent = nextLevel;
+
+            const currentStats = calcFinalStats(hero);
+            const tempHero = JSON.parse(JSON.stringify(hero));
+            tempHero.level = nextLevel;
+            const nextStats = calcFinalStats(tempHero);
+
+            const statsHtml = `
+                <div class="upgrade-stat">
+                    <span>生命</span>
+                    <span class="add">+${nextStats.hp - currentStats.hp}</span>
+                </div>
+                <div class="upgrade-stat">
+                    <span>攻击</span>
+                    <span class="add">+${nextStats.atk - currentStats.atk}</span>
+                </div>
+                <div class="upgrade-stat">
+                    <span>防御</span>
+                    <span class="add">+${nextStats.def - currentStats.def}</span>
+                </div>
+                <div class="upgrade-stat">
+                    <span>速度</span>
+                    <span class="add">+${nextStats.speed - currentStats.speed}</span>
+                </div>
+            `;
+            document.getElementById('upgradeStatsPreview').innerHTML = statsHtml;
+
+            const potions = playerData.materials;
+            const potionCost = { small: 3, medium: 1, large: 1 };
+            let costText = '';
+            let canAfford = true;
+
+            if (potions.expPotionLarge >= potionCost.large) {
+                costText = `经验药水(大) x${potionCost.large} (已有 x${potions.expPotionLarge})`;
+            } else if (potions.expPotionMedium >= potionCost.medium) {
+                costText = `经验药水(中) x${potionCost.medium} (已有 x${potions.expPotionMedium})`;
+            } else if (potions.expPotionSmall >= potionCost.small) {
+                costText = `经验药水(小) x${potionCost.small} (已有 x${potions.expPotionSmall})`;
+            } else {
+                costText = '经验药水不足';
+                canAfford = false;
+            }
+
+            const costItem = document.getElementById('upgradeCostItem');
+            costItem.innerHTML = `<span>${costText}</span>`;
+            costItem.className = `upgrade-cost-item ${canAfford ? 'sufficient' : 'insufficient'}`;
+            document.getElementById('upgradeConfirmBtn').disabled = !canAfford;
+        }
+
+        function showBreakModal() {
+            const hero = heroData[currentHeroId];
+            if (hero.breakLevel >= 6) {
+                showToast('已达到最大突破等级');
+                return;
+            }
+            const requiredLevel = breakNodes[hero.breakLevel];
+            if (hero.level < requiredLevel) {
+                showToast(`需要达到${requiredLevel}级才能突破`);
+                return;
+            }
+            updateBreakModalContent();
+            document.getElementById('breakModal').classList.add('active');
+        }
+
+        function updateBreakModalContent() {
+            const hero = heroData[currentHeroId];
+            const nextBreak = hero.breakLevel + 1;
+            const cost = breakCosts[nextBreak];
+
+            document.querySelector('#breakModal .upgrade-preview').innerHTML = `
+                <span style="color: var(--break-glow);">⓷${hero.breakLevel} 阶</span>
+                <div class="upgrade-arrow">→</div>
+                <span style="color: var(--break-glow);">⓷${nextBreak} 阶</span>
+            `;
+
+            const stonesSufficient = playerData.materials.breakStone >= cost.stones;
+            const heritageSufficient = playerData.materials.heritageMaterial >= cost.heritage;
+            const goldSufficient = playerData.gold >= cost.gold;
+
+            document.querySelector('#breakModal .modal-content').innerHTML = `
+                <div class="upgrade-preview" style="font-size: 24px; margin-bottom: 20px;">
+                    <span style="color: var(--break-glow);">⓷${hero.breakLevel} 阶</span>
+                    <div class="upgrade-arrow">→</div>
+                    <span style="color: var(--break-glow);">⓷${nextBreak} 阶</span>
+                </div>
+
+                <div style="background: var(--bg-dark); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;">突破消耗</div>
+                    <div class="upgrade-cost-item ${stonesSufficient ? 'sufficient' : 'insufficient'}" style="margin-bottom: 6px;">
+                        <span>突破石</span>
+                        <span>x${cost.stones} ${stonesSufficient ? '✓已拥有' : '✗不足'}</span>
+                    </div>
+                    <div class="upgrade-cost-item ${heritageSufficient ? 'sufficient' : 'insufficient'}" style="margin-bottom: 6px;">
+                        <span>传承材料</span>
+                        <span>x${cost.heritage} ${heritageSufficient ? '✓已拥有' : '✗不足'}</span>
+                    </div>
+                    <div class="upgrade-cost-item ${goldSufficient ? 'sufficient' : 'insufficient'}">
+                        <span>金币</span>
+                        <span>${cost.gold.toLocaleString()} ${goldSufficient ? '✓' : '✗不足'}</span>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-dark); border-radius: 8px; padding: 12px;">
+                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;">突破效果</div>
+                    <div style="font-size: 13px; color: var(--rarity-R); margin-bottom: 4px;">✓ 解锁${breakNodes[hero.breakLevel]}-${breakNodes[nextBreak] || 300}级</div>
+                    <div style="font-size: 13px; color: var(--rarity-R); margin-bottom: 4px;">✓ 全技能等级+${hero.breakLevel >= 4 ? '3' : '1~2'}</div>
+                    <div style="font-size: 13px; color: var(--rarity-R);">✓ 属性加成+5%</div>
+                </div>
+            `;
+
+            const canBreak = stonesSufficient && heritageSufficient && goldSufficient;
+            document.querySelector('#breakModal .modal-btn.confirm').disabled = !canBreak;
+        }
+
+        function showStarUpModal() {
+            const hero = heroData[currentHeroId];
+            if (hero.starLevel >= 6) {
+                showToast('已达到最大星级');
+                return;
+            }
+            const cost = starCosts[hero.starLevel + 1];
+            const currentFragments = playerData.heroFragments[hero.id];
+            const canAfford = currentFragments >= cost;
+
+            document.querySelector('#starUpModal .modal-content').innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 32px; margin-bottom: 10px;">
+                        ${'★'.repeat(hero.starLevel)}${'☆'.repeat(6 - hero.starLevel)}
+                    </div>
+                    <div style="font-size: 18px; color: var(--star-glow);">
+                        → ${'★'.repeat(hero.starLevel + 1)}${'☆'.repeat(5 - hero.starLevel)}
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-dark); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;">升星消耗</div>
+                    <div class="upgrade-cost-item ${canAfford ? 'sufficient' : 'insufficient'}">
+                        <span>${hero.name}碎片</span>
+                        <span>x${cost} (已有 x${currentFragments})</span>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-dark); border-radius: 8px; padding: 12px;">
+                    <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;">升星效果</div>
+                    <div style="font-size: 13px; color: var(--rarity-R); margin-bottom: 4px;">✓ 全属性 +${Math.round((starBonus[hero.starLevel + 1] - starBonus[hero.starLevel]) * 100)}%</div>
+                    <div style="font-size: 13px; color: var(--rarity-R);">✓ 基础属性大幅提升</div>
+                </div>
+            `;
+
+            document.querySelector('#starUpModal .modal-btn.confirm').disabled = !canAfford;
+            document.getElementById('starUpModal').classList.add('active');
+        }
+
+        function setUpgradeMode(mode) {
+            upgradeMode = mode;
+            document.querySelectorAll('.upgrade-mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+            if (mode === 'auto') {
+                performAutoUpgrade();
+            }
+        }
+
+        function performAutoUpgrade() {
+            const hero = heroData[currentHeroId];
+            let levelsUpped = 0;
+            const maxLevels = 50;
+
+            while (canUpgrade(hero) && levelsUpped < maxLevels) {
+                const potions = playerData.materials;
+                if (potions.expPotionLarge >= 1) {
+                    potions.expPotionLarge--;
+                    hero.level++;
+                    levelsUpped++;
+                } else if (potions.expPotionMedium >= 1) {
+                    potions.expPotionMedium--;
+                    hero.level++;
+                    levelsUpped++;
+                } else if (potions.expPotionSmall >= 1) {
+                    potions.expPotionSmall--;
+                    hero.level++;
+                    levelsUpped++;
+                } else {
+                    break;
+                }
+            }
+
+            if (levelsUpped > 0) {
+                showFloatText(`+${levelsUpped} Lv.`);
+                closeModal('upgradeModal');
+                openHeroDetail(currentHeroId);
+                renderHeroList();
+            } else {
+                showToast('经验药水不足');
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function confirmUpgrade() {
+            const hero = heroData[currentHeroId];
+            const potions = playerData.materials;
+            let cost = { small: 3, medium: 1, large: 1 };
+            let usedPotion = null;
+
+            if (potions.expPotionLarge >= cost.large) {
+                potions.expPotionLarge -= cost.large;
+                usedPotion = '经验药水(大)';
+            } else if (potions.expPotionMedium >= cost.medium) {
+                potions.expPotionMedium -= cost.medium;
+                usedPotion = '经验药水(中)';
+            } else if (potions.expPotionSmall >= cost.small) {
+                potions.expPotionSmall -= cost.small;
+                usedPotion = '经验药水(小)';
+            } else {
+                showToast('经验药水不足');
+                return;
+            }
+
+            hero.level++;
+            showFloatText(`+1 Lv.`);
+            closeModal('upgradeModal');
+            openHeroDetail(currentHeroId);
+            renderHeroList();
+        }
+
+        function confirmBreak() {
+            const hero = heroData[currentHeroId];
+            if (hero.breakLevel >= 6) return;
+
+            const cost = breakCosts[hero.breakLevel + 1];
+            playerData.materials.breakStone -= cost.stones;
+            playerData.materials.heritageMaterial -= cost.heritage;
+            playerData.gold -= cost.gold;
+
+            hero.breakLevel++;
+            closeModal('breakModal');
+            document.getElementById('breakEffectOverlay').classList.add('active');
+        }
+
+        function confirmStarUp() {
+            const hero = heroData[currentHeroId];
+            if (hero.starLevel >= 6) return;
+
+            const cost = starCosts[hero.starLevel + 1];
+            if (playerData.heroFragments[hero.id] < cost) {
+                showToast('碎片不足');
+                return;
+            }
+
+            playerData.heroFragments[hero.id] -= cost;
+            hero.starLevel++;
+            closeModal('starUpModal');
+            showFloatText('⭐升星成功!');
+            openHeroDetail(currentHeroId);
+            renderHeroList();
+        }
+
+        function closeBreakEffect() {
+            document.getElementById('breakEffectOverlay').classList.remove('active');
+            openHeroDetail(currentHeroId);
+            renderHeroList();
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.9);
+                color: var(--text-main);
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 300;
+                font-size: 14px;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+
+        function showFloatText(text) {
+            const float = document.createElement('div');
+            float.className = 'float-text';
+            float.textContent = text;
+            float.style.left = '50%';
+            float.style.top = '50%';
+            float.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(float);
+            setTimeout(() => float.remove(), 1000);
+        }
+
+        function filterByType(type) {
+            treasureFilter = type;
+            document.querySelectorAll('.filter-tag').forEach(t => {
+                t.classList.toggle('active', t.dataset.type === type);
+            });
+            renderTreasureList();
+        }
+
+        function renderTreasureList() {
+            const container = document.getElementById('treasureList');
+            let treasures = Object.values(treasureData);
+            if (treasureFilter !== 'all') {
+                treasures = treasures.filter(t => t.type === treasureFilter);
+            }
+            let html = '';
+            treasures.forEach(t => {
+                const isEquipped = t.ownerHeroId !== null;
+                html += `
+                    <div class="treasure-card ${isEquipped ? 'equipped' : ''}" onclick="showTreasureDetail('${t.id}')">
+                        <div class="treasure-card-icon rarity-${t.quality}">${t.icon}</div>
+                        <div class="treasure-card-name">${t.name}</div>
+                        <div class="treasure-card-level">Lv.${t.level}</div>
+                        ${isEquipped ? '<div class="treasure-card-status">已装备</div>' : ''}
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            document.getElementById('treasureCount').textContent = treasures.length;
+        }
+
+        function showTreasureDetail(treasureId) {
+            const treasure = treasureData[treasureId];
+            if (!treasure) return;
+            document.getElementById('treasureDetailName').textContent = treasure.name;
+            document.getElementById('treasureDetailIcon').textContent = treasure.icon;
+            document.getElementById('treasureDetailIcon').className = `treasure-detail-icon rarity-${treasure.quality}`;
+            document.getElementById('treasureDetailName2').textContent = treasure.name;
+            document.getElementById('treasureDetailType').textContent = `${treasure.quality} · ${treasure.type}`;
+            document.getElementById('treasureDetailLevel').textContent = treasure.level;
+            document.getElementById('treasureDetailMaxLevel').textContent = 50;
+            document.getElementById('treasureDetailBreak').textContent = `突破: ⓷${treasure.breakLevel}阶`;
+            document.getElementById('treasureLevelFill').style.width = `${(treasure.level / 50) * 100}%`;
+            const attrTypeMap = { atk: '攻击', hp: '生命', def: '防御', critRate: '暴击率', critDmg: '暴击伤害', rageDmg: '怒攻伤害' };
+            let attrsHtml = `
+                <div class="treasure-attr-row main">
+                    <span>主属性</span>
+                    <span>${attrTypeMap[treasure.mainAttr.type] || treasure.mainAttr.type} +${treasure.mainAttr.value}%</span>
+                </div>
+            `;
+            if (treasure.subAttr) {
+                attrsHtml += `
+                    <div class="treasure-attr-row sub">
+                        <span>副属性</span>
+                        <span>${attrTypeMap[treasure.subAttr.type] || treasure.subAttr.type} +${treasure.subAttr.value}%</span>
+                    </div>
+                `;
+            } else {
+                attrsHtml += `
+                    <div class="treasure-attr-row locked">
+                        <span>副属性</span>
+                        <span>突破解锁</span>
+                    </div>
+                `;
+            }
+            if (treasure.specialEffect) {
+                attrsHtml += `
+                    <div class="treasure-attr-row locked" id="treasureEffectRow">
+                        <span>特效</span>
+                        <span>${treasure.breakLevel >= 5 ? treasure.specialEffect : '满突破解锁'}</span>
+                    </div>
+                `;
+            }
+            document.getElementById('treasureDetailAttrs').innerHTML = attrsHtml;
+            document.getElementById('treasureDetailModal').classList.add('active');
+        }
+
+        function strengthenTreasure() {
+            showFloatText('强化成功!');
+        }
+
+        function breakTreasure() {
+            showFloatText('突破成功!');
+        }
+
+        function unequipTreasure() {
+            showFloatText('已卸下');
+            closeModal('treasureDetailModal');
+        }
+
+        function showTreasureEquipModal() {
+            showFloatText('选择英雄');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+            renderHeroList();
+        });
+    </script>
+</body>
+</html>

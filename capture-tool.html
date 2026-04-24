@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑截图工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            color: #fff;
+        }
+        h1 { color: #d4af37; margin-bottom: 15px; font-size: 20px; }
+        .instructions {
+            background: rgba(0,0,0,0.3);
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+        .instructions strong { color: #d4af37; }
+        .game-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 65vh;
+            overflow: hidden;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            cursor: crosshair;
+        }
+        .scene-bg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: url('assets/main_interface_bg.jpg') center/cover no-repeat;
+        }
+        .selection-box {
+            position: absolute;
+            border: 3px solid #d4af37;
+            background: rgba(212,175,55,0.1);
+            display: none;
+            pointer-events: none;
+        }
+        .selection-box.active { display: block; }
+        .btn-list {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .btn-item {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 80px;
+            transition: all 0.2s;
+        }
+        .btn-item:hover { border-color: #d4af37; background: rgba(212,175,55,0.2); }
+        .btn-item.active { border-color: #d4af37; background: rgba(212,175,55,0.3); box-shadow: 0 0 15px rgba(212,175,55,0.5); }
+        .btn-item.selected { border-color: #00ff00; background: rgba(0,255,0,0.2); }
+        .btn-item .btn-name { font-size: 14px; font-weight: bold; color: #fff; }
+        .btn-item .btn-status { font-size: 11px; color: #888; margin-top: 3px; }
+        .btn-item.selected .btn-status { color: #0f0; }
+        .preview-area {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .preview-item {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+            display: none;
+        }
+        .preview-item.captured { display: block; }
+        .output {
+            margin-top: 15px;
+            background: rgba(0,0,0,0.4);
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .output h3 { color: #d4af37; margin-bottom: 8px; font-size: 14px; }
+        .copy-btn {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #d4af37, #b8960c);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 15px;
+            color: #1a1530;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .copy-btn:hover { transform: scale(1.05); }
+        .reset-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #fff;
+            margin-left: 10px;
+        }
+        .info-box {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 建筑截图工具</h1>
+
+    <div class="instructions">
+        <strong>使用说明：</strong><br>
+        1. 选择要截取的按钮类型（探险/角色/召唤等）<br>
+        2. 在背景图上按住鼠标拖动，框选建筑区域<br>
+        3. 松开鼠标即可截图并自动生成CSS代码<br>
+        4. 截取完所有按钮后，点击"复制完整CSS"按钮
+    </div>
+
+    <div class="game-container" id="gameContainer">
+        <div class="scene-bg" id="sceneBg"></div>
+        <div class="selection-box" id="selectionBox"></div>
+    </div>
+
+    <div class="info-box" id="infoBox">请先选择要截取的按钮类型</div>
+
+    <div class="btn-list">
+        <div class="btn-item" data-btn="dungeon" onclick="selectBtn('dungeon')">
+            <div class="btn-name">探险</div>
+            <div class="btn-status">未截取</div>
+        </div>
+        <div class="btn-item" data-btn="camp" onclick="selectBtn('camp')">
+            <div class="btn-name">角色</div>
+            <div class="btn-status">未截取</div>
+        </div>
+        <div class="btn-item" data-btn="summon" onclick="selectBtn('summon')">
+            <div class="btn-name">召唤</div>
+            <div class="btn-status">未截取</div>
+        </div>
+        <div class="btn-item" data-btn="shop" onclick="selectBtn('shop')">
+            <div class="btn-name">商城</div>
+            <div class="btn-status">未截取</div>
+        </div>
+        <div class="btn-item" data-btn="quest" onclick="selectBtn('quest')">
+            <div class="btn-name">任务</div>
+            <div class="btn-status">未截取</div>
+        </div>
+    </div>
+
+    <div class="output" id="output">
+        <h3>📋 CSS 代码：</h3>
+        <pre id="cssCode">/* 截图工具生成的CSS代码将显示在这里 */</pre>
+        <button class="copy-btn" onclick="copyFullCSS()">复制完整CSS</button>
+        <button class="copy-btn reset-btn" onclick="resetAll()">重置</button>
+    </div>
+
+    <script>
+        const container = document.getElementById('gameContainer');
+        const selectionBox = document.getElementById('selectionBox');
+        const sceneBg = document.getElementById('sceneBg');
+        const infoBox = document.getElementById('infoBox');
+        const cssCodeEl = document.getElementById('cssCode');
+        const btnItems = document.querySelectorAll('.btn-item');
+
+        let currentBtn = null;
+        let isSelecting = false;
+        let startX, startY;
+        let containerRect;
+
+        const captures = {};
+
+        function selectBtn(btnName) {
+            currentBtn = btnName;
+            btnItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.btn === btnName) {
+                    item.classList.add('active');
+                }
+            });
+            infoBox.textContent = `正在截取【${getBtnChineseName(btnName)}】，请在背景图上拖动鼠标框选建筑区域`;
+            selectionBox.classList.remove('active');
+        }
+
+        function getBtnChineseName(name) {
+            const names = {
+                dungeon: '探险',
+                camp: '角色',
+                summon: '召唤',
+                shop: '商城',
+                quest: '任务'
+            };
+            return names[name] || name;
+        }
+
+        container.addEventListener('mousedown', (e) => {
+            if (!currentBtn) {
+                alert('请先选择一个按钮类型！');
+                return;
+            }
+
+            isSelecting = true;
+            containerRect = container.getBoundingClientRect();
+
+            startX = e.clientX - containerRect.left;
+            startY = e.clientY - containerRect.top;
+
+            selectionBox.style.left = startX + 'px';
+            selectionBox.style.top = startY + 'px';
+            selectionBox.style.width = '0px';
+            selectionBox.style.height = '0px';
+            selectionBox.classList.add('active');
+        });
+
+        container.addEventListener('mousemove', (e) => {
+            if (!isSelecting) return;
+
+            const currentX = e.clientX - containerRect.left;
+            const currentY = e.clientY - containerRect.top;
+
+            const left = Math.min(startX, currentX);
+            const top = Math.min(startY, currentY);
+            const width = Math.abs(currentX - startX);
+            const height = Math.abs(currentY - startY);
+
+            selectionBox.style.left = left + 'px';
+            selectionBox.style.top = top + 'px';
+            selectionBox.style.width = width + 'px';
+            selectionBox.style.height = height + 'px';
+        });
+
+        container.addEventListener('mouseup', (e) => {
+            if (!isSelecting) return;
+            isSelecting = false;
+
+            const currentX = e.clientX - containerRect.left;
+            const currentY = e.clientY - containerRect.top;
+
+            const left = Math.min(startX, currentX);
+            const top = Math.min(startY, currentY);
+            const width = Math.abs(currentX - startX);
+            const height = Math.abs(currentY - startY);
+
+            if (width > 20 && height > 20) {
+                const containerWidth = containerRect.width;
+                const containerHeight = containerRect.height;
+
+                const leftPercent = (left / containerWidth * 100).toFixed(2);
+                const topPercent = (top / containerHeight * 100).toFixed(2);
+                const widthPercent = (width / containerWidth * 100).toFixed(2);
+                const heightPercent = (height / containerHeight * 100).toFixed(2);
+
+                captures[currentBtn] = {
+                    left: leftPercent,
+                    top: topPercent,
+                    width: widthPercent,
+                    height: heightPercent,
+                    originalLeft: left,
+                    originalTop: top,
+                    originalWidth: width,
+                    originalHeight: height
+                };
+
+                updateBtnStatus(currentBtn, true);
+                updateCSSCode();
+
+                infoBox.textContent = `✅ 【${getBtnChineseName(currentBtn)}】截图完成！位置: left: ${leftPercent}%, top: ${topPercent}%, 尺寸: ${widthPercent}% × ${heightPercent}%`;
+            }
+
+            selectionBox.classList.remove('active');
+        });
+
+        function updateBtnStatus(btnName, captured) {
+            btnItems.forEach(item => {
+                if (item.dataset.btn === btnName) {
+                    if (captured) {
+                        item.classList.add('selected');
+                        item.querySelector('.btn-status').textContent = '已截取 ✓';
+                    } else {
+                        item.classList.remove('selected');
+                        item.querySelector('.btn-status').textContent = '未截取';
+                    }
+                }
+            });
+        }
+
+        function updateCSSCode() {
+            let css = '';
+
+            for (const [btnName, data] of Object.entries(captures)) {
+                const className = `.entry-${btnName}`;
+                css += `${className} {\n`;
+                css += `    left: ${data.left}%;\n`;
+                css += `    top: ${data.top}%;\n`;
+                css += `    width: ${(parseFloat(data.width) * 5).toFixed(0)}px;\n`;
+                css += `    height: ${(parseFloat(data.height) * 5).toFixed(0)}px;\n`;
+                css += `}\n`;
+                css += `${className} .building {\n`;
+                css += `    background-image: url('assets/main_interface_bg.jpg');\n`;
+                css += `    background-position: ${data.left}% ${data.top}%;\n`;
+                css += `    background-size: ${(parseFloat(data.width) * 5).toFixed(0)}px ${(parseFloat(data.height) * 5).toFixed(0)}px;\n`;
+                css += `    mask-image: url('assets/main_interface_bg.jpg');\n`;
+                css += `    mask-size: ${(parseFloat(data.width) * 5).toFixed(0)}px ${(parseFloat(data.height) * 5).toFixed(0)}px;\n`;
+                css += `    mask-position: ${data.left}% ${data.top}%;\n`;
+                css += `    -webkit-mask-image: url('assets/main_interface_bg.jpg');\n`;
+                css += `    -webkit-mask-size: ${(parseFloat(data.width) * 5).toFixed(0)}px ${(parseFloat(data.height) * 5).toFixed(0)}px;\n`;
+                css += `    -webkit-mask-position: ${data.left}% ${data.top}%;\n`;
+                css += `}\n\n`;
+            }
+
+            cssCodeEl.textContent = css || '/* 还没有截取任何建筑 */';
+        }
+
+        function copyFullCSS() {
+            const css = cssCodeEl.textContent;
+            navigator.clipboard.writeText(css).then(() => {
+                alert('完整CSS已复制到剪贴板！');
+            });
+        }
+
+        function resetAll() {
+            for (const btnName in captures) {
+                updateBtnStatus(btnName, false);
+            }
+            for (const key in captures) {
+                delete captures[key];
+            }
+            updateCSSCode();
+            infoBox.textContent = '已重置，请重新选择按钮类型并截取';
+        }
+    </script>
+</body>
+</html>

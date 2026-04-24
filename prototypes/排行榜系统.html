@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>排行榜 - 苍穹劫</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a25;
+            --accent: #d4af37;
+            --accent-dark: #8b7355;
+            --text-primary: #e8e8e8;
+            --text-secondary: #888;
+            --success: #4caf50;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            max-width: 430px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: linear-gradient(180deg, rgba(30,20,40,0.95) 0%, rgba(20,15,30,0.9) 100%);
+            border-bottom: 1px solid rgba(212,175,55,0.2);
+        }
+
+        .header-btn {
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.3);
+            color: var(--accent);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .header-title { font-size: 18px; color: var(--accent); }
+
+        .tabs {
+            display: flex;
+            padding: 10px 15px;
+            gap: 8px;
+            background: var(--bg-secondary);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(180deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.1) 100%);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .my-rank {
+            margin: 15px;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(212,175,55,0.15) 0%, rgba(212,175,55,0.05) 100%);
+            border-radius: 12px;
+            border: 1px solid rgba(212,175,55,0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .my-rank-info { flex: 1; }
+
+        .my-rank-title {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .my-rank-value {
+            font-size: 28px;
+            color: var(--accent);
+        }
+
+        .my-rank-name {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .ranking-list {
+            padding: 0 15px;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .ranking-item.highlight {
+            background: linear-gradient(90deg, rgba(212,175,55,0.15) 0%, var(--bg-card) 50%);
+            border: 1px solid rgba(212,175,55,0.3);
+        }
+
+        .rank-badge {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        .rank-badge.gold {
+            background: linear-gradient(180deg, rgba(255,215,0,0.3) 0%, rgba(255,215,0,0.1) 100%);
+            color: var(--gold);
+        }
+
+        .rank-badge.silver {
+            background: linear-gradient(180deg, rgba(192,192,192,0.3) 0%, rgba(192,192,192,0.1) 100%);
+            color: var(--silver);
+        }
+
+        .rank-badge.bronze {
+            background: linear-gradient(180deg, rgba(205,127,50,0.3) 0%, rgba(205,127,50,0.1) 100%);
+            color: var(--bronze);
+        }
+
+        .rank-badge.normal {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-secondary);
+        }
+
+        .rank-info { flex: 1; }
+
+        .rank-name {
+            font-size: 15px;
+            color: var(--text-primary);
+            margin-bottom: 3px;
+        }
+
+        .rank-detail {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .rank-value {
+            text-align: right;
+        }
+
+        .rank-power {
+            font-size: 16px;
+            color: var(--accent);
+        }
+
+        .rank-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--text-secondary);
+        }
+
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            color: var(--accent);
+            padding: 15px 30px;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+            z-index: 300;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="header-btn" onclick="goBack()">← 返回</button>
+        <span class="header-title">排行榜</span>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-type="power" onclick="switchTab('power')">战力榜</div>
+        <div class="tab" data-type="arena" onclick="switchTab('arena')">竞技榜</div>
+        <div class="tab" data-type="level" onclick="switchTab('level')">等级榜</div>
+    </div>
+
+    <div class="my-rank">
+        <div class="my-rank-info">
+            <div class="my-rank-title">我的排名</div>
+            <div class="my-rank-value" id="myRankValue">#888</div>
+        </div>
+        <div>
+            <div class="my-rank-name" id="myRankName">搬山道人</div>
+            <div class="rank-detail" id="myRankDetail">战力 12,580</div>
+        </div>
+    </div>
+
+    <div class="ranking-list" id="rankingList"></div>
+
+    <script src="game-data-manager.js"></script>
+    <script>
+        let currentTab = 'power';
+
+        const mockRankings = {
+            power: [
+                { rank: 1, name: '苍穹帝王', power: 25800, level: 58, class: '发丘中郎将' },
+                { rank: 2, name: '摸金校尉', power: 23500, level: 56, class: '摸金校尉' },
+                { rank: 3, name: '墓府之主', power: 22100, level: 55, class: '卸岭力士' },
+                { rank: 4, name: '古墓探险家', power: 19800, level: 52, class: '搬山道人' },
+                { rank: 5, name: '幽冥使者', power: 18500, level: 50, class: '秘法师' },
+                { rank: 6, name: '机关大师', power: 17200, level: 48, class: '千机术士' },
+                { rank: 7, name: '镇墓将军', power: 16500, level: 47, class: '搬山道人' },
+                { rank: 8, name: '墓府刺客', power: 15800, level: 45, class: '卸岭力士' },
+                { rank: 9, name: '古墓守护者', power: 14900, level: 43, class: '摸金校尉' },
+                { rank: 10, name: '探险新星', power: 13500, level: 40, class: '秘法师' }
+            ],
+            arena: [
+                { rank: 1, name: '竞技之王', power: 0, level: 60, class: '王者', winRate: '98%' },
+                { rank: 2, name: '战场传奇', power: 0, level: 59, class: '大师', winRate: '95%' },
+                { rank: 3, name: '荣耀巅峰', power: 0, level: 58, class: '钻石', winRate: '92%' },
+                { rank: 4, name: '不败战神', power: 0, level: 57, class: '钻石', winRate: '89%' },
+                { rank: 5, name: '战斗大师', power: 0, level: 55, class: '铂金', winRate: '85%' },
+                { rank: 6, name: '荣耀骑士', power: 0, level: 53, class: '铂金', winRate: '82%' },
+                { rank: 7, name: '战斗新星', power: 0, level: 50, class: '黄金', winRate: '78%' },
+                { rank: 8, name: '竞技挑战者', power: 0, level: 48, class: '黄金', winRate: '75%' },
+                { rank: 9, name: '战场新人', power: 0, level: 45, class: '白银', winRate: '70%' },
+                { rank: 10, name: '竞技入门', power: 0, level: 40, class: '青铜', winRate: '65%' }
+            ],
+            level: [
+                { rank: 1, name: '巅峰等级', power: 0, level: 60, class: '全职业' },
+                { rank: 2, name: '顶级冒险', power: 0, level: 58, class: '摸金校尉' },
+                { rank: 3, name: '资深探索', power: 0, level: 55, class: '搬山道人' },
+                { rank: 4, name: '进阶冒险', power: 0, level: 52, class: '秘法师' },
+                { rank: 5, name: '中级冒险', power: 0, level: 48, class: '卸岭力士' },
+                { rank: 6, name: '初级冒险', power: 0, level: 45, class: '千机术士' },
+                { rank: 7, name: '新人探索', power: 0, level: 40, class: '发丘中郎将' },
+                { rank: 8, name: '入门冒险', power: 0, level: 35, class: '摸金校尉' },
+                { rank: 9, name: '新手试炼', power: 0, level: 30, class: '搬山道人' },
+                { rank: 10, name: '初入江湖', power: 0, level: 25, class: '秘法师' }
+            ]
+        };
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.type === tab);
+            });
+            renderRankings();
+        }
+
+        function renderRankings() {
+            const list = document.getElementById('rankingList');
+            const rankings = mockRankings[currentTab];
+
+            const myRank = getMyRank();
+
+            list.innerHTML = rankings.map((player, index) => {
+                const isTop3 = player.rank <= 3;
+                let badgeClass = 'normal';
+                if (player.rank === 1) badgeClass = 'gold';
+                else if (player.rank === 2) badgeClass = 'silver';
+                else if (player.rank === 3) badgeClass = 'bronze';
+
+                let valueDisplay = '';
+                if (currentTab === 'power' || currentTab === 'level') {
+                    valueDisplay = currentTab === 'power'
+                        ? `<div class="rank-power">${player.power.toLocaleString()}</div><div class="rank-label">战力</div>`
+                        : `<div class="rank-power">Lv.${player.level}</div><div class="rank-label">等级</div>`;
+                } else {
+                    valueDisplay = `<div class="rank-power">${player.winRate}</div><div class="rank-label">胜率</div>`;
+                }
+
+                const detailText = currentTab === 'arena'
+                    ? `${player.class} · ${player.level}级`
+                    : `${player.class} · ${player.level}级`;
+
+                return `
+                    <div class="ranking-item ${player.rank <= 3 ? 'highlight' : ''}">
+                        <div class="rank-badge ${badgeClass}">
+                            ${player.rank <= 3 ? ['🥇','🥈','🥉'][player.rank - 1] : player.rank}
+                        </div>
+                        <div class="rank-info">
+                            <div class="rank-name">${player.name}</div>
+                            <div class="rank-detail">${detailText}</div>
+                        </div>
+                        <div class="rank-value">
+                            ${valueDisplay}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getMyRank() {
+            const heroes = GameDataManager.data.heroes;
+            let totalPower = 0;
+            Object.values(heroes).forEach(hero => {
+                totalPower += (hero.stats?.hp || 100) * 0.1 +
+                             (hero.stats?.atk || 10) * 2 +
+                             (hero.stats?.def || 5) * 3;
+            });
+            totalPower = Math.floor(totalPower);
+
+            const player = GameDataManager.data.player;
+            const myRank = 888 - Math.floor(totalPower / 1000);
+
+            document.getElementById('myRankValue').textContent = '#' + Math.max(1, myRank);
+            document.getElementById('myRankName').textContent = player.name || '搬山道人';
+            document.getElementById('myRankDetail').textContent = '战力 ' + totalPower.toLocaleString();
+        }
+
+        function goBack() {
+            GameDataManager.save();
+            window.location.href = 'main_interface_v3.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            GameDataManager.init();
+            renderRankings();
+        });
+    </script>
+</body>
+</html>
