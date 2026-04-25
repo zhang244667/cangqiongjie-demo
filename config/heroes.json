@@ -1,0 +1,326 @@
+{
+  "version": "1.0",
+  "description": "苍穹劫·摸金传人 英雄配置表",
+  "heroes": [
+    {
+      "id": "HERO_XW_001",
+      "name": "摸金手",
+      "quality": "SR",
+      "inheritance": "星纹摸金",
+      "position": "远程输出",
+      "portrait": "heroes/HERO_XW_001_摸金手"
+    },
+    {
+      "id": "HERO_XW_002",
+      "name": "小星",
+      "quality": "N",
+      "inheritance": "星纹摸金",
+      "position": "刺客",
+      "portrait": "heroes/HERO_XW_002_小星"
+    },
+    {
+      "id": "HERO_XW_003",
+      "name": "老周",
+      "quality": "SR",
+      "inheritance": "星纹摸金",
+      "position": "输出",
+      "portrait": "heroes/HERO_XW_003_老周"
+    },
+    {
+      "id": "HERO_XW_004",
+      "name": "摸金校尉",
+      "quality": "SSR",
+      "inheritance": "星纹摸金",
+      "position": "爆发",
+      "portrait": "heroes/HERO_XW_004_摸金校尉"
+    },
+    {
+      "id": "HERO_XW_005",
+      "name": "黑衣人",
+      "quality": "SR",
+      "inheritance": "星纹摸金",
+      "position": "切后",
+      "portrait": "heroes/HERO_XW_005_黑衣人"
+    },
+    {
+      "id": "HERO_XW_006",
+      "name": "星箭",
+      "quality": "R",
+      "inheritance": "星纹摸金",
+      "position": "远程",
+      "portrait": "heroes/HERO_XW_006_星箭"
+    },
+    {
+      "id": "HERO_XW_007",
+      "name": "铁蛋",
+      "quality": "N",
+      "inheritance": "星纹摸金",
+      "position": "输出",
+      "portrait": "heroes/HERO_XW_007_铁蛋"
+    },
+    {
+      "id": "HERO_XW_008",
+      "name": "星尘",
+      "quality": "R",
+      "inheritance": "星纹摸金",
+      "position": "辅助",
+      "portrait": "heroes/HERO_XW_008_星尘"
+    },
+    {
+      "id": "HERO_XW_009",
+      "name": "穿山甲",
+      "quality": "R",
+      "inheritance": "星纹摸金",
+      "position": "刺客",
+      "portrait": "heroes/HERO_XW_009_穿山甲"
+    },
+    {
+      "id": "HERO_XW_010",
+      "name": "追星者",
+      "quality": "SR",
+      "inheritance": "星纹摸金",
+      "position": "爆发",
+      "portrait": "heroes/HERO_XW_010_追星者"
+    },
+    {
+      "id": "HERO_XY_001",
+      "name": "星祭司",
+      "quality": "SSR",
+      "inheritance": "璇玑搬山",
+      "position": "法师",
+      "portrait": "heroes/HERO_XY_001_星祭司"
+    },
+    {
+      "id": "HERO_XY_002",
+      "name": "搬山客",
+      "quality": "SR",
+      "inheritance": "璇玑搬山",
+      "position": "控制",
+      "portrait": "heroes/HERO_XY_002_搬山客"
+    },
+    {
+      "id": "HERO_XY_003",
+      "name": "小璇",
+      "quality": "N",
+      "inheritance": "璇玑搬山",
+      "position": "辅助",
+      "portrait": "heroes/HERO_XY_003_小璇"
+    },
+    {
+      "id": "HERO_XY_004",
+      "name": "机关师",
+      "quality": "SR",
+      "inheritance": "璇玑搬山",
+      "position": "输出",
+      "portrait": "heroes/HERO_XY_004_机关师"
+    },
+    {
+      "id": "HERO_XY_005",
+      "name": "阵法师",
+      "quality": "R",
+      "inheritance": "璇玑搬山",
+      "position": "控制",
+      "portrait": "heroes/HERO_XY_005_阵法师"
+    },
+    {
+      "id": "HERO_XY_006",
+      "name": "破阵者",
+      "quality": "R",
+      "inheritance": "璇玑搬山",
+      "position": "输出",
+      "portrait": "heroes/HERO_XY_006_破阵者"
+    },
+    {
+      "id": "HERO_XY_007",
+      "name": "灵蛊师",
+      "quality": "SR",
+      "inheritance": "璇玑搬山",
+      "position": "控制",
+      "portrait": "heroes/HERO_XY_007_灵蛊师"
+    },
+    {
+      "id": "HERO_XY_008",
+      "name": "小云",
+      "quality": "N",
+      "inheritance": "璇玑搬山",
+      "position": "辅助",
+      "portrait": "heroes/HERO_XY_008_小云"
+    },
+    {
+      "id": "HERO_XY_009",
+      "name": "傀儡师",
+      "quality": "R",
+      "inheritance": "璇玑搬山",
+      "position": "输出",
+      "portrait": "heroes/HERO_XY_009_傀儡师"
+    },
+    {
+      "id": "HERO_XY_010",
+      "name": "璇玑子",
+      "quality": "SSR",
+      "inheritance": "璇玑搬山",
+      "position": "法师",
+      "portrait": "heroes/HERO_XY_010_璇玑子"
+    },
+    {
+      "id": "HERO_CS_001",
+      "name": "铁柱",
+      "quality": "N",
+      "inheritance": "辰宿卸岭",
+      "position": "坦克",
+      "portrait": "heroes/HERO_CS_001_铁柱"
+    },
+    {
+      "id": "HERO_CS_002",
+      "name": "守陵人",
+      "quality": "SR",
+      "inheritance": "辰宿卸岭",
+      "position": "反击",
+      "portrait": "heroes/HERO_CS_002_守陵人"
+    },
+    {
+      "id": "HERO_CS_003",
+      "name": "阿强",
+      "quality": "R",
+      "inheritance": "辰宿卸岭",
+      "position": "战士",
+      "portrait": "heroes/HERO_CS_003_阿强"
+    },
+    {
+      "id": "HERO_CS_004",
+      "name": "土行孙",
+      "quality": "R",
+      "inheritance": "辰宿卸岭",
+      "position": "坦克",
+      "portrait": "heroes/HERO_CS_004_土行孙"
+    },
+    {
+      "id": "HERO_CS_005",
+      "name": "卸岭力士",
+      "quality": "SR",
+      "inheritance": "辰宿卸岭",
+      "position": "坦克",
+      "portrait": "heroes/HERO_CS_005_卸岭力士"
+    },
+    {
+      "id": "HERO_CS_006",
+      "name": "岩甲",
+      "quality": "N",
+      "inheritance": "辰宿卸岭",
+      "position": "坦克",
+      "portrait": "heroes/HERO_CS_006_岩甲"
+    },
+    {
+      "id": "HERO_CS_007",
+      "name": "地龙",
+      "quality": "R",
+      "inheritance": "辰宿卸岭",
+      "position": "输出",
+      "portrait": "heroes/HERO_CS_007_地龙"
+    },
+    {
+      "id": "HERO_CS_008",
+      "name": "盾甲",
+      "quality": "SR",
+      "inheritance": "辰宿卸岭",
+      "position": "坦克",
+      "portrait": "heroes/HERO_CS_008_盾甲"
+    },
+    {
+      "id": "HERO_CS_009",
+      "name": "蛮牛",
+      "quality": "N",
+      "inheritance": "辰宿卸岭",
+      "position": "战士",
+      "portrait": "heroes/HERO_CS_009_蛮牛"
+    },
+    {
+      "id": "HERO_CS_010",
+      "name": "镇墓兽",
+      "quality": "SSR",
+      "inheritance": "辰宿卸岭",
+      "position": "坦克",
+      "portrait": "heroes/HERO_CS_010_镇墓兽"
+    },
+    {
+      "id": "HERO_TS_001",
+      "name": "灵儿",
+      "quality": "R",
+      "inheritance": "天枢发丘",
+      "position": "治疗",
+      "portrait": "heroes/HERO_TS_001_灵儿"
+    },
+    {
+      "id": "HERO_TS_002",
+      "name": "发丘天官",
+      "quality": "SSR",
+      "inheritance": "天枢发丘",
+      "position": "辅助",
+      "portrait": "heroes/HERO_TS_002_发丘天官"
+    },
+    {
+      "id": "HERO_TS_003",
+      "name": "小医仙",
+      "quality": "R",
+      "inheritance": "天枢发丘",
+      "position": "治疗",
+      "portrait": "heroes/HERO_TS_003_小医仙"
+    },
+    {
+      "id": "HERO_TS_004",
+      "name": "天机子",
+      "quality": "SR",
+      "inheritance": "天枢发丘",
+      "position": "辅助",
+      "portrait": "heroes/HERO_TS_004_天机子"
+    },
+    {
+      "id": "HERO_TS_005",
+      "name": "济世僧",
+      "quality": "R",
+      "inheritance": "天枢发丘",
+      "position": "治疗",
+      "portrait": "heroes/HERO_TS_005_济世僧"
+    },
+    {
+      "id": "HERO_TS_006",
+      "name": "蛊医",
+      "quality": "SR",
+      "inheritance": "天枢发丘",
+      "position": "治疗",
+      "portrait": "heroes/HERO_TS_006_蛊医"
+    },
+    {
+      "id": "HERO_TS_007",
+      "name": "小福星",
+      "quality": "N",
+      "inheritance": "天枢发丘",
+      "position": "辅助",
+      "portrait": "heroes/HERO_TS_007_小福星"
+    },
+    {
+      "id": "HERO_TS_008",
+      "name": "回春手",
+      "quality": "R",
+      "inheritance": "天枢发丘",
+      "position": "治疗",
+      "portrait": "heroes/HERO_TS_008_回春手"
+    },
+    {
+      "id": "HERO_TS_009",
+      "name": "仙草精",
+      "quality": "N",
+      "inheritance": "天枢发丘",
+      "position": "辅助",
+      "portrait": "heroes/HERO_TS_009_仙草精"
+    },
+    {
+      "id": "HERO_TS_010",
+      "name": "天医星",
+      "quality": "UR",
+      "inheritance": "天枢发丘",
+      "position": "治疗",
+      "portrait": "heroes/HERO_TS_010_天医星"
+    }
+  ]
+}
