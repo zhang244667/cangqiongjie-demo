@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>苍穹劫·摸金传人 - 主界面 v4</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #0a0a0a; min-height: 100vh; overflow: hidden; touch-action: manipulation; }
+        .game-container { position: relative; width: 100%; max-width: 500px; height: 100vh; margin: 0 auto; overflow: hidden; }
+        .scene-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://www.coze.cn/s/NuBDmB8KHF8/') center/cover no-repeat; z-index: 1; }
+        .scene-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(10, 10, 20, 0.4) 0%, rgba(10, 10, 20, 0.2) 30%, rgba(10, 10, 20, 0.3) 70%, rgba(10, 10, 20, 0.7) 100%); z-index: 2; pointer-events: none; }
+        
+        /* 顶部资源栏 */
+        .top-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 100; background: linear-gradient(180deg, rgba(15, 10, 25, 0.95) 0%, rgba(15, 10, 25, 0.7) 80%, transparent 100%); padding: 12px 15px; display: flex; align-items: center; gap: 12px; }
+        .player-info { display: flex; align-items: center; gap: 10px; flex: 1; }
+        .player-avatar { width: 44px; height: 44px; border-radius: 50%; border: 2px solid #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); background: linear-gradient(135deg, #2a2040, #1a1530); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .player-details { flex: 1; }
+        .player-name { font-size: 14px; color: #fff; font-weight: bold; }
+        .player-level { font-size: 11px; color: #888; }
+        .resources { display: flex; flex-direction: column; gap: 4px; }
+        .resource-row { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #fff; }
+        
+        /* 场景交互入口 */
+        .scene-entries { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; }
+        .entry-point { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.3s ease; }
+        .entry-point:active { transform: scale(0.95); }
+        
+        /* 图标图片样式 */
+        .entry-icon-img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 5px; filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.8)); transition: filter 0.3s ease; }
+        .entry-point:active .entry-icon-img { filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.8)); }
+        
+        .entry-label { font-size: 13px; color: #d4af37; text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 175, 55, 0.3); font-weight: bold; letter-spacing: 2px; }
+        
+        /* 探险入口 - 中央 */
+        .entry-dungeon { top: 48%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 120px; }
+        .entry-dungeon::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 100px; background: radial-gradient(ellipse, rgba(212, 175, 55, 0.3) 0%, transparent 70%); border-radius: 50%; animation: glowPulse 2s ease-in-out infinite; }
+        .entry-dungeon .entry-icon-img { width: 100px; height: 100px; }
+        
+        /* 星盘召唤 - 右上 */
+        .entry-summon { top: 22%; right: 3%; width: 110px; height: 100px; }
+        .entry-summon::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90px; height: 90px; background: radial-gradient(circle, rgba(128, 90, 213, 0.4) 0%, transparent 70%); border-radius: 50%; animation: purpleGlow 1.5s ease-in-out infinite; }
+        .entry-summon .entry-icon-img { width: 85px; height: 85px; filter: drop-shadow(0 0 12px rgba(128, 90, 213, 0.6)); }
+        .entry-summon .entry-label { color: #b088ff; }
+        
+        /* 古董商城 - 右下 */
+        .entry-shop { bottom: 14%; right: 6%; width: 100px; height: 90px; }
+        .entry-shop .entry-icon-img { width: 75px; height: 75px; }
+        .entry-shop .entry-label { color: #c8a064; }
+        
+        /* 任务 - 左下 */
+        .entry-quest { bottom: 14%; left: 6%; width: 95px; height: 85px; }
+        .entry-quest .entry-icon-img { width: 70px; height: 70px; }
+        .entry-quest .entry-label { color: #b4b4a0; }
+        
+        /* 邮件 - 左侧 */
+        .entry-mail { bottom: 28%; left: 5%; width: 85px; height: 75px; }
+        .entry-mail .entry-icon-img { width: 65px; height: 65px; }
+        .entry-mail .entry-label { color: #7ec8e3; }
+        
+        /* 签到 - 右侧 */
+        .entry-signin { bottom: 28%; right: 5%; width: 85px; height: 75px; }
+        .entry-signin .entry-icon-img { width: 65px; height: 65px; }
+        .entry-signin .entry-label { color: #7ee3a0; }
+        
+        /* 底部栏 */
+        .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; z-index: 100; background: linear-gradient(0deg, rgba(15, 10, 25, 0.95) 0%, rgba(15, 10, 25, 0.8) 80%, transparent 100%); padding: 15px 10px 20px; display: flex; justify-content: space-around; }
+        .quick-btn { display: flex; flex-direction: column; align-items: center; cursor: pointer; padding: 8px 12px; transition: transform 0.2s ease; }
+        .quick-btn:active { transform: scale(0.9); }
+        .quick-btn-icon { font-size: 24px; margin-bottom: 4px; }
+        .quick-btn-text { font-size: 10px; color: #888; }
+        
+        /* 关卡选择 */
+        .level-select-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #0a0a15 0%, #1a1a2e 50%, #0f0f1a 100%); z-index: 2000; overflow-y: auto; padding: 20px; display: none; }
+        .level-select-overlay.active { display: block; }
+        .back-btn { background: rgba(212, 175, 55, 0.2); border: 1px solid #d4af37; border-radius: 20px; padding: 8px 16px; color: #d4af37; font-size: 14px; cursor: pointer; }
+        .level-title { text-align: center; padding: 30px 0 20px; }
+        .level-title h1 { font-size: 24px; color: #d4af37; text-shadow: 0 0 20px rgba(212, 175, 55, 0.4); margin-bottom: 8px; }
+        .level-section { margin-bottom: 25px; }
+        .section-title { font-size: 14px; color: #888; margin-bottom: 12px; padding-left: 10px; border-left: 3px solid #d4af37; }
+        .level-card { background: rgba(30, 20, 50, 0.8); border: 1px solid #3a2a5a; border-radius: 12px; padding: 18px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s; }
+        .level-card:active { background: rgba(50, 40, 70, 0.9); border-color: #d4af37; }
+        .level-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .level-name { font-size: 16px; color: #d4af37; font-weight: bold; }
+        .level-tag { font-size: 10px; padding: 3px 8px; border-radius: 10px; background: #2a4a3a; color: #6bff6b; }
+        .level-desc { font-size: 12px; color: #999; line-height: 1.5; }
+        
+        /* 弹窗 */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: linear-gradient(135deg, #1a1530, #2a2040); border: 1px solid #d4af37; border-radius: 15px; padding: 25px; text-align: center; max-width: 300px; }
+        .modal-icon { font-size: 48px; margin-bottom: 15px; }
+        .modal-title { font-size: 18px; color: #d4af37; margin-bottom: 10px; font-weight: bold; }
+        .modal-desc { font-size: 13px; color: #8a8a9a; margin-bottom: 20px; }
+        .modal-btn { background: linear-gradient(135deg, #d4af37 0%, #b8960c 100%); border: none; border-radius: 20px; padding: 10px 30px; font-size: 14px; color: #1a1530; cursor: pointer; font-weight: bold; }
+        
+        /* 动画 */
+        @keyframes glowPulse { 0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } }
+        @keyframes purpleGlow { 0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.3); } }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="mainScreen">
+        <div class="scene-bg"></div>
+        <div class="scene-overlay"></div>
+        
+        <div class="top-bar">
+            <div class="player-info">
+                <div class="player-avatar">🧙</div>
+                <div class="player-details">
+                    <div class="player-name">盗墓传人</div>
+                    <div class="player-level">Lv.1</div>
+                </div>
+            </div>
+            <div class="resources">
+                <div class="resource-row"><span>💰</span><span>12,580</span></div>
+                <div class="resource-row"><span>💎</span><span>350</span></div>
+                <div class="resource-row"><span>⚡</span><span>120/120</span></div>
+            </div>
+        </div>
+
+        <div class="scene-entries">
+            <div class="entry-point entry-dungeon" onclick="showLevelSelect()">
+                <img class="entry-icon-img" src="https://www.coze.cn/s/GTToRFYyiTA/" alt="探险">
+                <span class="entry-label">探 险</span>
+            </div>
+            <div class="entry-point entry-summon" onclick="alert('召唤系统')">
+                <img class="entry-icon-img" src="https://www.coze.cn/s/JnW3Zpnr1yQ/" alt="召唤">
+                <span class="entry-label">召 唤</span>
+            </div>
+            <div class="entry-point entry-shop" onclick="alert('商城系统')">
+                <img class="entry-icon-img" src="https://www.coze.cn/s/HMol6f877xE/" alt="商城">
+                <span class="entry-label">商 城</span>
+            </div>
+            <div class="entry-point entry-quest" onclick="alert('任务系统')">
+                <img class="entry-icon-img" src="https://www.coze.cn/s/JaJnwwBXSwc/" alt="任务">
+                <span class="entry-label">任 务</span>
+            </div>
+            <div class="entry-point entry-mail" onclick="alert('邮件系统')">
+                <img class="entry-icon-img" src="https://www.coze.cn/s/HRlPTlcLeGg/" alt="邮件">
+                <span class="entry-label">邮 件</span>
+            </div>
+            <div class="entry-point entry-signin" onclick="alert('签到系统')">
+                <img class="entry-icon-img" src="https://www.coze.cn/s/MR1fCs_H9Pg/" alt="签到">
+                <span class="entry-label">签 到</span>
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <div class="quick-btn" onclick="alert('角色')"><span class="quick-btn-icon">👤</span><span class="quick-btn-text">角色</span></div>
+            <div class="quick-btn" onclick="alert('编队')"><span class="quick-btn-icon">⚔️</span><span class="quick-btn-text">编队</span></div>
+            <div class="quick-btn" onclick="alert('背包')"><span class="quick-btn-icon">🎒</span><span class="quick-btn-text">背包</span></div>
+            <div class="quick-btn" onclick="alert('排行')"><span class="quick-btn-icon">🏅</span><span class="quick-btn-text">排行</span></div>
+        </div>
+    </div>
+
+    <div class="level-select-overlay" id="levelSelect">
+        <button class="back-btn" onclick="hideLevelSelect()">← 返回营地</button>
+        <div class="level-title"><h1>《苍穹劫》地宫探索</h1></div>
+        <div class="level-section">
+            <div class="section-title">第一章：初入地宫</div>
+            <div class="level-card" onclick="alert('进入关卡')">
+                <div class="level-header"><span class="level-name">古老墓穴</span><span class="level-tag">经典模式</span></div>
+                <div class="level-desc">一座被遗忘的古墓，传说中埋藏着前朝宝藏...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLevelSelect() { document.getElementById('levelSelect').classList.add('active'); }
+        function hideLevelSelect() { document.getElementById('levelSelect').classList.remove('active'); }
+    </script>
+</body>
+</html>
